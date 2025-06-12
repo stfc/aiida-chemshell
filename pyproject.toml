@@ -24,6 +24,12 @@ classifiers = [
 [project.urls]
 Source = "https://gitlab.stfc.ac.uk/sil23665/aiida-chemshell"
 
+[project.entry-points."aiida.calculations"]
+"chemshell" = "aiida_chemshell.calculations:ChemShellCalculation"
+
+[project.entry-points."aiida.parsers"]
+"chemshell" = "aiida_chemshell.parsers:ChemShellParser"
+
 [tool.setuptools.packages.find]
 where = ["src",]
 

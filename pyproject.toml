@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+version = "0.0.1"
+name = "aiida-chemshell"
+description = "AiiDA workflow plugin for the ChemShell chemical modelling software package"
+authors = [
+    {name = "Dr. Benjamin T. Speake", email = "benjamin.speake@stfc.ac.uk"},
+]
+dependencies = [
+    "aiida-core >= 2.6",
+]
+readme = "README.md"
+keywords = ["aiida", "workflows", "chemshell", ]
+classifiers = [
+    "Intended Audience :: Science/Research/Education",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering", 
+    "Framework :: AiiDA"
+]
+
+[project.urls]
+Source = "https://gitlab.stfc.ac.uk/sil23665/aiida-chemshell"
+
+[tool.setuptools.packages.find]
+where = ["src",]
+

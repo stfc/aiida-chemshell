@@ -97,7 +97,6 @@ class ChemShellCalculation(CalcJob):
             A string containing the ChemShell input script for the single-point energy calculation.
         """
  
-        # TODO: ERROR HANDLING 
         if isinstance(self.inputs.parameters.get("theory"), str):
             theory = ChemShellTheory[self.inputs.parameters.get("theory").upper()]
         elif isinstance(self.inputs.parameters.get("theory"), int):
@@ -106,12 +105,32 @@ class ChemShellCalculation(CalcJob):
             theory = self.inputs.parameters.get("theory")
             
         match theory:
+            case ChemShellTheory.CASTEP:
+                theory_key = "CASTEP"
+            case ChemShellTheory.CP2K:
+                theory_key = "CP2K"
+            case ChemShellTheory.DFTBP:
+                theory_key = "DFTBplus"
+            case ChemShellTheory.FHI_AIMS:
+                theory_key = "FHIaims"
+            case ChemShellTheory.GAMESS_UK:
+                theory_key = "GAMESS_UK"
+            case ChemShellTheory.GAUSSIAN:
+                theory_key = "Gaussian"
+            case ChemShellTheory.LSDALTON:
+                theory_key = "LSDalton"
+            case ChemShellTheory.MNDO:
+                theory_key = "MNDO"
+            case ChemShellTheory.MOLPRO:
+                theory_key = "Molpro"
             case ChemShellTheory.NWCHEM:
                 theory_key = "NWChem"
+            case ChemShellTheory.ORCA:
+                theory_key = "ORCA"
             case ChemShellTheory.PYSCF:
                 theory_key = "PySCF"
-            case _:
-                theory_key = '' # TODO: ERROR HANDLNING 
+            case ChemShellTheory.TURBOMOLE:
+                theory_key = "TURBOMOLE"
 
         script = "from chemsh import Fragment, {0:s}, SP\n".format(theory_key)
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)

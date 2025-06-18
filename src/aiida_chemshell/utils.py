@@ -1,8 +1,9 @@
 from enum import Enum, auto 
 
 
-class ChemShellTheory(Enum):
+class ChemShellQMTheory(Enum):
     """Enum fr the ChemShell theory interfaces."""
+    NONE      = auto() 
     CASTEP    = auto() 
     CP2K      = auto() 
     DFTBP     = auto()
@@ -16,3 +17,10 @@ class ChemShellTheory(Enum):
     ORCA      = auto()
     PYSCF     = auto() 
     TURBOMOLE = auto()  
+
+class ChemShellMMTheory(Enum):
+    """ Enum for the ChemShell MM theory interfaces. """
+    NONE      = auto() 
+    DL_POLY   = auto() 
+    GULP      = auto() 
+    NAMD      = auto() 

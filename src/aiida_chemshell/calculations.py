@@ -20,10 +20,11 @@ class ChemShellCalculation(CalcJob):
         """
         super(ChemShellCalculation, cls).define(spec)
         spec.input('structure', valid_type=SinglefileData, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
-        spec.input("calculation_parameters", valid_type=Dict, required=False, help="A dictionary of parameters for the ChemShell Task object.")
+        spec.input("calculation_parameters", valid_type=Dict, validator=cls.validate_calculation_parameters, required=False, help="A dictionary of parameters for the ChemShell Task object.")
         spec.input("QM_parameters", valid_type=Dict, validator=cls.validate_QM_parameters, required=False, help="A dictionary of parameters for to be passed to the Theory object for the ChemShell calculation.")
-        spec.input("MM_parameters", valid_type=Dict, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
+        spec.input("MM_parameters", valid_type=Dict, validator=cls.validate_MM_parameters, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
         spec.input("QMMM_parameters", valid_type=Dict, required=False, help="A dictionary of parameters for the ChemShell QM/MM interface.")
+        spec.input("forceFieldFile", valid_type=SinglefileData, required=False, help="A file containing the force field parameters for the ChemShell MM interface.")
 
         spec.output("energy", valid_type=Float, help="The total energy of the system.")
 
@@ -153,6 +154,11 @@ class ChemShellCalculation(CalcJob):
         return validKeys
     
     @classmethod
+    def validate_MM_parameters(cls, value: Dict | None, _) -> str | None:
+        print(value.get_dict())
+        return 
+    
+    @classmethod
     def getQMTheoryKey(cls, theory: ChemShellQMTheory) -> str:
         """
         Get the key for the QM theory interface in ChemShell.
@@ -232,12 +238,13 @@ class ChemShellCalculation(CalcJob):
             A string containing the ChemShell input script for the single-point energy calculation.
         """
 
+        qmTheory = None
+        mmTheory = None 
+
         script = "from chemsh import Fragment, SP\n"
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
 
-        if not self.inputs.QM_parameters:
-            qmTheory = None
-        else:
+        if "QM_parameters" in self.inputs:
             if isinstance(self.inputs.QM_parameters.get("theory"), str):
                 qmTheory = ChemShellQMTheory[self.inputs.QM_parameters.get("theory").upper()]
             elif isinstance(self.inputs.QM_parameters.get("theory"), int):
@@ -259,10 +266,7 @@ class ChemShellCalculation(CalcJob):
                 self.inputs.QM_parameters.get("scftype", "rhf")
             )
                 
-
-        if not self.inputs.MM_parameters:
-            mmTheory = None 
-        else:
+        if "MM_parameters" in self.inputs:
             if isinstance(self.inputs.MM_parameters.get("theory"), str):
                 mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
             elif isinstance(self.inputs.MM_parameters.get("theory"), int):
@@ -273,14 +277,14 @@ class ChemShellCalculation(CalcJob):
                 mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
 
                 script += "from chemsh import {0:s}\n".format(mmTheoryKey)
-                script += "mmtheory = {0:s}(frag=structure, ff='{1:s}', input='{2:s}', output='{3:s}')\n".format(
+                script += "mmtheory = {0:s}(frag=structure, ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
                     mmTheoryKey,
-                    '',
-                    '',
-                    '' 
+                    self.inputs.forceFieldFile.filename,
+                    # '',
+                    # '' 
                 )
 
-        if not self.inputs.calculation_parameters:
+        if "calculation_parameters" not in self.inputs:
             self.inputs.calculation_parameters = Dict(dict={})
         
         if qmTheory and not mmTheory:
@@ -301,7 +305,6 @@ class ChemShellCalculation(CalcJob):
                     str(self.inputs.calculation_parameters.get("gradients", False)),
                     str(self.inputs.calculation_parameters.get("hessian", False))
                 )
-        
         return script 
 
 
@@ -334,7 +337,10 @@ class ChemShellCalculation(CalcJob):
         calcInfo.retrieve_temporary_list = []
         calcInfo.provenance_exclude_list = [] 
         calcInfo.retrieve_list = [ChemShellCalculation.FILE_STDOUT,]
-        calcInfo.local_copy_list = [(self.inputs.structure.uuid, self.inputs.structure.filename, self.inputs.structure.filename),]
+        calcInfo.local_copy_list = [
+            (self.inputs.structure.uuid, self.inputs.structure.filename, self.inputs.structure.filename),
+            (self.inputs.forceFieldFile.uuid, self.inputs.forceFieldFile.filename, self.inputs.forceFieldFile.filename),
+        ]
 
 
         return calcInfo 

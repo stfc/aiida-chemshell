@@ -139,9 +139,34 @@ class ChemShellCalculation(CalcJob):
             
         return 
     
+    @classmethod 
+    def get_valid_MM_parameter_keys(cls) -> tuple[str]:
+        """
+        Return a tuple of valid parameter keys for the ChemShell MM interface.
+
+        Returns
+        -------
+        validKeys : tuple[str]
+            A tuple of valid MM parameter keys for the ChemShell calculation.
+        """
+        validKeys = ("theory", "ff", "input", "output")
+        return validKeys
+    
     @classmethod
     def getQMTheoryKey(cls, theory: ChemShellQMTheory) -> str:
+        """
+        Get the key for the QM theory interface in ChemShell.
 
+        Parameters
+        ----------
+        theory : ChemShellQMTheory
+            The MM theory interface to get the key for.
+
+        Returns
+        -------
+        str
+            The ChemShell class key for the QM theory interface.
+        """
         match theory:
             case ChemShellQMTheory.CASTEP:
                 return "CASTEP"
@@ -185,9 +210,15 @@ class ChemShellCalculation(CalcJob):
         Returns
         -------
         str
-            The key for the MM theory interface.
+            The ChemShell class key for the MM theory interface.
         """
-        # Placeholder for MM theory keys, as no MM theories are currently implemented
+        match theory:
+            case ChemShellMMTheory.DL_POLY:
+                return "DL_POLY"
+            case ChemShellMMTheory.GULP:
+                return "GULP"
+            case ChemShellMMTheory.NAMD:
+                return "NAMD"
         return ''
         
         
@@ -229,7 +260,25 @@ class ChemShellCalculation(CalcJob):
             )
                 
 
-        mmTheory = None
+        if not self.inputs.MM_parameters:
+            mmTheory = None 
+        else:
+            if isinstance(self.inputs.MM_parameters.get("theory"), str):
+                mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
+            elif isinstance(self.inputs.MM_parameters.get("theory"), int):
+                mmTheory = ChemShellMMTheory(self.inputs.MM_parameters.get("theory"))
+            else:
+                mmTheory = self.inputs.MM_parameters.get("theory")
+            if mmTheory != ChemShellMMTheory.NONE:
+                mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
+
+                script += "from chemsh import {0:s}\n".format(mmTheoryKey)
+                script += "mmtheory = {0:s}(frag=structure, ff='{1:s}', input='{2:s}', output='{3:s}')\n".format(
+                    mmTheoryKey,
+                    '',
+                    '',
+                    '' 
+                )
 
         if not self.inputs.calculation_parameters:
             self.inputs.calculation_parameters = Dict(dict={})

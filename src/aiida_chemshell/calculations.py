@@ -8,6 +8,11 @@ from aiida_chemshell.utils import ChemShellQMTheory, ChemShellMMTheory
 class ChemShellCalculation(CalcJob):
     """
     AiiDA calculation plugin wrapper for ChemShell calculations.
+
+    Currently supports the following tasks: 
+      - Single point energy 
+      - Geometry optimisation 
+
     """
 
     FILE_SCRIPT = "chemshell_input.py"
@@ -17,34 +22,36 @@ class ChemShellCalculation(CalcJob):
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
         """
-        Define the inputs and outputs of the ChemShell calculation.
+        Define the inputs, outputs and metadata of the ChemShell calculation.
         """
         super(ChemShellCalculation, cls).define(spec)
         spec.input('structure', valid_type=SinglefileData, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
         
+        # Task object parameters 
         spec.input("calculation_parameters", valid_type=Dict, validator=cls.validate_calculation_parameters, required=False, help="A dictionary of parameters for the ChemShell Task object.")
         spec.input("optimisation_parameters", valid_type=Dict, validator=cls.validate_optimisation_parameters, required=False, help="A dictionary of parameters for the ChemShell geometry optimisation task. If this input is provided, a geometry optimisation task will be configured and added to this job.")
 
+        # Theory objects parameters 
         spec.input("QM_parameters", valid_type=Dict, validator=cls.validate_QM_parameters, required=False, help="A dictionary of parameters for to be passed to the Theory object for the ChemShell calculation.")
-        
         spec.input("MM_parameters", valid_type=Dict, validator=cls.validate_MM_parameters, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
+        # The force field input is specified as a file (not a string) and is not directly contained within the MM_parameters dictionary due to serialisation of SingfileData object types 
         spec.input("forceFieldFile", valid_type=SinglefileData, required=False, help="A file containing the force field parameters for the ChemShell MM interface.")
-        
         spec.input("QMMM_parameters", valid_type=Dict, required=False, help="A dictionary of parameters for the ChemShell QM/MM interface.")
         
-
+        # Calculation outputs 
         spec.output("energy", valid_type=Float, required=True, help="The total energy of the system.")
         spec.output("optimised_structure", valid_type=SinglefileData, required=False, help="The optimised structure of the given system, if a geometry optimisation task was configured and successfully completed. The structure is contained within a ChemShell '.pun' file.")
 
+        # Metadata 
         spec.inputs["metadata"]["options"]["resources"].default = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
 
-
+        return 
 
     @classmethod 
     def get_valid_calculation_parameter_keys(cls) -> tuple[str]:
         """
-        Return a tuple of valid parameter keys for the ChemShell calculation.
+        Return a tuple of valid parameter keys for the ChemShell Single Point calculation.
 
         Returns
         -------
@@ -57,7 +64,7 @@ class ChemShellCalculation(CalcJob):
     @classmethod 
     def validate_calculation_parameters(cls, value: Dict | None, _) -> str | None:
         """
-        Validate the calculation parameters to be passed to the ChemShell calculation.
+        Validate the calculation parameters to be passed to the ChemShell Single Point calculation.
         
         Parameters
         ----------
@@ -69,7 +76,8 @@ class ChemShellCalculation(CalcJob):
         str | None
             Returns None if the parameters are valid, otherwise returns an error message string.
         """
-            
+        
+        # Check for valid parameter keys 
         invalidKeys = set(value.keys()).difference(set(cls.get_valid_calculation_parameter_keys()))
         if invalidKeys:
             return "The following parameter keys are invalid: {0:s}. Valid keys are: {1:s}".format(
@@ -115,7 +123,8 @@ class ChemShellCalculation(CalcJob):
         str | None
             Returns None if the parameters are valid, otherwise returns an error message string.
         """
-        
+
+        # Check for invalid parameters keys 
         invalidKeys = set(value.keys()).difference(set(cls.get_valid_optimisation_parameter_keys()))
         if invalidKeys:
             return "The following parameter keys are invalid: {0:s}. Valid keys are: {1:s}".format(
@@ -160,11 +169,13 @@ class ChemShellCalculation(CalcJob):
         
         invalidKeys = set(value.keys()).difference(set(cls.get_valid_QM_parameter_keys()))
         if invalidKeys:
+            # Checks for invalid parameter keys 
             return "The following parameter keys are invalid: {0:s}. Valid keys are: {1:s}".format(
                 ", ".join(invalidKeys), 
                 ", ".join(cls.get_valid_parameter_keys())
             )
         
+        # Check the specified theory interface 
         if isinstance(value.get("theory"), str):
             if value.get("theory").upper() not in ChemShellQMTheory.__members__:
                 return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
@@ -174,6 +185,7 @@ class ChemShellCalculation(CalcJob):
         elif not isinstance(value.get("theory"), ChemShellQMTheory):
             return "The 'theory' parameter cannot be recognised as a valid ChemShell theory interface. It must be a string, integer or ChemShellQMTheory enum."
         
+
         if "method" in value.keys():
             if value.get("method").upper() not in ["HF", "DFT"]:
                 return "The specified method key ('{0:s}') us not valid.".format(value.get("method"))
@@ -199,7 +211,7 @@ class ChemShellCalculation(CalcJob):
         validKeys : tuple[str]
             A tuple of valid MM parameter keys for the ChemShell calculation.
         """
-        validKeys = ("theory", "ff", "input", "output")
+        validKeys = ("theory", "input", "output")
         return validKeys
     
     @classmethod
@@ -277,7 +289,7 @@ class ChemShellCalculation(CalcJob):
         return ''
         
         
-    def SPCalc_Script_Generator(self) -> str:
+    def chemsh_script_generator(self) -> str:
         """
         Generates the input script for a ChemShell single-point energy calculation.
 
@@ -290,10 +302,13 @@ class ChemShellCalculation(CalcJob):
         qmTheory = None
         mmTheory = None 
 
-        script = "from chemsh import Fragment, SP\n"
+        script = "from chemsh import Fragment\n"
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
 
+        ## Setup Theory objects 
+
         if "QM_parameters" in self.inputs:
+            # Creates a quantum mechanics Theory object 
             if isinstance(self.inputs.QM_parameters.get("theory"), str):
                 qmTheory = ChemShellQMTheory[self.inputs.QM_parameters.get("theory").upper()]
             elif isinstance(self.inputs.QM_parameters.get("theory"), int):
@@ -316,6 +331,7 @@ class ChemShellCalculation(CalcJob):
             )
                 
         if "MM_parameters" in self.inputs:
+            # Creates a molecular mechanics Theory object 
             if isinstance(self.inputs.MM_parameters.get("theory"), str):
                 mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
             elif isinstance(self.inputs.MM_parameters.get("theory"), int):
@@ -332,6 +348,8 @@ class ChemShellCalculation(CalcJob):
                     # '',
                     # '' 
                 )
+
+        ## Setup Task objects 
 
         if "optimisation_parameters" in self.inputs:
             # Run a geometry optimisation using DL_FIND 
@@ -355,23 +373,28 @@ class ChemShellCalculation(CalcJob):
             )
             script += optStr
         else:
-            # Perform a single point energy calculation 
+            # Perform a single point energy calculation (default calculation type)
+            script += "from chemsh import SP\n"
             if "calculation_parameters" not in self.inputs:
                 # Assign default values if none are given 
                 self.inputs.calculation_parameters = Dict(dict={})
             
             if qmTheory and not mmTheory:
+                # Runs a QM single point energy calculation
                 script += "SP(theory=qmtheory, gradients={0:s}, hessian={1:s}).run()\n".format(
                     str(self.inputs.calculation_parameters.get("gradients", False)),
                     str(self.inputs.calculation_parameters.get("hessian", False))
                 )
             elif mmTheory and not qmTheory:
+                # Runs a MM single point energy calculation 
                 script += "SP(theory=mmtheory, gradients={0:s}, hessian={1:s}).run()\n".format(
                     str(self.inputs.calculation_parameters.get("gradients", False)),
                     str(self.inputs.calculation_parameters.get("hessian", False))
                 )
             elif qmTheory and mmTheory:
+                # If both a provided assume the user wants to run a QM/MM calculation and check for require parameters
                 if self.input.QMMM_parameters:
+                    # Runs a QM/MM single point energy calculation 
                     script += "from chemsh import QMMM\n"
                     script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[{0:s}])\n".format('')
                     script += "SP(theory=qmmm, gradients={0:s}, hessian={1:s}).run()\n".format(
@@ -395,16 +418,19 @@ class ChemShellCalculation(CalcJob):
         calcInfo : CalcInfo 
             An `aiida.common.CalcInfo` instance. 
         """
-        inputScript = self.SPCalc_Script_Generator()
 
+        # Create the ChemShell input script 
+        inputScript = self.chemsh_script_generator()
         with folder.open(ChemShellCalculation.FILE_SCRIPT, 'w') as f:
             f.write(inputScript)
 
+        # Define the AiiDA code parameters 
         codeInfo = CodeInfo()
         codeInfo.code_uuid = self.inputs.code.uuid
         codeInfo.cmdline_params = [ChemShellCalculation.FILE_SCRIPT,]
         codeInfo.stdout_name = ChemShellCalculation.FILE_STDOUT
         
+        # Setup the calculation information object 
         calcInfo = CalcInfo()
         calcInfo.codes_info = [codeInfo]
         calcInfo.retrieve_temporary_list = []
@@ -414,9 +440,11 @@ class ChemShellCalculation(CalcJob):
             (self.inputs.structure.uuid, self.inputs.structure.filename, self.inputs.structure.filename),
         ]
 
+        # If running with an MM theory a force field file is required and copied
         if "MM_parameters" in self.inputs:
             calcInfo.local_copy_list.append((self.inputs.forceFieldFile.uuid, self.inputs.forceFieldFile.filename, self.inputs.forceFieldFile.filename))
 
+        # If performing a geometry optimisation retrieve the generated _dl_find.pun file containing the optimised structure 
         if "optimisation_parameters" in self.inputs:
             calcInfo.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
 

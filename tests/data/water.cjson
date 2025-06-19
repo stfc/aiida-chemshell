@@ -1,0 +1,16 @@
+{
+  "chemical json": 0,
+  "name": "water",
+  "formula": "H2 O",
+  "atoms": {
+    "elements": {
+      "number": [ 8, 1, 1 ]
+    },
+    "coords": {
+      "unit" : "au",
+      "3d": [  0.0,   0.0,   0.0,
+              -1.426, 1.115, 0.0,
+               1.426, 1.115, 0.0 ]
+    }
+  }
+}

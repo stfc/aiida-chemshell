@@ -176,14 +176,8 @@ class ChemShellCalculation(CalcJob):
             )
         
         # Check the specified theory interface 
-        if isinstance(value.get("theory"), str):
-            if value.get("theory").upper() not in ChemShellQMTheory.__members__:
-                return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
-        elif isinstance(value.get("theory"), int):
-            if value.get("theory") not in [t.value for t in ChemShellQMTheory]:
-                return "The specified theory '{0:d}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
-        elif not isinstance(value.get("theory"), ChemShellQMTheory):
-            return "The 'theory' parameter cannot be recognised as a valid ChemShell theory interface. It must be a string, integer or ChemShellQMTheory enum."
+        if value.get("theory").upper() not in ChemShellQMTheory.__members__:
+            return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
         
 
         if "method" in value.keys():
@@ -309,12 +303,7 @@ class ChemShellCalculation(CalcJob):
 
         if "QM_parameters" in self.inputs:
             # Creates a quantum mechanics Theory object 
-            if isinstance(self.inputs.QM_parameters.get("theory"), str):
-                qmTheory = ChemShellQMTheory[self.inputs.QM_parameters.get("theory").upper()]
-            elif isinstance(self.inputs.QM_parameters.get("theory"), int):
-                qmTheory = ChemShellQMTheory(self.inputs.QM_parameters.get("theory"))
-            else:
-                qmTheory = self.inputs.QM_parameters.get("theory")
+            qmTheory = ChemShellQMTheory[self.inputs.QM_parameters.get("theory").upper()]
             
             if qmTheory != ChemShellQMTheory.NONE:
                 qmTheoryKey = ChemShellCalculation.getQMTheoryKey(qmTheory)
@@ -332,12 +321,7 @@ class ChemShellCalculation(CalcJob):
                 
         if "MM_parameters" in self.inputs:
             # Creates a molecular mechanics Theory object 
-            if isinstance(self.inputs.MM_parameters.get("theory"), str):
-                mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
-            elif isinstance(self.inputs.MM_parameters.get("theory"), int):
-                mmTheory = ChemShellMMTheory(self.inputs.MM_parameters.get("theory"))
-            else:
-                mmTheory = self.inputs.MM_parameters.get("theory")
+            mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
             if mmTheory != ChemShellMMTheory.NONE:
                 mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
 

@@ -88,6 +88,8 @@ def test_OptCalculation_NWChem(chemsh_code, get_test_data_file):
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles 
 
+    assert results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
+
     eref = -75.951248996895
     assert abs(results.get("energy") - eref) < 1e-8, \
         "Incorrect energy result for NWChem based optimisation calculation."
@@ -108,6 +110,8 @@ def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles 
     assert ChemShellCalculation.FILE_DLFIND in ofiles 
+
+    assert results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
 
     eref = 0.017155540777
     assert abs(results.get("energy") - eref) < 1e-8, \

@@ -17,7 +17,7 @@ class ChemShellParser(Parser):
         if "optimisation_parameters" in self.node.inputs:
             # Store the optimised structure file 
             with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, 'r') as f:
-                self.out("optimised_structure", SinglefileData(file=f))
+                self.out("optimised_structure", SinglefileData(file=f, filename=ChemShellCalculation.FILE_DLFIND))
             # Read the final converged energy value for the optimised structure 
             with self.retrieved.open(ChemShellCalculation.FILE_STDOUT, 'r') as f:
                 for line in f:
@@ -31,4 +31,6 @@ class ChemShellParser(Parser):
                     if "Final SP energy" in line:
                         self.out("energy", Float(line.split()[4]))
                         break
+
+        return ExitCode(0)
         

@@ -34,7 +34,7 @@ def chemsh_code(aiida_code_installed):
 def generate_inputs(chemsh_code, get_test_data_file):
     """ Returns a dictionary of inputs for the ChemShellCalculation. """
     
-    def factory(sp: dict | None = None, qm: dict | None = None, mm: dict | None = None, structure_fname: str = 'water.cjson', ff_fname: str | None = None):
+    def factory(sp: dict | None = None, qm: dict | None = None, mm: dict | None = None, structure_fname: str = 'water.cjson', ff_fname: str | None = None, opt: dict | None = None):
         structure = get_test_data_file(structure_fname)
         inputs = {
             "code": chemsh_code,
@@ -53,6 +53,9 @@ def generate_inputs(chemsh_code, get_test_data_file):
         if ff_fname:
             inputs["forceFieldFile"] = get_test_data_file(ff_fname)
 
+        if opt:
+            inputs["optimisation_parameters"] = Dict(opt)
+
         return inputs 
     
     return factory 
@@ -64,11 +67,11 @@ def generate_calcjob(tmp_path, generate_inputs):
         manager = get_manager()
         runner = manager.get_runner() 
         process = instantiate_process(runner, process_class, **inputs)
-        calcInfo = process.prepare_for_submission(Folder(tmp_path))
 
         if return_process:
             return process 
         
+        calcInfo = process.prepare_for_submission(Folder(tmp_path))
         return tmp_path, calcInfo
     
     return factory 

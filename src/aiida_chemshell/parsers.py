@@ -15,7 +15,7 @@ class ChemShellParser(Parser):
         """
 
         if ChemShellCalculation.FILE_STDOUT not in self.retrieved.list_object_names():
-                return self.exit_codes.ERROR_STDOUT_NOT_FOUND
+            return self.exit_codes.ERROR_STDOUT_NOT_FOUND
 
         if "optimisation_parameters" in self.node.inputs:
             if ChemShellCalculation.FILE_DLFIND not in self.retrieved.list_object_names():

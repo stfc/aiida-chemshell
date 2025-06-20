@@ -72,8 +72,6 @@ class ChemShellCalculation(CalcJob):
         if not value._validate():
             return "Structure file doesn't exist."
         
-        print(value.filename)
-
         if value.filename[-4:] not in [".xyz", ".pun"]:
             if value.filename[-6:] != ".cjson":
                 return "Structure file must be either an '.xyz', '.pun' or '.cjson' formatted structure file." 
@@ -244,7 +242,7 @@ class ChemShellCalculation(CalcJob):
     
     @classmethod
     def validate_MM_parameters(cls, value: Dict | None, _) -> str | None:
-        print(value.get_dict())
+        # print(value.get_dict())
         return 
     
     @classmethod
@@ -400,26 +398,14 @@ class ChemShellCalculation(CalcJob):
                 #TODO: Catch exception here 
                 pass 
 
-            optStr = "Opt(theory={13:s}, maxcycle={0:d}, maxene={1:d}, coordinates='{2:s}', algorithm='{3:s}', "
-            optStr += "trust_radius='{4:s}', maxstep={5:f}, tolerance={6:f}, neb='{7:s}', nimages={8:d}, nebk={9:f}, "
-            optStr += "dimer={10:s}, delta={11:f}, tsrelative={12:s}).run()\n"
-            optStr = optStr.format(
-                self.inputs.optimisation_parameters.get("maxcycle", 100),
-                self.inputs.optimisation_parameters.get("maxene", 10000),
-                self.inputs.optimisation_parameters.get("coordinates", "cartesian"),
-                self.inputs.optimisation_parameters.get("algorithm", "lbfgs"),
-                self.inputs.optimisation_parameters.get("trust_radius", "constant"), 
-                self.inputs.optimisation_parameters.get("maxstep", 0.5), 
-                self.inputs.optimisation_parameters.get("tolerance", 0.00045), 
-                self.inputs.optimisation_parameters.get("neb", ""), 
-                self.inputs.optimisation_parameters.get("nimages", 1), 
-                self.inputs.optimisation_parameters.get("nebk", 0.01), 
-                str(self.inputs.optimisation_parameters.get("dimer", False)),
-                self.inputs.optimisation_parameters.get("delta", 0.01), 
-                str(self.inputs.optimisation_parameters.get("tsrelative", False)),
-                tStr
-            )
-            script += optStr
+            script += "from chemsh import Opt\n" 
+            optStr = "Opt(theory={0:s}".format(tStr)
+            for key in self.inputs.optimisation_parameters.keys():
+                if isinstance(self.inputs.optimisation_parameters.get(key), str):
+                    optStr += ", " + key + "='" + self.inputs.optimisation_parameters.get(key) + "'" 
+                else:
+                    optStr += ", " + key + "=" + str(self.inputs.optimisation_parameters.get(key))
+            script += optStr + ").run()\n"
         else:
             # Perform a single point energy calculation (default calculation type)
             script += "from chemsh import SP\n"

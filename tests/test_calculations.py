@@ -104,6 +104,8 @@ def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
 
     results, node = run.get_node(builder)
 
+    print(results)
+
     assert node.is_finished_ok, \
         "CalcJob failed for `test_OptCalculation_dlpoly`"
     

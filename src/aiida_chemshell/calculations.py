@@ -47,6 +47,12 @@ class ChemShellCalculation(CalcJob):
         spec.inputs["metadata"]["options"]["resources"].default = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
 
+
+        # Exit Codes
+        spec.exit_code(300, "ERROR_STDOUT_NOT_FOUND", message="Error accessing the `output.log` ChemShell output file.")
+        spec.exit_code(301, "ERROR_MISSING_FINAL_ENERGY", message="ChemShell calculation failed to compute a final energy for the given task.")
+        spec.exit_code(302, "ERROR_MISSING_OPTIMISED_STRUCTURE_FILE", message="ChemShell failed to produced the expected optimised structure file.")
+
         return 
     
     @classmethod 

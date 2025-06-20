@@ -72,3 +72,43 @@ def test_SPCalculation_dlpoly(chemsh_code, get_test_data_file):
         "Incorrect energy result for DL_POLY based SP calculation."
 
     
+def test_OptCalculation_NWChem(chemsh_code, get_test_data_file):
+    code = chemsh_code
+    builder = code.get_builder() 
+    builder.structure = get_test_data_file("water.cjson")
+    builder.qm_theory = "NWChem"
+    builder.QM_parameters = Dict({"method": "DFT", "basis": "3-21G"})
+    builder.optimisation_parameters = Dict({})
+
+    results, node = run.get_node(builder)
+
+    assert node.is_finished_ok, \
+        "CalcJob failed for `test_OptCalculation_NWChem`"
+    
+    ofiles = results.get("retrieved").list_object_names() 
+    assert ChemShellCalculation.FILE_STDOUT in ofiles 
+
+    eref = -75.951248996895
+    assert abs(results.get("energy") - eref) < 1e-8, \
+        "Incorrect energy result for NWChem based optimisation calculation."
+    
+def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
+    code = chemsh_code 
+    builder = code.get_builder() 
+    builder.structure = get_test_data_file("butanol.cjson")
+    builder.MM_parameters = Dict({"theory": "dl_poly"})
+    builder.forceFieldFile = get_test_data_file("butanol.ff")
+    builder.optimisation_parameters = Dict({})
+
+    results, node = run.get_node(builder)
+
+    assert node.is_finished_ok, \
+        "CalcJob failed for `test_OptCalculation_dlpoly`"
+    
+    ofiles = results.get("retrieved").list_object_names() 
+    assert ChemShellCalculation.FILE_STDOUT in ofiles 
+    assert ChemShellCalculation.FILE_DLFIND in ofiles 
+
+    eref = 0.017155540777
+    assert abs(results.get("energy") - eref) < 1e-8, \
+        "Incorrect energy result for DL_POLY based optimisation calculation."

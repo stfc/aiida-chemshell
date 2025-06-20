@@ -16,7 +16,7 @@ def test_defaults(generate_calcjob):
     assert "from chemsh import Fragment\n" in scriptText  
     assert "structure = Fragment(coords='water.cjson')\n" in scriptText 
     assert "from chemsh import NWChem\n" in scriptText 
-    assert "qmtheory = NWChem(frag=structure, method='HF', basis='3-21G', charge=0, functional='B3LYP', mult=1, scftype='rhf')\n" in scriptText 
+    assert "qmtheory = NWChem(frag=structure)" in scriptText
     assert "from chemsh import SP\n" in scriptText 
     assert "SP(theory=qmtheory, gradients=False, hessian=False).run()\n" in scriptText 
     

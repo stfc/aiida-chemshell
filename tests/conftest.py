@@ -44,10 +44,11 @@ def generate_inputs(chemsh_code, get_test_data_file):
             inputs["calculation_parameters"] = Dict(sp)
         if qm:
             inputs["QM_parameters"] = Dict(qm)
+            inputs["qm_theory"] = "NWChem"
         if mm:
             inputs["MM_parameters"] = Dict(mm)
         if not qm and not mm:
-            inputs["QM_parameters"] = Dict({"theory": "nwchem"})
+            inputs["qm_theory"] = "NWChem"
 
         if ff_fname:
             inputs["forceFieldFile"] = get_test_data_file(ff_fname)

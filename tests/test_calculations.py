@@ -10,7 +10,8 @@ def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
-    builder.QM_parameters =  Dict({"theory": ChemShellQMTheory.NWCHEM.name, "method": "HF"})
+    builder.QM_parameters =  Dict({"method": "HF"})
+    builder.qm_theory = "NWChem"
     builder.calculation_parameters = Dict({"gradients": True, "hessian": False})
      
     results, node = run.get_node(builder)
@@ -33,7 +34,8 @@ def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
-    builder.QM_parameters = Dict({"theory": "nwchem", "method": "DFT", "functional": "BLYP", "charge": 0, "scftype": "uks"})
+    builder.QM_parameters = Dict({"method": "DFT", "functional": "BLYP", "charge": 0, "scftype": "uks"})
+    builder.qm_theory = "NWChem"
     
     results, node = run.get_node(builder)
 
@@ -41,7 +43,7 @@ def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file):
         "CalcJob failed for `test_SPCalculation_nwchem_DFT`"
 
     ofiles = results.get("retrieved").list_object_names() 
-    assert ChemShellCalculation.FILE_STDOUT in ofiles 
+    assert ChemShellCalculation.FILE_STDOUT in ofiles         
 
     eref = -75.9468895721
     assert abs(results.get("energy") - eref) < 1e-8, \

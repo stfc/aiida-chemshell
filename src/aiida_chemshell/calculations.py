@@ -341,8 +341,20 @@ class ChemShellCalculation(CalcJob):
         ## Setup Task objects 
 
         if "optimisation_parameters" in self.inputs:
-            # Run a geometry optimisation using DL_FIND 
-            optStr = "Opt(theory=qmtheory, maxcycle={0:d}, maxene={1:d}, coordinates='{2:s}', algorithm='{3:s}', "
+            # Run a geometry optimisation using DL_FIND
+            
+            if qmTheory and not mmTheory:
+                tStr = "qmtheory"
+            elif mmTheory and not qmTheory:
+                tStr = "mmtheory"
+            elif qmTheory and mmTheory:
+                #TODO: qm/mm theory setup 
+                tStr = "qmtheory" 
+            else:
+                #TODO: Catch exception here 
+                pass 
+
+            optStr = "Opt(theory={13:s}, maxcycle={0:d}, maxene={1:d}, coordinates='{2:s}', algorithm='{3:s}', "
             optStr += "trust_radius='{4:s}', maxstep={5:f}, tolerance={6:f}, neb='{7:s}', nimages={8:d}, nebk={9:f}, "
             optStr += "dimer={10:s}, delta={11:f}, tsrelative={12:s}).run()\n"
             optStr = optStr.format(
@@ -358,7 +370,8 @@ class ChemShellCalculation(CalcJob):
                 self.inputs.optimisation_parameters.get("nebk", 0.01), 
                 str(self.inputs.optimisation_parameters.get("dimer", False)),
                 self.inputs.optimisation_parameters.get("delta", 0.01), 
-                str(self.inputs.optimisation_parameters.get("tsrelative", False))
+                str(self.inputs.optimisation_parameters.get("tsrelative", False)),
+                tStr
             )
             script += optStr
         else:

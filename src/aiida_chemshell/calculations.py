@@ -285,6 +285,21 @@ class ChemShellCalculation(CalcJob):
                 return "NAMD"
         return ''
         
+
+    def _build_process_label(self) -> str:
+        """
+        Defines the process label to be associated with the created ProcessNode stored in the 
+        AiiDA database. 
+
+        Returns
+        -------
+        str 
+            The process label based on what inputs have been provided. 
+        """
+        if "optimisation_parameters" in self.inputs:
+            return "ChemShell_Geometry_Optimisation"
+        
+        return "ChemShell_Single_Point_Calculation"
         
     def chemsh_script_generator(self) -> str:
         """

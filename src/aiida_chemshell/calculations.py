@@ -25,7 +25,7 @@ class ChemShellCalculation(CalcJob):
         Define the inputs, outputs and metadata of the ChemShell calculation.
         """
         super(ChemShellCalculation, cls).define(spec)
-        spec.input('structure', valid_type=SinglefileData, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
+        spec.input('structure', valid_type=SinglefileData, validator=cls.validate_structure_file, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
         
         # Task object parameters 
         spec.input("calculation_parameters", valid_type=Dict, validator=cls.validate_calculation_parameters, required=False, help="A dictionary of parameters for the ChemShell Task object.")
@@ -46,6 +46,31 @@ class ChemShellCalculation(CalcJob):
         # Metadata 
         spec.inputs["metadata"]["options"]["resources"].default = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
+
+        return 
+    
+    @classmethod 
+    def validate_structure_file(cls, value: SinglefileData | None, _) -> str | None:
+        """
+        Validate the ChemShell input structure file 
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        str | None
+            Returns `None` if no error is found otherwise returns an error message 
+        """
+ 
+        if not value._validate():
+            return "Structure file doesn't exist."
+        
+        print(value.filename)
+
+        if value.filename[-4:] not in [".xyz", ".pun"]:
+            if value.filename[-6:] != ".cjson":
+                return "Structure file must be either an '.xyz', '.pun' or '.cjson' formatted structure file." 
 
         return 
 

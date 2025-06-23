@@ -27,23 +27,24 @@ class ChemShellCalculation(CalcJob):
         super(ChemShellCalculation, cls).define(spec)
         spec.input('structure', valid_type=SinglefileData, validator=cls.validate_structure_file, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
         
-        # Task object parameters 
+        ## Task object parameters 
         spec.input("calculation_parameters", valid_type=Dict, validator=cls.validate_calculation_parameters, required=False, help="A dictionary of parameters for the ChemShell Task object.")
         spec.input("optimisation_parameters", valid_type=Dict, validator=cls.validate_optimisation_parameters, required=False, help="A dictionary of parameters for the ChemShell geometry optimisation task. If this input is provided, a geometry optimisation task will be configured and added to this job.")
 
-        # Theory objects parameters 
+        ## Theory objects parameters 
         spec.input("qm_theory", valid_type=Str, validator=cls.validate_qm_theory, required=False, help="Set the QM theory interface for the chemshell calculation.")
         spec.input("QM_parameters", valid_type=Dict, validator=cls.validate_QM_parameters, required=False, help="A dictionary of parameters for to be passed to the Theory object for the ChemShell calculation.")
+        spec.input("MM_theory", valid_type=Str, validator=cls.validate_mm_theory, required=False, help="The MM theory interface for the ChemShell calculation.")
         spec.input("MM_parameters", valid_type=Dict, validator=cls.validate_MM_parameters, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
         # The force field input is specified as a file (not a string) and is not directly contained within the MM_parameters dictionary due to serialisation of SingfileData object types 
         spec.input("forceFieldFile", valid_type=SinglefileData, required=False, help="A file containing the force field parameters for the ChemShell MM interface.")
         spec.input("QMMM_parameters", valid_type=Dict, required=False, help="A dictionary of parameters for the ChemShell QM/MM interface.")
         
-        # Calculation outputs 
+        ## Calculation outputs 
         spec.output("energy", valid_type=Float, required=True, help="The total energy of the system.")
         spec.output("optimised_structure", valid_type=SinglefileData, required=False, help="The optimised structure of the given system, if a geometry optimisation task was configured and successfully completed. The structure is contained within a ChemShell '.pun' file.")
 
-        # Metadata 
+        ## Metadata 
         spec.inputs["metadata"]["options"]["resources"].default = {"num_machines": 1, "num_mpiprocs_per_machine": 1}
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
 
@@ -221,12 +222,31 @@ class ChemShellCalculation(CalcJob):
         return 
     
     @classmethod 
-    def validate_qm_theory(cls, value: str | None, _) -> str | None:
+    def validate_qm_theory(cls, value: Str | None, _) -> str | None:
         # Check the specified theory interface 
         if value.value.upper() not in ChemShellQMTheory.__members__:
             return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value)
         return 
     
+    @classmethod 
+    def validate_mm_theory(cls, value: Str | None, _) -> str | None:
+        """ 
+        Checks if the given MM theory is a valid ChemShelll interface. 
+
+        Parameters
+        ----------
+        value : str | None
+            The MM theory interface to validate. If None, no validation is performed.
+        
+        Returns 
+        -------
+        str | None
+            Returns None if the MM theory is valid, otherwise returns an error message string.
+        """
+        if value.value.upper() not in ChemShellMMTheory.__members__:
+            return "The specified MM theory '{0:s}' is not a valid ChemShell MM interface within the AiiDA-ChemShell workflow.".format(value)
+        return 
+
     @classmethod 
     def get_valid_MM_parameter_keys(cls) -> tuple[str]:
         """
@@ -237,7 +257,7 @@ class ChemShellCalculation(CalcJob):
         validKeys : tuple[str]
             A tuple of valid MM parameter keys for the ChemShell calculation.
         """
-        validKeys = ("theory", "input", "output")
+        validKeys = ("input", "output")
         return validKeys
     
     @classmethod
@@ -368,9 +388,9 @@ class ChemShellCalculation(CalcJob):
                 script += "qmtheory = {0:s}(frag=structure".format(qmTheoryKey) + paramStr + ")\n"
                     
                 
-        if "MM_parameters" in self.inputs:
+        if "MM_theory" in self.inputs:
             # Creates a molecular mechanics Theory object 
-            mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
+            mmTheory = ChemShellMMTheory[self.inputs.MM_theory.value.upper()]
             if mmTheory != ChemShellMMTheory.NONE:
                 mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
 
@@ -378,8 +398,6 @@ class ChemShellCalculation(CalcJob):
                 script += "mmtheory = {0:s}(frag=structure, ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
                     mmTheoryKey,
                     self.inputs.forceFieldFile.filename,
-                    # '',
-                    # '' 
                 )
 
         ## Setup Task objects 
@@ -427,7 +445,7 @@ class ChemShellCalculation(CalcJob):
                 )
             elif qmTheory and mmTheory:
                 # If both a provided assume the user wants to run a QM/MM calculation and check for require parameters
-                if self.input.QMMM_parameters:
+                if self.inputs.QMMM_parameters:
                     # Runs a QM/MM single point energy calculation 
                     script += "from chemsh import QMMM\n"
                     script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[{0:s}])\n".format('')
@@ -475,7 +493,7 @@ class ChemShellCalculation(CalcJob):
         ]
 
         # If running with an MM theory a force field file is required and copied
-        if "MM_parameters" in self.inputs:
+        if "forceFieldFile" in self.inputs:
             calcInfo.local_copy_list.append((self.inputs.forceFieldFile.uuid, self.inputs.forceFieldFile.filename, self.inputs.forceFieldFile.filename))
 
         # If performing a geometry optimisation retrieve the generated _dl_find.pun file containing the optimised structure 

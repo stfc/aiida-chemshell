@@ -56,7 +56,8 @@ def test_SPCalculation_dlpoly(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file("butanol.cjson")
-    builder.MM_parameters = Dict({"theory": "dl_poly"})
+    builder.MM_parameters = Dict()
+    builder.MM_theory = "DL_POLY"
     builder.forceFieldFile = get_test_data_file("butanol.ff")
 
     results, node = run.get_node(builder)
@@ -98,14 +99,13 @@ def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
     code = chemsh_code 
     builder = code.get_builder() 
     builder.structure = get_test_data_file("butanol.cjson")
-    builder.MM_parameters = Dict({"theory": "dl_poly"})
+    builder.MM_parameters = Dict()
+    builder.MM_theory = "DL_POLY"
     builder.forceFieldFile = get_test_data_file("butanol.ff")
     builder.optimisation_parameters = Dict({})
 
     results, node = run.get_node(builder)
-
-    print(results)
-
+    
     assert node.is_finished_ok, \
         "CalcJob failed for `test_OptCalculation_dlpoly`"
     

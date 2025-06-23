@@ -23,7 +23,7 @@ def test_defaults(generate_calcjob):
 
 def test_default_MM_SP(generate_calcjob, generate_inputs):
 
-    inputs = generate_inputs(mm={"theory": "dl_poly"}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
+    inputs = generate_inputs(mm={}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
     tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
 
     assert len(calcInfo.local_copy_list) == 2 
@@ -38,6 +38,7 @@ def test_default_MM_SP(generate_calcjob, generate_inputs):
     assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff')\n" in scriptText 
     assert "from chemsh import SP\n" in scriptText 
     assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 
+    
 
 def test_default_QM_Opt(generate_calcjob, generate_inputs):
 

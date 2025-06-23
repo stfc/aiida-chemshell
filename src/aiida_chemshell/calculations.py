@@ -345,10 +345,18 @@ class ChemShellCalculation(CalcJob):
         str 
             The process label based on what inputs have been provided. 
         """
+        theoryKey = ""
+        if "qm_theory" in self.inputs:
+            if "MM_theory" in self.inputs:
+                theoryKey = "_(QM/MM)"
+            theoryKey = "_(QM)"
+        else:
+            theoryKey = "_(MM)"
+
         if "optimisation_parameters" in self.inputs:
-            return "ChemShell_Geometry_Optimisation"
+            return "ChemShell_Geometry_Optimisation" + theoryKey
         
-        return "ChemShell_Single_Point_Calculation"
+        return "ChemShell_Single_Point_Calculation" + theoryKey
         
     def chemsh_script_generator(self) -> str:
         """
@@ -448,7 +456,7 @@ class ChemShellCalculation(CalcJob):
                 if self.inputs.QMMM_parameters:
                     # Runs a QM/MM single point energy calculation 
                     script += "from chemsh import QMMM\n"
-                    script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[{0:s}])\n".format('')
+                    script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region={0:s})\n".format(str(self.inputs.QMMM_parameters.get("qm_region")))
                     script += "SP(theory=qmmm, gradients={0:s}, hessian={1:s}).run()\n".format(
                         str(self.inputs.calculation_parameters.get("gradients", False)),
                         str(self.inputs.calculation_parameters.get("hessian", False))

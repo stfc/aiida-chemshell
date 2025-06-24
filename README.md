@@ -88,8 +88,7 @@ builder = load_code("chemsh").get_builder()
 builder.structure = SinglefileData(file="h2o_dimer.cjson")
 builder.qm_theory = "nwchem" 
 builder.QM_parameters = Dict({"method": "DFT", "basis": "6-31G"})
-builder.MM_theory = "DL_POLY"
-builder.MM_parameters = Dict({})
+builder.MM_parameters = Dict({"theory": "DL_POLY"})
 builder.forceFieldFile = SinglefileData(file="h2o_dimer.ff")
 builder.optimisation_parameters = Dict({"algorithm": "lbfgs", "maxcyle": 100})
 

@@ -23,7 +23,7 @@ def test_defaults(generate_calcjob):
 
 def test_default_MM_SP(generate_calcjob, generate_inputs):
 
-    inputs = generate_inputs(mm={}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
+    inputs = generate_inputs(mm={"theory": "DL_POLY"}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
     tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
 
     assert len(calcInfo.local_copy_list) == 2 
@@ -80,3 +80,22 @@ def test_default_QM_Opt(generate_calcjob, generate_inputs):
     assert "Opt(theory=qmtheory, maxcycle=100).run()\n" in scriptText
 
     assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT, ChemShellCalculation.FILE_DLFIND]
+
+
+def test_expanded_MM_parameters(generate_calcjob, generate_inputs):
+
+    inputs = generate_inputs(mm={"theory": "DL_POLY", "timestep": 0.0001, "rcut": 10.0}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
+    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+
+    assert len(calcInfo.local_copy_list) == 2 
+
+    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
+    assert scriptFile.exists()
+
+    scriptText = scriptFile.read_text() 
+    assert "from chemsh import Fragment\n" in scriptText  
+    assert "structure = Fragment(coords='butanol.cjson')\n" in scriptText 
+    assert "from chemsh import DL_POLY\n" in scriptText 
+    assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff', timestep=0.0001, rcut=10.0)\n" in scriptText 
+    assert "from chemsh import SP\n" in scriptText 
+    assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 

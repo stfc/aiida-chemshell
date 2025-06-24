@@ -62,8 +62,7 @@ def test_SPCalculation_dlpoly(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file("butanol.cjson")
-    builder.MM_parameters = Dict()
-    builder.MM_theory = "DL_POLY"
+    builder.MM_parameters = Dict({"theory": "DL_POLY"})
     builder.forceFieldFile = get_test_data_file("butanol.ff")
 
     results, node = run.get_node(builder)
@@ -90,7 +89,7 @@ def test_SPCalculation_qmmm(chemsh_code, get_test_data_file):
     builder.qm_theory = "NWChem"
     builder.forceFieldFile = get_test_data_file("h2o_dimer.ff")
     builder.QMMM_parameters = Dict({"qm_region": [0, 1, 2]})
-    builder.MM_theory = "DL_POLY"
+    builder.MM_parameters = Dict({"theory": "DL_POLY"})
 
     results, node = run.get_node(builder)
 
@@ -138,8 +137,7 @@ def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
     code = chemsh_code 
     builder = code.get_builder() 
     builder.structure = get_test_data_file("butanol.cjson")
-    builder.MM_parameters = Dict()
-    builder.MM_theory = "DL_POLY"
+    builder.MM_parameters = Dict({"theory": "DL_POLY"})
     builder.forceFieldFile = get_test_data_file("butanol.ff")
     builder.optimisation_parameters = Dict({})
 
@@ -169,8 +167,10 @@ def test_OptCalculation_qmmm(chemsh_code, get_test_data_file):
     builder.QM_parameters = Dict({"method": "HF"})
     builder.qm_theory = "NWChem"
     builder.forceFieldFile = get_test_data_file("h2o_dimer_gulp.ff")
+    # There seems to be a bug when running this with DL_POLY???
+    builder.MM_parameters = Dict({"theory": "GULP"})
     builder.QMMM_parameters = Dict({"qm_region": [0, 1, 2]})
-    builder.MM_theory = "GULP" # There seems to be a bug when running this with DL_POLY???
+    
     builder.optimisation_parameters = Dict({})
     # builder.metadata.options.withmpi = True
     # builder.metadata.options.resources = {"num_machines": 1, "num_mpiprocs_per_machine": 4}

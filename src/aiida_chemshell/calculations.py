@@ -34,7 +34,6 @@ class ChemShellCalculation(CalcJob):
         ## Theory objects parameters 
         spec.input("qm_theory", valid_type=Str, validator=cls.validate_qm_theory, required=False, help="Set the QM theory interface for the chemshell calculation.")
         spec.input("QM_parameters", valid_type=Dict, validator=cls.validate_QM_parameters, required=False, help="A dictionary of parameters for to be passed to the Theory object for the ChemShell calculation.")
-        spec.input("MM_theory", valid_type=Str, validator=cls.validate_mm_theory, required=False, help="The MM theory interface for the ChemShell calculation.")
         spec.input("MM_parameters", valid_type=Dict, validator=cls.validate_MM_parameters, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
         # The force field input is specified as a file (not a string) and is not directly contained within the MM_parameters dictionary due to serialisation of SingfileData object types 
         spec.input("forceFieldFile", valid_type=SinglefileData, required=False, help="A file containing the force field parameters for the ChemShell MM interface.")
@@ -163,6 +162,8 @@ class ChemShellCalculation(CalcJob):
                 ", ".join(cls.get_valid_optimisation_parameter_keys())
             )
         
+        # TODO: check the types of the parameters 
+        
         return
 
     @classmethod 
@@ -226,29 +227,10 @@ class ChemShellCalculation(CalcJob):
         # Check the specified theory interface 
         if value.value.upper() not in ChemShellQMTheory.__members__:
             return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.value)
-        return 
-    
-    @classmethod 
-    def validate_mm_theory(cls, value: Str | None, _) -> str | None:
-        """ 
-        Checks if the given MM theory is a valid ChemShelll interface. 
-
-        Parameters
-        ----------
-        value : str | None
-            The MM theory interface to validate. If None, no validation is performed.
-        
-        Returns 
-        -------
-        str | None
-            Returns None if the MM theory is valid, otherwise returns an error message string.
-        """
-        if value.value.upper() not in ChemShellMMTheory.__members__:
-            return "The specified MM theory '{0:s}' is not a valid ChemShell MM interface within the AiiDA-ChemShell workflow.".format(value.value)
-        return 
+        return
 
     @classmethod 
-    def get_valid_MM_parameter_keys(cls) -> tuple[str]:
+    def get_valid_MM_parameter_keys(cls, theory: str = "") -> dict[str: type]:
         """
         Return a tuple of valid parameter keys for the ChemShell MM interface.
 
@@ -257,13 +239,114 @@ class ChemShellCalculation(CalcJob):
         validKeys : tuple[str]
             A tuple of valid MM parameter keys for the ChemShell calculation.
         """
-        validKeys = ("input", "output")
+        theoryKey = theory.upper() 
+        if theoryKey == "DL_POLY":
+            validKeys = {
+                "theory": str,
+                "input": str | tuple[str], "output": str, # general keys -> TODO: these are files which are not supported by as AiiDA nodes if in a Dict object  
+                "berendsen": float, 
+                "delr": float, 
+                "densvar": int, 
+                "dl_field_charges": bool, 
+                "dl_field_types": bool, 
+                "equilibration": int, 
+                "ewald": float, 
+                "potential": bool,
+                "print": int, 
+                "rcut": float, 
+                "rpad": float, 
+                "rvdw": float, 
+                "scale": int, 
+                "steps": int, 
+                "stack": int, 
+                "restart": str, 
+                "timestep": float,
+            }
+        elif theoryKey == "GULP":
+            validKeys = {
+                "theory": str, 
+                "input": str, "output": str, # general keys -> TODO: these are files which are not supported by as AiiDA nodes if in a Dict object  
+                "molecule": bool, 
+                "conjugate": bool,
+            }
+        elif theoryKey == "NAMD":
+            validKeys = {
+                "theory": str, 
+                "input": str, "output": str, # general keys -> TODO: these are files which are not supported by as AiiDA nodes if in a Dict object  
+                "binary": bool, 
+                "coor": str, # TODO: file??? 
+                "margin": float, 
+                "par": str | list[str], # TODO: file??? 
+                "pdb": str, # TODO: file???
+                "prefix": str, # ?? how to handle this? 
+                "prefix_restart": str, # ?? how to handle this?
+                "psf": str, # TODO: file???
+                "psfgen_options": dict, 
+                "vel": str, # TODO: file???
+                "xsc": str, # TODO: file???
+                "xst": str, # TODO: file???
+                "cutoff": float, 
+                "exclude": str, 
+                "ff_dir": str, # TODO: file??? -> folder??? 
+                "freq_nonbonded": int, 
+                "freq_full_elect": int, 
+                "merge_cross": bool, 
+                "pairlist_dist": float,
+                "scaling14": float, 
+                "switching": bool, 
+                "switch_dist": float, 
+                "nsteps_per_cycle": int, 
+                "seed": int, 
+                "constraints": str, # TODO: file???
+                "constraints_ref": str, # TODO: file???
+                "fixed_atoms": str, # TODO: file???
+                "fixed_atoms_forces": bool, 
+                "constant_area": bool, 
+                "flexible_cell": bool, 
+                "group_pressure": bool, 
+                "pme": bool, 
+                "pme_grid_sizes": list | tuple, 
+                "wrap_all": bool, 
+                "wrap_water": bool, 
+            }
+        else:
+            validKeys = {"theory": str, "input": str, "output": str}
         return validKeys
     
     @classmethod
     def validate_MM_parameters(cls, value: Dict | None, _) -> str | None:
-        # if "MM_theory" not in value:
-        #     return "MM theory must be specified to be able to use an MM interface."
+        """
+        Validate the MM interface parameters to be passed to the ChemShell calculation.
+        
+        Parameters
+        ----------
+        value : Dict | None
+            A dictionary of parameters for the ChemShell calculation. If None, no validation is performed.
+
+        Returns 
+        -------
+        str | None
+            Returns None if the parameters are valid, otherwise returns an error message string.
+        """
+
+        if value.get("theory", "").upper() not in ChemShellMMTheory.__members__:
+            return "The specified MM theory '{0:s}' is not a valid ChemShell MM interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
+
+        validKeys = cls.get_valid_MM_parameter_keys(value.get("theory", ""))
+        invalidKeys = set(value.keys()).difference(set(validKeys.keys()))
+        if invalidKeys:
+            # Checks for invalid parameter keys 
+            return "The following parameter keys are invalid: {0:s}. Valid keys are: {1:s}".format(
+                ", ".join(invalidKeys), 
+                ", ".join(validKeys.keys())
+            ) 
+        
+        for key, val in value.items():
+            if not isinstance(val, validKeys[key]):
+                return "The parameter '{0:s}' must be of type {1:s}.".format(
+                    key, 
+                    validKeys[key].__name__
+                )
         return 
     
     @classmethod
@@ -348,7 +431,7 @@ class ChemShellCalculation(CalcJob):
         """
         theoryKey = ""
         if "qm_theory" in self.inputs:
-            if "MM_theory" in self.inputs:
+            if "MM_parameters" in self.inputs:
                 theoryKey = "_(QM/MM)"
             else:
                 theoryKey = "_(QM)"
@@ -372,7 +455,7 @@ class ChemShellCalculation(CalcJob):
 
         qmTheory = None
         mmTheory = None 
-        qmmmChk = ("qm_theory" in self.inputs and "MM_theory" in self.inputs)
+        qmmmChk = ("qm_theory" in self.inputs and "MM_parameters" in self.inputs)
 
         script = "from chemsh import Fragment\n"
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
@@ -402,22 +485,33 @@ class ChemShellCalculation(CalcJob):
                     script += "qmtheory = {0:s}(frag=structure".format(qmTheoryKey) + paramStr + ")\n"
                     
                 
-        if "MM_theory" in self.inputs:
+        if "MM_parameters" in self.inputs:
             # Creates a molecular mechanics Theory object 
-            mmTheory = ChemShellMMTheory[self.inputs.MM_theory.value.upper()]
+            mmTheory = ChemShellMMTheory[self.inputs.MM_parameters.get("theory").upper()]
             if mmTheory != ChemShellMMTheory.NONE:
                 mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
 
                 script += "from chemsh import {0:s}\n".format(mmTheoryKey)
+                paramStr = "" 
+                for key in self.inputs.MM_parameters.keys():
+                    if key == "theory":
+                        continue 
+                    val = self.inputs.MM_parameters.get(key)
+                    if isinstance(val, str):
+                        paramStr += ", " + key + "='" + val + "'"
+                    else:
+                        paramStr += ", " + key + "=" + str(val)
                 if qmmmChk:
-                    script += "mmtheory = {0:s}(ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
+                    script += "mmtheory = {0:s}(ff='{1:s}'{2:s})\n".format(#, input='{2:s}', output='{3:s}')\n".format(
                     mmTheoryKey,
                     self.inputs.forceFieldFile.filename,
+                    paramStr
                 )
                 else:
-                    script += "mmtheory = {0:s}(frag=structure, ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
+                    script += "mmtheory = {0:s}(frag=structure, ff='{1:s}'{2:s})\n".format(#, input='{2:s}', output='{3:s}')\n".format(
                     mmTheoryKey,
                     self.inputs.forceFieldFile.filename,
+                    paramStr
                 )
                     
         if qmmmChk:

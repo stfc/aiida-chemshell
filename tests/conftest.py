@@ -54,12 +54,13 @@ def generate_inputs(chemsh_code, get_test_data_file):
 
         if ff_fname:
             inputs["forceFieldFile"] = get_test_data_file(ff_fname)
-            inputs["MM_theory"] = "DL_POLY"
- 
+            if "MM_parameters" not in inputs:
+                inputs["MM_parameters"] = Dict({"theory": "DL_POLY"})
+
         if opt:
             inputs["optimisation_parameters"] = Dict(opt)
 
-        if "MM_theory" in inputs and "qm_theory" in inputs:
+        if "MM_parameters" in inputs and "qm_theory" in inputs:
             inputs["QMMM_parameters"] = Dict({"qm_region": range(3)})
 
         return inputs 

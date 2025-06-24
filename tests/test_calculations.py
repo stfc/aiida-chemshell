@@ -177,9 +177,6 @@ def test_OptCalculation_qmmm(chemsh_code, get_test_data_file):
 
     results, node = run.get_node(builder)
 
-    with open("tmp.txt", 'w') as f:
-        f.write(results.get("retrieved").get_object_content(ChemShellCalculation.FILE_STDOUT))
-
     assert node.is_finished_ok, \
         "CalcJob failed for `test_OptCalculation_qmmm`"
     

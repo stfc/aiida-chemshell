@@ -225,7 +225,7 @@ class ChemShellCalculation(CalcJob):
     def validate_qm_theory(cls, value: Str | None, _) -> str | None:
         # Check the specified theory interface 
         if value.value.upper() not in ChemShellQMTheory.__members__:
-            return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value)
+            return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.value)
         return 
     
     @classmethod 
@@ -244,7 +244,7 @@ class ChemShellCalculation(CalcJob):
             Returns None if the MM theory is valid, otherwise returns an error message string.
         """
         if value.value.upper() not in ChemShellMMTheory.__members__:
-            return "The specified MM theory '{0:s}' is not a valid ChemShell MM interface within the AiiDA-ChemShell workflow.".format(value)
+            return "The specified MM theory '{0:s}' is not a valid ChemShell MM interface within the AiiDA-ChemShell workflow.".format(value.value)
         return 
 
     @classmethod 
@@ -262,7 +262,8 @@ class ChemShellCalculation(CalcJob):
     
     @classmethod
     def validate_MM_parameters(cls, value: Dict | None, _) -> str | None:
-        # print(value.get_dict())
+        # if "MM_theory" not in value:
+        #     return "MM theory must be specified to be able to use an MM interface."
         return 
     
     @classmethod
@@ -349,7 +350,8 @@ class ChemShellCalculation(CalcJob):
         if "qm_theory" in self.inputs:
             if "MM_theory" in self.inputs:
                 theoryKey = "_(QM/MM)"
-            theoryKey = "_(QM)"
+            else:
+                theoryKey = "_(QM)"
         else:
             theoryKey = "_(MM)"
 
@@ -370,6 +372,7 @@ class ChemShellCalculation(CalcJob):
 
         qmTheory = None
         mmTheory = None 
+        qmmmChk = ("qm_theory" in self.inputs and "MM_theory" in self.inputs)
 
         script = "from chemsh import Fragment\n"
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
@@ -393,7 +396,10 @@ class ChemShellCalculation(CalcJob):
                             paramStr += ", " + key + "='" + val + "'"
                         else:
                             paramStr += ", " + key + "=" + str(val)
-                script += "qmtheory = {0:s}(frag=structure".format(qmTheoryKey) + paramStr + ")\n"
+                if qmmmChk:
+                    script += "qmtheory = {0:s}(".format(qmTheoryKey) + paramStr[1:] + ")\n"
+                else:
+                    script += "qmtheory = {0:s}(frag=structure".format(qmTheoryKey) + paramStr + ")\n"
                     
                 
         if "MM_theory" in self.inputs:
@@ -403,27 +409,30 @@ class ChemShellCalculation(CalcJob):
                 mmTheoryKey = ChemShellCalculation.getMMTheoryKey(mmTheory)
 
                 script += "from chemsh import {0:s}\n".format(mmTheoryKey)
-                script += "mmtheory = {0:s}(frag=structure, ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
+                if qmmmChk:
+                    script += "mmtheory = {0:s}(ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
                     mmTheoryKey,
                     self.inputs.forceFieldFile.filename,
                 )
+                else:
+                    script += "mmtheory = {0:s}(frag=structure, ff='{1:s}')\n".format(#, input='{2:s}', output='{3:s}')\n".format(
+                    mmTheoryKey,
+                    self.inputs.forceFieldFile.filename,
+                )
+                    
+        if qmmmChk:
+            tStr = "qmmm" 
+            script += "from chemsh import QMMM\n"
+            script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region={0:s})\n".format(str(self.inputs.QMMM_parameters.get("qm_region", [])))
+        elif mmTheory:
+            tStr = "mmtheory" 
+        else:
+            tStr = "qmtheory"
 
         ## Setup Task objects 
 
         if "optimisation_parameters" in self.inputs:
             # Run a geometry optimisation using DL_FIND
-            
-            if qmTheory and not mmTheory:
-                tStr = "qmtheory"
-            elif mmTheory and not qmTheory:
-                tStr = "mmtheory"
-            elif qmTheory and mmTheory:
-                #TODO: qm/mm theory setup 
-                tStr = "qmtheory" 
-            else:
-                #TODO: Catch exception here 
-                pass 
-
             script += "from chemsh import Opt\n" 
             optStr = "Opt(theory={0:s}".format(tStr)
             for key in self.inputs.optimisation_parameters.keys():
@@ -439,28 +448,13 @@ class ChemShellCalculation(CalcJob):
                 # Assign default values if none are given 
                 self.inputs.calculation_parameters = Dict(dict={})
             
-            if qmTheory and not mmTheory:
-                # Runs a QM single point energy calculation
-                script += "SP(theory=qmtheory, gradients={0:s}, hessian={1:s}).run()\n".format(
-                    str(self.inputs.calculation_parameters.get("gradients", False)),
-                    str(self.inputs.calculation_parameters.get("hessian", False))
-                )
-            elif mmTheory and not qmTheory:
-                # Runs a MM single point energy calculation 
-                script += "SP(theory=mmtheory, gradients={0:s}, hessian={1:s}).run()\n".format(
-                    str(self.inputs.calculation_parameters.get("gradients", False)),
-                    str(self.inputs.calculation_parameters.get("hessian", False))
-                )
-            elif qmTheory and mmTheory:
-                # If both a provided assume the user wants to run a QM/MM calculation and check for require parameters
-                if self.inputs.QMMM_parameters:
-                    # Runs a QM/MM single point energy calculation 
-                    script += "from chemsh import QMMM\n"
-                    script += "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region={0:s})\n".format(str(self.inputs.QMMM_parameters.get("qm_region")))
-                    script += "SP(theory=qmmm, gradients={0:s}, hessian={1:s}).run()\n".format(
-                        str(self.inputs.calculation_parameters.get("gradients", False)),
-                        str(self.inputs.calculation_parameters.get("hessian", False))
-                    )
+            # Runs a QM single point energy calculation
+            script += "SP(theory={2:s}, gradients={0:s}, hessian={1:s}).run()\n".format(
+                str(self.inputs.calculation_parameters.get("gradients", False)),
+                str(self.inputs.calculation_parameters.get("hessian", False)),
+                tStr
+            )
+            
         return script 
 
 

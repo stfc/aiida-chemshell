@@ -38,7 +38,30 @@ def test_default_MM_SP(generate_calcjob, generate_inputs):
     assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff')\n" in scriptText 
     assert "from chemsh import SP\n" in scriptText 
     assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 
-    
+
+
+def test_default_QMMM_SP(generate_calcjob, generate_inputs):
+
+    inputs = generate_inputs(qm={"method": "HF"}, structure_fname="h2o_dimer.cjson", ff_fname="h2o_dimer.ff")
+    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+
+    assert len(calcInfo.local_copy_list) == 2 
+
+    scritpFile = tmpPth / ChemShellCalculation.FILE_SCRIPT
+    assert scritpFile.exists()
+
+    scriptText = scritpFile.read_text()
+    assert "from chemsh import Fragment\n" in scriptText
+    assert "structure = Fragment(coords='h2o_dimer.cjson')\n" in scriptText
+    assert "from chemsh import NWChem\n" in scriptText
+    assert "qmtheory = NWChem( method='HF')\n" in scriptText
+    assert "from chemsh import DL_POLY\n" in scriptText
+    assert "mmtheory = DL_POLY(ff='h2o_dimer.ff')\n" in scriptText
+    assert "from chemsh import QMMM\n" in scriptText 
+    assert "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[0, 1, 2])\n" in scriptText
+    assert "from chemsh import SP\n" in scriptText 
+    assert "SP(theory=qmmm, gradients=False, hessian=False).run()\n" in scriptText 
+
 
 def test_default_QM_Opt(generate_calcjob, generate_inputs):
 

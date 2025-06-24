@@ -1,0 +1,1911 @@
+
+ >>> Executing command:
+ mpirun -n 1 /home/bspeake/Codes/ChemShell/chemsh-py-23.0.3/bin/intel/chemsh.x -dbg 0 chemshell_input.py
+
+
+
+ ================================================
+
+ Initialising Parallelism driven by Global Arrays (GA)
+
+ Heap   size:   150 MB (  19200 GB available)
+ Stack  size:   150 MB (  19200 GB available)
+ Global size:   300 MB ( 307200 GB available)
+
+ ================================================
+
+
+ ======================================================================
+ Py-ChemShell 2023 (version 23.0.3)
+ ----------------------------------------------------------------------
+ Tue Jun 24 14:41:49 2025
+ Compiler intel; Python 3.13.5; Numpy 1.26.4
+ Debug level 0
+ ----------------------------------------------------------------------
+ Please cite Py-ChemShell as:
+   Y. Lu, M.R. Farrow, P. Fayon, A.J. Logsdail, A.A. Sokol, C.R.A.
+   Catlow, P. Sherwood, and T.W. Keal, J. Chem. Theory Comput. 2019,
+   15, 1317-1328.
+ ----------------------------------------------------------------------
+ www.chemshell.org
+ ======================================================================
+
+
+ Indices of QM atoms:
+ 0 1 2
+
+ NB: Py-ChemShell atom indices count from 0 (cf. 1 in Tcl-ChemShell)
+
+
+***********************************************************************
+**                                                                   **
+**                       ---------------------                       **
+**                              DL-FIND                              **
+**                       Geometry Optimisation                       **
+**                       ---------------------                       **
+**                                                                   **
+**                 J. Kaestner, J.M. Carr, T.W. Keal,                **
+**                W. Thiel, A. Wander and P. Sherwood                **
+**                                                                   **
+**              J. Phys. Chem. A, 2009, 113 (43), 11856.             **
+**                                                                   **
+**   Please include this reference in published work using DL-FIND.  **
+**                                                                   **
+**               Copyright:  STFC Daresbury Laboratory               **
+**                                                                   **
+***********************************************************************
+
+
+DL-FIND Report:
+===============
+Optimisation algorithm: L-BFGS
+Number of steps in L-BFGS memory ...............         18
+ 
+Step length: simple scaled
+Maximum step length ............................  5.000E-01
+Scaling step by ................................  1.000E+00
+ 
+Coordinate system: Cartesian coordinates
+ 
+Number of atoms ................................          6
+Number of input geometries .....................          1
+Variables to be optimised ......................         18
+Restart information is written every ...........          5 steps
+This run has not been restarted.
+Maximum number of steps ........................        100
+Maximum number of energy evaluations ...........     100000
+ 
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 216.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.014 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5959616614733      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 253.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.094 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.595961661473 a.u.
+ MM energy          =            0.001579781605 a.u.
+ QM/MM total energy =          -75.594381879868 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 253.266 MB
+
+ Energy calculation finished, energy: -7.559438188E+01
+Testing convergence  in cycle    1
+  Max grad  2.9744E-02 Target: 4.5000E-04 converged?   no component    10
+  RMS grad  1.5511E-02 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 253.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5967672077040      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 254.141 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.087 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.596767207704 a.u.
+ MM energy          =            0.001253428163 a.u.
+ QM/MM total energy =          -75.595513779541 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 254.141 MB
+
+ Energy calculation finished, energy: -7.559551378E+01
+Testing convergence  in cycle    2
+    Energy  1.1319E-03 Target: 1.0000E-06 converged?   no
+  Max step  9.0394E-03 Target: 1.8000E-03 converged?   no component    10
+  RMS step  4.7140E-03 Target: 1.2000E-03 converged?   no
+  Max grad  2.1552E-02 Target: 4.5000E-04 converged?   no component    10
+  RMS grad  1.1216E-02 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 254.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5981153960577      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 254.891 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.072 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.598115396058 a.u.
+ MM energy          =            0.001204366736 a.u.
+ QM/MM total energy =          -75.596911029322 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 254.891 MB
+
+ Energy calculation finished, energy: -7.559691103E+01
+Testing convergence  in cycle    3
+    Energy  1.3972E-03 Target: 1.0000E-06 converged?   no
+  Max step  2.4951E-02 Target: 1.8000E-03 converged?   no component    10
+  RMS step  1.3195E-02 Target: 1.2000E-03 converged?   no
+  Max grad  5.2164E-03 Target: 4.5000E-04 converged?   no component     1
+  RMS grad  2.2877E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 255.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.017 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5982720600004      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 255.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.071 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.598272060000 a.u.
+ MM energy          =            0.001251482172 a.u.
+ QM/MM total energy =          -75.597020577828 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 255.641 MB
+
+ Energy calculation finished, energy: -7.559702058E+01
+Testing convergence  in cycle    4
+    Energy  1.0955E-04 Target: 1.0000E-06 converged?   no
+  Max step  7.2672E-03 Target: 1.8000E-03 converged?   no component     5
+  RMS step  3.2044E-03 Target: 1.2000E-03 converged?   no
+  Max grad  5.0857E-03 Target: 4.5000E-04 converged?   no component     1
+  RMS grad  2.0278E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 255.766 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.014 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5988069834285      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 256.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.068 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.598806983428 a.u.
+ MM energy          =            0.001494296764 a.u.
+ QM/MM total energy =          -75.597312686664 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 256.391 MB
+
+ Energy calculation finished, energy: -7.559731269E+01
+Testing convergence  in cycle    5
+    Energy  2.9211E-04 Target: 1.0000E-06 converged?   no
+  Max step  3.7887E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  1.4196E-02 Target: 1.2000E-03 converged?   no
+  Max grad  4.9351E-03 Target: 4.5000E-04 converged?   no component    10
+  RMS grad  2.1085E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 256.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.5991902581435      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 257.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.075 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.599190258143 a.u.
+ MM energy          =            0.001675891121 a.u.
+ QM/MM total energy =          -75.597514367022 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 257.266 MB
+
+ Energy calculation finished, energy: -7.559751437E+01
+Testing convergence  in cycle    6
+    Energy  2.0168E-04 Target: 1.0000E-06 converged?   no
+  Max step  5.0475E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  1.4925E-02 Target: 1.2000E-03 converged?   no
+  Max grad  7.7700E-03 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  3.3587E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 257.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6000177174695      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 258.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.073 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.600017717469 a.u.
+ MM energy          =            0.002199961676 a.u.
+ QM/MM total energy =          -75.597817755793 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 258.016 MB
+
+ Energy calculation finished, energy: -7.559781776E+01
+Testing convergence  in cycle    7
+    Energy  3.0339E-04 Target: 1.0000E-06 converged?   no
+  Max step  6.4694E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  1.8823E-02 Target: 1.2000E-03 converged?   no
+  Max grad  8.2470E-03 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  3.3837E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 258.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.014 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6025724819937      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 258.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.075 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.602572481994 a.u.
+ MM energy          =            0.007180682754 a.u.
+ QM/MM total energy =          -75.595391799240 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 258.391 MB
+
+ Energy calculation finished, energy: -7.559539180E+01
+Testing convergence  in cycle    8
+    Energy  2.4260E-03 Target: 1.0000E-06 converged?   no
+  Max step  2.1725E-01 Target: 1.8000E-03 converged?   no component     1
+  RMS step  7.0246E-02 Target: 1.2000E-03 converged?   no
+  Max grad  5.5927E-02 Target: 4.5000E-04 converged?   no component    12
+  RMS grad  1.8569E-02 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 258.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6017971706676      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 259.141 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.074 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.601797170668 a.u.
+ MM energy          =            0.003461353539 a.u.
+ QM/MM total energy =          -75.598335817129 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 259.141 MB
+
+ Energy calculation finished, energy: -7.559833582E+01
+Testing convergence  in cycle    9
+    Energy  2.9440E-03 Target: 1.0000E-06 converged?   no
+  Max step  1.0715E-01 Target: 1.8000E-03 converged?   no component     1
+  RMS step  3.8263E-02 Target: 1.2000E-03 converged?   no
+  Max grad  2.8696E-03 Target: 4.5000E-04 converged?   no component    15
+  RMS grad  1.1282E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 259.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.014 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6021123965094      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 259.891 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.064 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.602112396509 a.u.
+ MM energy          =            0.003730216206 a.u.
+ QM/MM total energy =          -75.598382180303 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 259.891 MB
+
+ Energy calculation finished, energy: -7.559838218E+01
+Testing convergence  in cycle   10
+    Energy  4.6363E-05 Target: 1.0000E-06 converged?   no
+  Max step  1.8296E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  6.4160E-03 Target: 1.2000E-03 converged?   no
+  Max grad  2.7554E-03 Target: 4.5000E-04 converged?   no component    15
+  RMS grad  9.2599E-04 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 259.891 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6026370803273      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 260.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.085 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.602637080327 a.u.
+ MM energy          =            0.004175617962 a.u.
+ QM/MM total energy =          -75.598461462365 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 260.516 MB
+
+ Energy calculation finished, energy: -7.559846146E+01
+Testing convergence  in cycle   11
+    Energy  7.9282E-05 Target: 1.0000E-06 converged?   no
+  Max step  2.6242E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  1.1379E-02 Target: 1.2000E-03 converged?   no
+  Max grad  2.1674E-03 Target: 4.5000E-04 converged?   no component    15
+  RMS grad  1.0543E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 260.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6035463227453      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 261.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.068 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.603546322745 a.u.
+ MM energy          =            0.004896836442 a.u.
+ QM/MM total energy =          -75.598649486303 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 261.266 MB
+
+ Energy calculation finished, energy: -7.559864949E+01
+Testing convergence  in cycle   12
+    Energy  1.8802E-04 Target: 1.0000E-06 converged?   no
+  Max step  6.1607E-02 Target: 1.8000E-03 converged?   no component    15
+  RMS step  2.5123E-02 Target: 1.2000E-03 converged?   no
+  Max grad  3.7578E-03 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  1.9062E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 261.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6049960252454      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 261.891 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.069 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604996025245 a.u.
+ MM energy          =            0.006144637155 a.u.
+ QM/MM total energy =          -75.598851388090 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 261.891 MB
+
+ Energy calculation finished, energy: -7.559885139E+01
+Testing convergence  in cycle   13
+    Energy  2.0190E-04 Target: 1.0000E-06 converged?   no
+  Max step  9.6094E-02 Target: 1.8000E-03 converged?   no component    16
+  RMS step  3.9234E-02 Target: 1.2000E-03 converged?   no
+  Max grad  3.8055E-03 Target: 4.5000E-04 converged?   no component    13
+  RMS grad  1.6629E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 262.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046986050187      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 262.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.068 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604698605019 a.u.
+ MM energy          =            0.005682928566 a.u.
+ QM/MM total energy =          -75.599015676453 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 262.516 MB
+
+ Energy calculation finished, energy: -7.559901568E+01
+Testing convergence  in cycle   14
+    Energy  1.6429E-04 Target: 1.0000E-06 converged?   no
+  Max step  8.0105E-02 Target: 1.8000E-03 converged?   no component    16
+  RMS step  3.0424E-02 Target: 1.2000E-03 converged?   no
+  Max grad  6.8580E-03 Target: 4.5000E-04 converged?   no component     3
+  RMS grad  3.2959E-03 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 262.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6044752491919      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 263.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.065 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604475249192 a.u.
+ MM energy          =            0.005305998834 a.u.
+ QM/MM total energy =          -75.599169250358 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 263.266 MB
+
+ Energy calculation finished, energy: -7.559916925E+01
+Testing convergence  in cycle   15
+    Energy  1.5357E-04 Target: 1.0000E-06 converged?   no
+  Max step  1.6856E-02 Target: 1.8000E-03 converged?   no component    13
+  RMS step  8.0155E-03 Target: 1.2000E-03 converged?   no
+  Max grad  2.0834E-03 Target: 4.5000E-04 converged?   no component    10
+  RMS grad  8.2989E-04 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 263.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046143202835      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 264.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.065 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604614320283 a.u.
+ MM energy          =            0.005429005294 a.u.
+ QM/MM total energy =          -75.599185314989 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 264.016 MB
+
+ Energy calculation finished, energy: -7.559918531E+01
+Testing convergence  in cycle   16
+    Energy  1.6065E-05 Target: 1.0000E-06 converged?   no
+  Max step  2.4089E-02 Target: 1.8000E-03 converged?   no component    16
+  RMS step  8.4359E-03 Target: 1.2000E-03 converged?   no
+  Max grad  6.9053E-04 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  3.1453E-04 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 264.141 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6045913988568      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 264.766 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.067 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604591398857 a.u.
+ MM energy          =            0.005402964406 a.u.
+ QM/MM total energy =          -75.599188434451 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 264.766 MB
+
+ Energy calculation finished, energy: -7.559918843E+01
+Testing convergence  in cycle   17
+    Energy  3.1195E-06 Target: 1.0000E-06 converged?   no
+  Max step  2.3097E-03 Target: 1.8000E-03 converged?   no component    10
+  RMS step  1.1968E-03 Target: 1.2000E-03 converged?  yes
+  Max grad  4.8639E-04 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  2.3929E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 264.766 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.014 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046292943095      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 265.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.072 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604629294309 a.u.
+ MM energy          =            0.005437400642 a.u.
+ QM/MM total energy =          -75.599191893667 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 265.391 MB
+
+ Energy calculation finished, energy: -7.559919189E+01
+Testing convergence  in cycle   18
+    Energy  3.4592E-06 Target: 1.0000E-06 converged?   no
+  Max step  4.9175E-03 Target: 1.8000E-03 converged?   no component    16
+  RMS step  1.9190E-03 Target: 1.2000E-03 converged?   no
+  Max grad  4.0869E-04 Target: 4.5000E-04 converged?  yes component     3
+  RMS grad  1.6193E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 265.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046534014012      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 266.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.077 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604653401401 a.u.
+ MM energy          =            0.005459052959 a.u.
+ QM/MM total energy =          -75.599194348442 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 266.016 MB
+
+ Energy calculation finished, energy: -7.559919435E+01
+Testing convergence  in cycle   19
+    Energy  2.4548E-06 Target: 1.0000E-06 converged?   no
+  Max step  3.6474E-03 Target: 1.8000E-03 converged?   no component     1
+  RMS step  1.6655E-03 Target: 1.2000E-03 converged?   no
+  Max grad  4.2638E-04 Target: 4.5000E-04 converged?  yes component    13
+  RMS grad  1.8805E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 266.141 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.015 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046902433002      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 266.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.075 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604690243300 a.u.
+ MM energy          =            0.005489004467 a.u.
+ QM/MM total energy =          -75.599201238833 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 266.641 MB
+
+ Energy calculation finished, energy: -7.559920124E+01
+Testing convergence  in cycle   20
+    Energy  6.8904E-06 Target: 1.0000E-06 converged?   no
+  Max step  1.0936E-02 Target: 1.8000E-03 converged?   no component     1
+  RMS step  5.5181E-03 Target: 1.2000E-03 converged?   no
+  Max grad  6.0613E-04 Target: 4.5000E-04 converged?   no component     5
+  RMS grad  2.9936E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 266.766 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046577845957      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 267.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.071 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604657784596 a.u.
+ MM energy          =            0.005445664914 a.u.
+ QM/MM total energy =          -75.599212119682 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 267.516 MB
+
+ Energy calculation finished, energy: -7.559921212E+01
+Testing convergence  in cycle   21
+    Energy  1.0881E-05 Target: 1.0000E-06 converged?   no
+  Max step  2.0628E-02 Target: 1.8000E-03 converged?   no component    13
+  RMS step  9.9528E-03 Target: 1.2000E-03 converged?   no
+  Max grad  7.2621E-04 Target: 4.5000E-04 converged?   no component    10
+  RMS grad  3.6327E-04 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 267.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6046041977551      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 268.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.069 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604604197755 a.u.
+ MM energy          =            0.005386525045 a.u.
+ QM/MM total energy =          -75.599217672710 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 268.266 MB
+
+ Energy calculation finished, energy: -7.559921767E+01
+Testing convergence  in cycle   22
+    Energy  5.5530E-06 Target: 1.0000E-06 converged?   no
+  Max step  3.3562E-02 Target: 1.8000E-03 converged?   no component    13
+  RMS step  1.4718E-02 Target: 1.2000E-03 converged?   no
+  Max grad  1.5945E-03 Target: 4.5000E-04 converged?   no component    18
+  RMS grad  5.4142E-04 Target: 3.0000E-04 converged?   no
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 268.391 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6044935577746      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 268.891 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.072 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604493557775 a.u.
+ MM energy          =            0.005270044650 a.u.
+ QM/MM total energy =          -75.599223513125 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 268.891 MB
+
+ Energy calculation finished, energy: -7.559922351E+01
+Testing convergence  in cycle   23
+    Energy  5.8404E-06 Target: 1.0000E-06 converged?   no
+  Max step  7.6526E-03 Target: 1.8000E-03 converged?   no component    18
+  RMS step  4.2213E-03 Target: 1.2000E-03 converged?   no
+  Max grad  2.6753E-04 Target: 4.5000E-04 converged?  yes component    10
+  RMS grad  1.3059E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 269.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6044087194305      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 269.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.071 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604408719430 a.u.
+ MM energy          =            0.005184144518 a.u.
+ QM/MM total energy =          -75.599224574912 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 269.641 MB
+
+ Energy calculation finished, energy: -7.559922457E+01
+Testing convergence  in cycle   24
+    Energy  1.0618E-06 Target: 1.0000E-06 converged?   no
+  Max step  1.1911E-02 Target: 1.8000E-03 converged?   no component    16
+  RMS step  4.3017E-03 Target: 1.2000E-03 converged?   no
+  Max grad  3.4383E-04 Target: 4.5000E-04 converged?  yes component     3
+  RMS grad  1.4114E-04 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 269.641 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.012 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6044182682739      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 270.266 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.069 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604418268274 a.u.
+ MM energy          =            0.005193419936 a.u.
+ QM/MM total energy =          -75.599224848338 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 270.266 MB
+
+ Energy calculation finished, energy: -7.559922485E+01
+Testing convergence  in cycle   25
+    Energy  2.7343E-07 Target: 1.0000E-06 converged?  yes
+  Max step  2.1620E-03 Target: 1.8000E-03 converged?   no component    15
+  RMS step  1.0771E-03 Target: 1.2000E-03 converged?  yes
+  Max grad  6.5872E-05 Target: 4.5000E-04 converged?  yes component     3
+  RMS grad  3.2970E-05 Target: 3.0000E-04 converged?  yes
+ >>> "_dl_find.pun" saved.
+
+ ======================================================================
+ ChemShell QM/MM Driver
+ ======================================================================
+ QM/MM scheme      : additive
+ Embedding method  : electrostatic
+ Coupling method   : covalent
+ QM theory         : NWChem
+ MM theory         : GULP
+ Number of atoms   : 6
+ Number of QM atoms: 3 (incl. 0 link atom)
+ Number of MM atoms: 6
+ QM charge         : 0
+ ----------------------------------------------------------------------
+
+ +----------------------------+
+ |  ChemShell/GULP Interface  |
+ +----------------------------+
+
+
+ >>> GULP run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 270.516 MB
+ >>> Elapsed time of procedure chemsh.interfaces.mm.run: 0.013 sec
+
+ +------------------------------+
+ |  ChemShell/NWChem Interface  |
+ +------------------------------+
+
+
+ >>> running NWChem as a compiled library...
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ Name: default                                                                 
+ Number of centers:                      3
+ Total Bq charge:   0.000000000000000E+000
+ 
+ 
+ 
+ ChemShell/NWChem: HF Energy =  -75.6044204533142      a.u.
+ 
+ Summary of allocated global arrays
+-----------------------------------
+  No active global arrays
+
+
+
+ >>> NWChem run successfully.
+ >>> Peak memory used by procedure chemsh.base.run.run: 271.016 MB
+ >>> Elapsed time of procedure chemsh.interfaces.qm.run: 0.060 sec
+
+ ----------------------------------------------------------------------
+ QM energy          =          -75.604420453314 a.u.
+ MM energy          =            0.005195579578 a.u.
+ QM/MM total energy =          -75.599224873736 a.u.
+ ----------------------------------------------------------------------
+
+ >>> Peak memory used by procedure chemsh.interfaces.qmmm.run: 271.016 MB
+
+ Energy calculation finished, energy: -7.559922487E+01
+Testing convergence  in cycle   26
+    Energy  2.5399E-08 Target: 1.0000E-06 converged?  yes
+  Max step  5.3311E-04 Target: 1.8000E-03 converged?  yes component     3
+  RMS step  2.8294E-04 Target: 1.2000E-03 converged?  yes
+  Max grad  3.0535E-05 Target: 4.5000E-04 converged?  yes component     3
+  RMS grad  1.1274E-05 Target: 3.0000E-04 converged?  yes
+Convergence reached
+
+ Optimisation converged
+ ----------------------
+ Final converged energy:     -75.599224873736
+
+
+DL-FIND Report:
+===============
+Optimisation algorithm: L-BFGS
+Number of steps in L-BFGS memory ...............         18
+ 
+Step length: simple scaled
+Maximum step length ............................  5.000E-01
+Scaling step by ................................  1.000E+00
+ 
+Coordinate system: Cartesian coordinates
+ 
+Number of atoms ................................          6
+Number of input geometries .....................          1
+Variables to be optimised ......................         18
+Restart information is written every ...........          5 steps
+This run has not been restarted.
+Number of energy evaluations on this processor .         26
+Number of steps ................................         26
+Number of accepted steps / line searches .......         26
+ 
+
+Timing report
+=============
+Module                                      CPU time            Wall clock time
+Total .................................     4.737 (100.00%)     4.612 (100.00%) seconds
+Energy and Gradient ...................     4.731 ( 99.87%)     4.603 ( 99.80%) seconds
+Step direction ........................     0.000 (  0.01%)     0.000 (  0.00%) seconds
+Coordinate transformation .............     0.000 (  0.00%)     0.000 (  0.01%) seconds
+Checkpoint file I/O ...................     0.001 (  0.02%)     0.001 (  0.03%) seconds
+XYZ-file I/O ..........................     0.000 (  0.00%)     0.000 (  0.00%) seconds
+Maximum memory usage ........................... 6.9492E+00 kB
+ >>> "_dl_find.pun" saved.
+ >>> Elapsed time of procedure chemsh.dl_find.run: 5.160 sec
+
+
+ ChemShell exiting normally.
+

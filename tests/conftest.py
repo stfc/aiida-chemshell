@@ -45,10 +45,12 @@ def generate_inputs(chemsh_code, get_test_data_file):
         if qm:
             inputs["QM_parameters"] = Dict(qm)
             inputs["qm_theory"] = "NWChem"
+            # inputs["qm_theory"] = "PySCF"
         if mm:
             inputs["MM_parameters"] = Dict(mm)
         if not qm and not mm and not ff_fname:
             inputs["qm_theory"] = "NWChem"
+            # inputs["qm_theory"] = "PySCF"
 
         if ff_fname:
             inputs["forceFieldFile"] = get_test_data_file(ff_fname)
@@ -56,6 +58,9 @@ def generate_inputs(chemsh_code, get_test_data_file):
  
         if opt:
             inputs["optimisation_parameters"] = Dict(opt)
+
+        if "MM_theory" in inputs and "qm_theory" in inputs:
+            inputs["QMMM_parameters"] = Dict({"qm_region": range(3)})
 
         return inputs 
     

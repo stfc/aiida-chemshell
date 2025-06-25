@@ -32,7 +32,6 @@ class ChemShellCalculation(CalcJob):
         spec.input("optimisation_parameters", valid_type=Dict, validator=cls.validate_optimisation_parameters, required=False, help="A dictionary of parameters for the ChemShell geometry optimisation task. If this input is provided, a geometry optimisation task will be configured and added to this job.")
 
         ## Theory objects parameters 
-        spec.input("qm_theory", valid_type=Str, validator=cls.validate_qm_theory, required=False, help="Set the QM theory interface for the chemshell calculation.")
         spec.input("QM_parameters", valid_type=Dict, validator=cls.validate_QM_parameters, required=False, help="A dictionary of parameters for to be passed to the Theory object for the ChemShell calculation.")
         spec.input("MM_parameters", valid_type=Dict, validator=cls.validate_MM_parameters, required=False, help="A dictionary of parameters for the ChemShell MM interface.")
         # The force field input is specified as a file (not a string) and is not directly contained within the MM_parameters dictionary due to serialisation of SingfileData object types 
@@ -167,18 +166,33 @@ class ChemShellCalculation(CalcJob):
         return
 
     @classmethod 
-    def get_valid_QM_parameter_keys(cls) -> tuple[str]:
+    def get_valid_QM_parameter_keys(cls) -> dict[str: type]:
         """
         Return a tuple of valid parameter keys for the ChemShell calculation.
 
         Returns
         -------
-        validKeys : tuple[str]
+        validKeys : dict[str: type]
             A tuple of valid Theory parameter keys for the ChemShell calculation.
         """
-        validKeys = ("method", "basis", "charge", "functional", "mult", "scftype",
-                     "damping", "diis", "direct", "guess", "maxiter", "path", "pseudopotential",
-                     "restart", "scf")
+        validKeys = {
+            "theory": str,
+            "method": str, 
+            "basis": str, 
+            "charge": float | int, 
+            "functional": str, 
+            "mult": int | float, 
+            "scftype": str,
+            "damping": bool, 
+            "diis": bool, 
+            "direct": bool, 
+            "guess": str, # TODO: file??? 
+            "maxiter": int, 
+            "path": str, 
+            "pseudopotential": str | dict,
+            "restart": bool, 
+            "scf": float
+        }
         return validKeys
 
     @classmethod
@@ -196,38 +210,39 @@ class ChemShellCalculation(CalcJob):
         str | None
             Returns None if the parameters are valid, otherwise returns an error message string.
         """
-        
-        invalidKeys = set(value.keys()).difference(set(cls.get_valid_QM_parameter_keys()))
+
+        # Check the specified theory interface 
+        if value.get("theory", "").upper() not in ChemShellQMTheory.__members__:
+            return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.get("theory"))
+
+        validKeys = cls.get_valid_QM_parameter_keys() 
+
+        # Check for valid parameter keys
+        invalidKeys = set(value.keys()).difference(set(validKeys.keys()))
         if invalidKeys:
-            # Checks for invalid parameter keys 
             return "The following parameter keys are invalid: {0:s}. Valid keys are: {1:s}".format(
                 ", ".join(invalidKeys), 
-                ", ".join(cls.get_valid_QM_parameter_keys())
+                ", ".join(validKeys.keys())
             )     
+        
+        # Check for valid parameter types 
+        for key, val in value.items():
+            if not isinstance(val, validKeys[key]):
+                return "The parameter '{0:s}' must be of type {1:s}.".format(
+                    key, 
+                    validKeys[key].__name__
+                )
 
+        # Check for valid parameter values if value options are restricted
         if "method" in value.keys():
             if value.get("method").upper() not in ["HF", "DFT"]:
                 return "The specified method key ('{0:s}') us not valid.".format(value.get("method"))
-        if "charge" in value.keys():
-            if not isinstance(value.get("charge"), int):
-                return "The 'charge' parameter must be an integer."
-        if "mult" in value.keys():
-            if not isinstance(value.get("mult"), int):
-                return "The 'mult' parameter must be an integer."
         if "scftype" in value.keys():
             if value.get("scftype").upper() not in ["RHF", "UHF", "ROHF", "RKS", "UKS", "ROKS"]:
                 return "The 'scftype' parameter must be one of 'RHF', 'UHF' or 'ROHF' (or analogous 'rks', 'uks' or 'roks')."
             
-
-        # TODO: check SCF parameters 
         return 
     
-    @classmethod 
-    def validate_qm_theory(cls, value: Str | None, _) -> str | None:
-        # Check the specified theory interface 
-        if value.value.upper() not in ChemShellQMTheory.__members__:
-            return "The specified theory '{0:s}' is not a valid ChemShell theory interface within the AiiDA-ChemShell workflow.".format(value.value)
-        return
 
     @classmethod 
     def get_valid_MM_parameter_keys(cls, theory: str = "") -> dict[str: type]:
@@ -236,7 +251,7 @@ class ChemShellCalculation(CalcJob):
 
         Returns
         -------
-        validKeys : tuple[str]
+        validKeys : dict[str: type]
             A tuple of valid MM parameter keys for the ChemShell calculation.
         """
         theoryKey = theory.upper() 
@@ -341,6 +356,7 @@ class ChemShellCalculation(CalcJob):
                 ", ".join(validKeys.keys())
             ) 
         
+        # Check for valid parameter types 
         for key, val in value.items():
             if not isinstance(val, validKeys[key]):
                 return "The parameter '{0:s}' must be of type {1:s}.".format(
@@ -430,7 +446,7 @@ class ChemShellCalculation(CalcJob):
             The process label based on what inputs have been provided. 
         """
         theoryKey = ""
-        if "qm_theory" in self.inputs:
+        if "QM_parameters" in self.inputs:
             if "MM_parameters" in self.inputs:
                 theoryKey = "_(QM/MM)"
             else:
@@ -455,17 +471,16 @@ class ChemShellCalculation(CalcJob):
 
         qmTheory = None
         mmTheory = None 
-        qmmmChk = ("qm_theory" in self.inputs and "MM_parameters" in self.inputs)
+        qmmmChk = ("QM_parameters" in self.inputs and "MM_parameters" in self.inputs)
 
         script = "from chemsh import Fragment\n"
         script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
 
         ## Setup Theory objects 
 
-        # if "QM_parameters" in self.inputs:
-        if self.inputs.get("qm_theory", Str("NONE")).value.upper() != "NONE":
+        if "QM_parameters" in self.inputs:
             # Creates a quantum mechanics Theory object 
-            qmTheory = ChemShellQMTheory[self.inputs.qm_theory.value.upper()]
+            qmTheory = ChemShellQMTheory[self.inputs.QM_parameters.get("theory").upper()]
             
             if qmTheory != ChemShellQMTheory.NONE:
                 qmTheoryKey = ChemShellCalculation.getQMTheoryKey(qmTheory)
@@ -474,6 +489,7 @@ class ChemShellCalculation(CalcJob):
                 paramStr = "" 
                 if "QM_parameters" in self.inputs:
                     for key in self.inputs.QM_parameters.keys():
+                        if key == "theory": continue 
                         val = self.inputs.QM_parameters.get(key)
                         if isinstance(val, str):
                             paramStr += ", " + key + "='" + val + "'"
@@ -513,7 +529,8 @@ class ChemShellCalculation(CalcJob):
                     self.inputs.forceFieldFile.filename,
                     paramStr
                 )
-                    
+
+        # If both QM and MM are specified, create a QM/MM interface object        
         if qmmmChk:
             tStr = "qmmm" 
             script += "from chemsh import QMMM\n"

@@ -10,8 +10,7 @@ def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
-    builder.QM_parameters =  Dict({"method": "HF"})
-    builder.qm_theory = "NWChem"
+    builder.QM_parameters =  Dict({"theory": "NWChem", "method": "HF"})
     builder.calculation_parameters = Dict({"gradients": True, "hessian": False})
      
     results, node = run.get_node(builder)
@@ -37,8 +36,7 @@ def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
-    builder.QM_parameters = Dict({"method": "DFT", "functional": "BLYP", "charge": 0, "scftype": "uks"})
-    builder.qm_theory = "NWChem"
+    builder.QM_parameters = Dict({"theory": "NWChem", "method": "DFT", "functional": "BLYP", "charge": 0, "scftype": "uks"})
     
     results, node = run.get_node(builder)
 
@@ -85,8 +83,7 @@ def test_SPCalculation_qmmm(chemsh_code, get_test_data_file):
     code = chemsh_code 
     builder = code.get_builder() 
     builder.structure = get_test_data_file("h2o_dimer.cjson")
-    builder.QM_parameters = Dict({"method": "HF"})
-    builder.qm_theory = "NWChem"
+    builder.QM_parameters = Dict({"theory": "NWChem", "method": "HF"})
     builder.forceFieldFile = get_test_data_file("h2o_dimer.ff")
     builder.QMMM_parameters = Dict({"qm_region": [0, 1, 2]})
     builder.MM_parameters = Dict({"theory": "DL_POLY"})
@@ -112,8 +109,7 @@ def test_OptCalculation_NWChem(chemsh_code, get_test_data_file):
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file("water.cjson")
-    builder.qm_theory = "NWChem"
-    builder.QM_parameters = Dict({"method": "DFT", "basis": "3-21G"})
+    builder.QM_parameters = Dict({"theory": "NWChem", "method": "DFT", "basis": "3-21G"})
     builder.optimisation_parameters = Dict({})
 
     results, node = run.get_node(builder)
@@ -164,8 +160,7 @@ def test_OptCalculation_qmmm(chemsh_code, get_test_data_file):
     code = chemsh_code 
     builder = code.get_builder() 
     builder.structure = get_test_data_file("h2o_dimer.cjson")
-    builder.QM_parameters = Dict({"method": "HF"})
-    builder.qm_theory = "NWChem"
+    builder.QM_parameters = Dict({"theory": "NWChem", "method": "HF"})
     builder.forceFieldFile = get_test_data_file("h2o_dimer_gulp.ff")
     # There seems to be a bug when running this with DL_POLY???
     builder.MM_parameters = Dict({"theory": "GULP"})

@@ -8,6 +8,7 @@ from aiida.common.folders import Folder
 from aiida.orm import Dict, SinglefileData 
 
 import pathlib 
+import os 
 
 @pytest.fixture 
 def get_data_filepath() -> pathlib.Path:
@@ -44,13 +45,14 @@ def generate_inputs(chemsh_code, get_test_data_file):
             inputs["calculation_parameters"] = Dict(sp)
         if qm:
             inputs["QM_parameters"] = Dict(qm)
-            inputs["qm_theory"] = "NWChem"
-            # inputs["qm_theory"] = "PySCF"
+            if "theory" not in qm:
+                inputs["QM_parameters"]["theory"] = "NWChem"
         if mm:
             inputs["MM_parameters"] = Dict(mm)
+            if "theory" not in mm:
+                inputs["MM_parameters"]["theory"] = "DL_POLY"
         if not qm and not mm and not ff_fname:
-            inputs["qm_theory"] = "NWChem"
-            # inputs["qm_theory"] = "PySCF"
+            inputs["QM_parameters"] = Dict({"theory": "NWChem"})
 
         if ff_fname:
             inputs["forceFieldFile"] = get_test_data_file(ff_fname)
@@ -60,7 +62,7 @@ def generate_inputs(chemsh_code, get_test_data_file):
         if opt:
             inputs["optimisation_parameters"] = Dict(opt)
 
-        if "MM_parameters" in inputs and "qm_theory" in inputs:
+        if "MM_parameters" in inputs and "QM_parameters" in inputs:
             inputs["QMMM_parameters"] = Dict({"qm_region": range(3)})
 
         return inputs 

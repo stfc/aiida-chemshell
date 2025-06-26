@@ -5,7 +5,7 @@ from aiida.engine import CalcJob
 from aiida.engine.utils import instantiate_process 
 from aiida.manage.manager import get_manager 
 from aiida.common.folders import Folder 
-from aiida.orm import Dict, SinglefileData 
+from aiida.orm import Dict, SinglefileData, StructureData
 
 import pathlib 
 import os 
@@ -27,16 +27,31 @@ def get_test_data_file(get_data_filepath):
 @pytest.fixture 
 def chemsh_code(aiida_code_installed):
     return aiida_code_installed(
-            filepath_executable="chemsh",
+            filepath_executable="chemsh.x",
             default_calc_job_plugin="chemshell"
         )
+
+@pytest.fixture 
+def water_structure_object() -> StructureData:
+    structure = StructureData()
+    structureStr = """3
+    
+    O   0.000 0.000 0.000
+    H  -0.754606402 0.590032355 0.0
+    H   0.754606402 0.590032355 0.0
+    """
+    structure._parse_xyz(structureStr)
+    return structure 
 
 @pytest.fixture 
 def generate_inputs(chemsh_code, get_test_data_file):
     """ Returns a dictionary of inputs for the ChemShellCalculation. """
     
-    def factory(sp: dict | None = None, qm: dict | None = None, mm: dict | None = None, structure_fname: str = 'water.cjson', ff_fname: str | None = None, opt: dict | None = None):
-        structure = get_test_data_file(structure_fname)
+    def factory(sp: dict | None = None, qm: dict | None = None, mm: dict | None = None, structure_fname: str | StructureData = 'water.cjson', ff_fname: str | None = None, opt: dict | None = None):
+        if isinstance(structure_fname, str):
+            structure = get_test_data_file(structure_fname)
+        else:
+            structure = structure_fname
         inputs = {
             "code": chemsh_code,
             "structure": structure 

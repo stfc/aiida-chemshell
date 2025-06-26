@@ -99,3 +99,28 @@ def test_expanded_MM_parameters(generate_calcjob, generate_inputs):
     assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff', timestep=0.0001, rcut=10.0)\n" in scriptText 
     assert "from chemsh import SP\n" in scriptText 
     assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 
+
+
+
+def test_structure_as_StructureData_object(generate_calcjob, generate_inputs, water_structure_object):
+    
+
+    inputs = generate_inputs(structure_fname=water_structure_object)
+
+    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+
+    structureFile = tmpPth / ChemShellCalculation.FILE_TMP_STRUCTURE
+    assert structureFile.exists()
+    chkStr = """3
+Lattice="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" pbc="False False False"
+O            0.0000000000       0.0000000000       0.0000000000
+H           -0.7546064020       0.5900323550       0.0000000000
+H            0.7546064020       0.5900323550       0.0000000000"""
+    assert structureFile.read_text() == chkStr
+
+    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
+    assert scriptFile.exists()
+
+    scriptText = scriptFile.read_text() 
+    assert "from chemsh import Fragment\n" in scriptText  
+    assert "structure = Fragment(coords='{0:s}')\n".format(ChemShellCalculation.FILE_TMP_STRUCTURE) in scriptText

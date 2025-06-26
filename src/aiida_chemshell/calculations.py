@@ -1,7 +1,7 @@
 from aiida.engine import CalcJob, CalcJobProcessSpec
 from aiida.common.folders import Folder 
 from aiida.common import CalcInfo, CodeInfo
-from aiida.orm import SinglefileData, Dict, Float, Str
+from aiida.orm import SinglefileData, Dict, Float, Str, StructureData
 
 from aiida_chemshell.utils import ChemShellQMTheory, ChemShellMMTheory
 
@@ -18,6 +18,7 @@ class ChemShellCalculation(CalcJob):
     FILE_SCRIPT = "chemshell_input.py"
     FILE_STDOUT = "output.log"
     FILE_DLFIND = "_dl_find.pun"
+    FILE_TMP_STRUCTURE = "input_structure.xyz"
 
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
@@ -25,7 +26,7 @@ class ChemShellCalculation(CalcJob):
         Define the inputs, outputs and metadata of the ChemShell calculation.
         """
         super(ChemShellCalculation, cls).define(spec)
-        spec.input('structure', valid_type=SinglefileData, validator=cls.validate_structure_file, required=True, help="The input structure for the ChemShell calculation contained within an '.xyz', '.pun' or '.cjson' file.")
+        spec.input('structure', valid_type=(SinglefileData, StructureData), validator=cls.validate_structure_file, required=True, help="The input structure for the ChemShell calculation either contained within an '.xyz', '.pun' or '.cjson' file or as a StructureData instance.")
         
         ## Task object parameters 
         spec.input("calculation_parameters", valid_type=Dict, validator=cls.validate_calculation_parameters, required=False, help="A dictionary of parameters for the ChemShell Task object.")
@@ -55,25 +56,25 @@ class ChemShellCalculation(CalcJob):
         return 
     
     @classmethod 
-    def validate_structure_file(cls, value: SinglefileData | None, _) -> str | None:
+    def validate_structure_file(cls, value: SinglefileData | StructureData | None, _) -> str | None:
         """
         Validate the ChemShell input structure file 
 
         Parameters
         ----------
+        value : SinglefileData | StructureData | None
+            The input structure to validate. This can be either a file containing the structure or an AiiDA StructureData object. If None, no validation is performed.
 
         Returns
         -------
         str | None
             Returns `None` if no error is found otherwise returns an error message 
         """
- 
-        if not value._validate():
-            return "Structure file doesn't exist."
         
-        if value.filename[-4:] not in [".xyz", ".pun"]:
-            if value.filename[-6:] != ".cjson":
-                return "Structure file must be either an '.xyz', '.pun' or '.cjson' formatted structure file." 
+        if isinstance(value, SinglefileData):
+            if value.filename[-4:] not in [".xyz", ".pun"]:
+                if value.filename[-6:] != ".cjson":
+                    return "Structure file must be either an '.xyz', '.pun' or '.cjson' formatted structure file." 
 
         return 
 
@@ -461,12 +462,12 @@ class ChemShellCalculation(CalcJob):
         
     def chemsh_script_generator(self) -> str:
         """
-        Generates the input script for a ChemShell single-point energy calculation.
+        Generates the input script for a ChemShell calculation.
 
         Returns
         -------
         script : str
-            A string containing the ChemShell input script for the single-point energy calculation.
+            A string containing the ChemShell input script for the calculation.
         """
 
         qmTheory = None
@@ -474,7 +475,10 @@ class ChemShellCalculation(CalcJob):
         qmmmChk = ("QM_parameters" in self.inputs and "MM_parameters" in self.inputs)
 
         script = "from chemsh import Fragment\n"
-        script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
+        if isinstance(self.inputs.structure, SinglefileData):
+            script += "structure = Fragment(coords='{0:s}')\n".format(self.inputs.structure.filename)
+        else:
+            script += "structure = Fragment(coords='{0:s}')\n".format(ChemShellCalculation.FILE_TMP_STRUCTURE)
 
         ## Setup Theory objects 
 
@@ -601,9 +605,15 @@ class ChemShellCalculation(CalcJob):
         calcInfo.retrieve_temporary_list = []
         calcInfo.provenance_exclude_list = [] 
         calcInfo.retrieve_list = [ChemShellCalculation.FILE_STDOUT,]
-        calcInfo.local_copy_list = [
-            (self.inputs.structure.uuid, self.inputs.structure.filename, self.inputs.structure.filename),
-        ]
+        calcInfo.local_copy_list = [] 
+
+        if isinstance(self.inputs.structure, StructureData):
+            with folder.open(ChemShellCalculation.FILE_TMP_STRUCTURE, 'wb') as f:
+                f.write(self.inputs.structure._prepare_xyz()[0])
+        else:
+            calcInfo.local_copy_list.append(
+                (self.inputs.structure.uuid, self.inputs.structure.filename, self.inputs.structure.filename),
+            )
 
         # If running with an MM theory a force field file is required and copied
         if "forceFieldFile" in self.inputs:

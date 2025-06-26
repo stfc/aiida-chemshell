@@ -1,6 +1,5 @@
 from aiida.engine import run 
-from aiida.orm import load_code, SinglefileData, Dict 
-from aiida import load_profile 
+from aiida.orm import Dict
 
 from aiida_chemshell.calculations import ChemShellCalculation
 from aiida_chemshell.utils import * 
@@ -31,11 +30,11 @@ def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
     
 
 
-def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file):
+def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file, water_structure_object):
 
     code = chemsh_code
     builder = code.get_builder() 
-    builder.structure = get_test_data_file() 
+    builder.structure = water_structure_object
     builder.QM_parameters = Dict({"theory": "NWChem", "method": "DFT", "functional": "BLYP", "charge": 0, "scftype": "uks"})
     
     results, node = run.get_node(builder)
@@ -49,7 +48,7 @@ def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file):
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles         
 
-    eref = -75.9468895721
+    eref =  -75.9468895533
     assert abs(results.get("energy") - eref) < 1e-8, \
         "Incorrect energy result for NWChem based SP calculation"
 
@@ -167,8 +166,6 @@ def test_OptCalculation_qmmm(chemsh_code, get_test_data_file):
     builder.QMMM_parameters = Dict({"qm_region": [0, 1, 2]})
     
     builder.optimisation_parameters = Dict({})
-    # builder.metadata.options.withmpi = True
-    # builder.metadata.options.resources = {"num_machines": 1, "num_mpiprocs_per_machine": 4}
 
     results, node = run.get_node(builder)
 

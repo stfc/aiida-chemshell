@@ -61,8 +61,7 @@ load_profile("user_profile")  # This is not required if running in a verdi shell
 
 builder = load_code("chemsh").get_builder() 
 builder.structure = SinglefileData(file="water.cjson")
-builder.qm_theory = "nwchem" 
-builder.QM_parameters = Dict({"method": "HF", "basis": "3-21G"})
+builder.QM_parameters = Dict({"theory": "NWChem", "method": "HF", "basis": "3-21G"})
 builder.calculation_parameters = Dict({"gradients": False, "hessian": False})
 
 results, node = run.get_node(builder)
@@ -86,8 +85,7 @@ load_profile("user_profile")  # This is not required if running in a verdi shell
 
 builder = load_code("chemsh").get_builder()
 builder.structure = SinglefileData(file="h2o_dimer.cjson")
-builder.qm_theory = "nwchem" 
-builder.QM_parameters = Dict({"method": "DFT", "basis": "6-31G"})
+builder.QM_parameters = Dict({"theory": "NWChem", "method": "DFT", "basis": "6-31G"})
 builder.MM_parameters = Dict({"theory": "DL_POLY"})
 builder.forceFieldFile = SinglefileData(file="h2o_dimer.ff")
 builder.optimisation_parameters = Dict({"algorithm": "lbfgs", "maxcyle": 100})

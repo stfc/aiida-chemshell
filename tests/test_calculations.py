@@ -4,13 +4,15 @@ from aiida.orm import Dict
 from aiida_chemshell.calculations import ChemShellCalculation
 from aiida_chemshell.utils import * 
 
+from numpy.linalg import norm 
+
 def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
 
     code = chemsh_code
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
     builder.QM_parameters =  Dict({"theory": "NWChem", "method": "HF"})
-    builder.calculation_parameters = Dict({"gradients": True, "hessian": False})
+    builder.calculation_parameters = Dict({"gradients": False, "hessian": True})
      
     results, node = run.get_node(builder)
 
@@ -22,13 +24,26 @@ def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
 
     ofiles = results["retrieved"].list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles 
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     eref = -75.585287777076
     assert abs(results.get("energy") - eref) < 1e-8, \
         "Incorrect energy result for NWChem based SP calculation"
+    
+    assert "gradients" in results 
+    gradData = results.get("gradients")
+
+    assert gradData.get_arraynames() == ["gradients", "hessian"], \
+        "Gradients and Hessian have not been correctly parsed for an SP calculation."
+
+    assert gradData.get_shape("gradients") == (3, 3), \
+        "Gradients have not been returned in the expected shape for a SP calculation."
+    
+    ref = 0.020629319737626634
+    print(norm(gradData.get_array("gradients")))
+    assert (norm(gradData.get_array("gradients")) - ref) < 1e-8 
 
     
-
 
 def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file, water_structure_object):
 
@@ -46,11 +61,15 @@ def test_SPCalculation_nwchem_DFT(chemsh_code, get_test_data_file, water_structu
     assert "QM" in node.process_label 
 
     ofiles = results.get("retrieved").list_object_names() 
-    assert ChemShellCalculation.FILE_STDOUT in ofiles         
+    assert ChemShellCalculation.FILE_STDOUT in ofiles     
+    assert ChemShellCalculation.FILE_RESULTS in ofiles    
 
     eref =  -75.9468895533
     assert abs(results.get("energy") - eref) < 1e-8, \
         "Incorrect energy result for NWChem based SP calculation"
+    
+    assert "gradients" not in results, \
+        "Gradients have been returned for a SP calculation, but they were not requested in the inputs."
 
    
 
@@ -72,6 +91,7 @@ def test_SPCalculation_dlpoly(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles  
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     eref = 0.018194285557 
     assert (abs(results.get("energy") - eref)) < 1e-8, \
@@ -97,8 +117,9 @@ def test_SPCalculation_qmmm(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    eref = -75.603478594858
+    eref = -75.594381915214
 
     assert (abs(results.get("energy") - eref)) < 1e-8, \
         "Incorrect energy result for QM/MM based SP calculation."
@@ -121,6 +142,7 @@ def test_OptCalculation_NWChem(chemsh_code, get_test_data_file):
     
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles 
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     assert results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
 
@@ -147,6 +169,7 @@ def test_OptCalculation_dlpoly(chemsh_code, get_test_data_file):
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles 
     assert ChemShellCalculation.FILE_DLFIND in ofiles 
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     assert results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
 
@@ -177,6 +200,7 @@ def test_OptCalculation_qmmm(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names() 
     assert ChemShellCalculation.FILE_STDOUT in ofiles
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     eref = -75.599224873736
 

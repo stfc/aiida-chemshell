@@ -1,7 +1,7 @@
 from aiida.engine import CalcJob, CalcJobProcessSpec
 from aiida.common.folders import Folder 
 from aiida.common import CalcInfo, CodeInfo
-from aiida.orm import SinglefileData, Dict, Float, Str, StructureData
+from aiida.orm import SinglefileData, Dict, Float, Str, StructureData, ArrayData
 
 from aiida_chemshell.utils import ChemShellQMTheory, ChemShellMMTheory
 
@@ -19,6 +19,7 @@ class ChemShellCalculation(CalcJob):
     FILE_STDOUT = "output.log"
     FILE_DLFIND = "_dl_find.pun"
     FILE_TMP_STRUCTURE = "input_structure.xyz"
+    FILE_RESULTS = "result.json"
 
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
@@ -41,6 +42,7 @@ class ChemShellCalculation(CalcJob):
         
         ## Calculation outputs 
         spec.output("energy", valid_type=Float, required=True, help="The total energy of the system.")
+        spec.output("gradients", valid_type=ArrayData, required=False, help="The gradients (and hessian) of the system if requested. The gradients are contained within an AiiDA ArrayData object with the key 'gradients'.")
         spec.output("optimised_structure", valid_type=SinglefileData, required=False, help="The optimised structure of the given system, if a geometry optimisation task was configured and successfully completed. The structure is contained within a ChemShell '.pun' file.")
 
         ## Metadata 
@@ -52,6 +54,8 @@ class ChemShellCalculation(CalcJob):
         spec.exit_code(300, "ERROR_STDOUT_NOT_FOUND", message="Error accessing the `output.log` ChemShell output file.")
         spec.exit_code(301, "ERROR_MISSING_FINAL_ENERGY", message="ChemShell calculation failed to compute a final energy for the given task.")
         spec.exit_code(302, "ERROR_MISSING_OPTIMISED_STRUCTURE_FILE", message="ChemShell failed to produced the expected optimised structure file.")
+        spec.exit_code(303, "ERROR_RESULTS_FILE_NOT_FOUND", message="ChemShell calculation failed to produce the expected results file.")
+        spec.exit_code(304, "ERROR_MISSING_GRADIENTS", message="ChemShell calculation failed to compute the requested gradients or hessian for the given task.")
 
         return 
     
@@ -549,13 +553,13 @@ class ChemShellCalculation(CalcJob):
         if "optimisation_parameters" in self.inputs:
             # Run a geometry optimisation using DL_FIND
             script += "from chemsh import Opt\n" 
-            optStr = "Opt(theory={0:s}".format(tStr)
+            optStr = "job = Opt(theory={0:s}".format(tStr)
             for key in self.inputs.optimisation_parameters.keys():
                 if isinstance(self.inputs.optimisation_parameters.get(key), str):
                     optStr += ", " + key + "='" + self.inputs.optimisation_parameters.get(key) + "'" 
                 else:
                     optStr += ", " + key + "=" + str(self.inputs.optimisation_parameters.get(key))
-            script += optStr + ").run()\n"
+            script += optStr + ")\n"
         else:
             # Perform a single point energy calculation (default calculation type)
             script += "from chemsh import SP\n"
@@ -564,12 +568,14 @@ class ChemShellCalculation(CalcJob):
                 self.inputs.calculation_parameters = Dict(dict={})
             
             # Runs a QM single point energy calculation
-            script += "SP(theory={2:s}, gradients={0:s}, hessian={1:s}).run()\n".format(
+            script += "job = SP(theory={2:s}, gradients={0:s}, hessian={1:s})\n".format(
                 str(self.inputs.calculation_parameters.get("gradients", False)),
                 str(self.inputs.calculation_parameters.get("hessian", False)),
                 tStr
             )
             
+        script += "job.run()\njob.result.save()\n"
+
         return script 
 
 
@@ -604,7 +610,7 @@ class ChemShellCalculation(CalcJob):
         calcInfo.codes_info = [codeInfo]
         calcInfo.retrieve_temporary_list = []
         calcInfo.provenance_exclude_list = [] 
-        calcInfo.retrieve_list = [ChemShellCalculation.FILE_STDOUT,]
+        calcInfo.retrieve_list = [ChemShellCalculation.FILE_STDOUT,ChemShellCalculation.FILE_RESULTS,]
         calcInfo.local_copy_list = [] 
 
         if isinstance(self.inputs.structure, StructureData):

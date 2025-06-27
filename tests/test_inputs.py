@@ -4,7 +4,7 @@ def test_defaults(generate_calcjob):
 
     tmpPth, calcInfo = generate_calcjob(ChemShellCalculation)
 
-    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT,]
+    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT,ChemShellCalculation.FILE_RESULTS,]
     codeInfo = calcInfo.codes_info[0] 
     assert codeInfo.cmdline_params == [ChemShellCalculation.FILE_SCRIPT,]
     assert codeInfo.stdout_name == ChemShellCalculation.FILE_STDOUT
@@ -18,8 +18,10 @@ def test_defaults(generate_calcjob):
     assert "from chemsh import NWChem\n" in scriptText 
     assert "qmtheory = NWChem(frag=structure)" in scriptText
     assert "from chemsh import SP\n" in scriptText 
-    assert "SP(theory=qmtheory, gradients=False, hessian=False).run()\n" in scriptText 
-    
+    assert "job = SP(theory=qmtheory, gradients=False, hessian=False)\n" in scriptText 
+    assert "job.run()\n" in scriptText 
+    assert "job.result.save()\n" in scriptText 
+
 
 def test_default_MM_SP(generate_calcjob, generate_inputs):
 
@@ -37,7 +39,7 @@ def test_default_MM_SP(generate_calcjob, generate_inputs):
     assert "from chemsh import DL_POLY\n" in scriptText 
     assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff')\n" in scriptText 
     assert "from chemsh import SP\n" in scriptText 
-    assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 
+    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in scriptText 
 
 
 def test_default_QMMM_SP(generate_calcjob, generate_inputs):
@@ -60,7 +62,7 @@ def test_default_QMMM_SP(generate_calcjob, generate_inputs):
     assert "from chemsh import QMMM\n" in scriptText 
     assert "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[0, 1, 2])\n" in scriptText
     assert "from chemsh import SP\n" in scriptText 
-    assert "SP(theory=qmmm, gradients=False, hessian=False).run()\n" in scriptText 
+    assert "job = SP(theory=qmmm, gradients=False, hessian=False)\n" in scriptText 
 
 
 def test_default_QM_Opt(generate_calcjob, generate_inputs):
@@ -77,9 +79,9 @@ def test_default_QM_Opt(generate_calcjob, generate_inputs):
     assert "from chemsh import NWChem\n" in scriptText 
     assert "qmtheory = NWChem(frag=structure, method='dft', charge=0)" in scriptText
     assert "from chemsh import Opt\n" in scriptText 
-    assert "Opt(theory=qmtheory, maxcycle=100).run()\n" in scriptText
+    assert "job = Opt(theory=qmtheory, maxcycle=100)\n" in scriptText
 
-    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT, ChemShellCalculation.FILE_DLFIND]
+    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT, ChemShellCalculation.FILE_RESULTS, ChemShellCalculation.FILE_DLFIND]
 
 
 def test_expanded_MM_parameters(generate_calcjob, generate_inputs):
@@ -98,7 +100,7 @@ def test_expanded_MM_parameters(generate_calcjob, generate_inputs):
     assert "from chemsh import DL_POLY\n" in scriptText 
     assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff', timestep=0.0001, rcut=10.0)\n" in scriptText 
     assert "from chemsh import SP\n" in scriptText 
-    assert "SP(theory=mmtheory, gradients=True, hessian=False).run()\n" in scriptText 
+    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in scriptText 
 
 
 

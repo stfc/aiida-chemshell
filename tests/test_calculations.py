@@ -12,7 +12,7 @@ def test_SPCalculation_nwchem_hf(chemsh_code, get_test_data_file):
     builder = code.get_builder() 
     builder.structure = get_test_data_file() 
     builder.QM_parameters =  Dict({"theory": "NWChem", "method": "HF"})
-    builder.calculation_parameters = Dict({"gradients": False, "hessian": True})
+    builder.calculation_parameters = Dict({"gradients": True, "hessian": True})
      
     results, node = run.get_node(builder)
 

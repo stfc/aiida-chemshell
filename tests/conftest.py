@@ -27,7 +27,7 @@ def get_test_data_file(get_data_filepath):
 @pytest.fixture 
 def chemsh_code(aiida_code_installed):
     return aiida_code_installed(
-            filepath_executable="chemsh.x",
+            filepath_executable="chemsh",
             default_calc_job_plugin="chemshell"
         )
 

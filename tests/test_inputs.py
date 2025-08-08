@@ -1,128 +1,155 @@
-from aiida_chemshell.calculations import ChemShellCalculation 
+"""Tests for ChemShell input script generation based on various input parameters."""
+
+from aiida_chemshell.calculations import ChemShellCalculation
+
 
 def test_defaults(generate_calcjob):
+    """Test the default for QM based single point chemshell script generation."""
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation)
 
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation)
+    assert calc_info.retrieve_list == [
+        ChemShellCalculation.FILE_STDOUT,
+        ChemShellCalculation.FILE_RESULTS,
+    ]
+    code_info = calc_info.codes_info[0]
+    assert code_info.cmdline_params == [
+        ChemShellCalculation.FILE_SCRIPT,
+    ]
+    assert code_info.stdout_name == ChemShellCalculation.FILE_STDOUT
 
-    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT,ChemShellCalculation.FILE_RESULTS,]
-    codeInfo = calcInfo.codes_info[0] 
-    assert codeInfo.cmdline_params == [ChemShellCalculation.FILE_SCRIPT,]
-    assert codeInfo.stdout_name == ChemShellCalculation.FILE_STDOUT
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
 
-    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
-    assert scriptFile.exists()
-
-    scriptText = scriptFile.read_text() 
-    assert "from chemsh import Fragment\n" in scriptText  
-    assert "structure = Fragment(coords='water.cjson')\n" in scriptText 
-    assert "from chemsh import NWChem\n" in scriptText 
-    assert "qmtheory = NWChem(frag=structure)" in scriptText
-    assert "from chemsh import SP\n" in scriptText 
-    assert "job = SP(theory=qmtheory, gradients=False, hessian=False)\n" in scriptText 
-    assert "job.run()\n" in scriptText 
-    assert "job.result.save()\n" in scriptText 
-
-
-def test_default_MM_SP(generate_calcjob, generate_inputs):
-
-    inputs = generate_inputs(mm={"theory": "DL_POLY"}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
-
-    assert len(calcInfo.local_copy_list) == 2 
-
-    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
-    assert scriptFile.exists()
-
-    scriptText = scriptFile.read_text() 
-    assert "from chemsh import Fragment\n" in scriptText  
-    assert "structure = Fragment(coords='butanol.cjson')\n" in scriptText 
-    assert "from chemsh import DL_POLY\n" in scriptText 
-    assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff')\n" in scriptText 
-    assert "from chemsh import SP\n" in scriptText 
-    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in scriptText 
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "structure = Fragment(coords='water.cjson')\n" in script_txt
+    assert "from chemsh import NWChem\n" in script_txt
+    assert "qmtheory = NWChem(frag=structure)" in script_txt
+    assert "from chemsh import SP\n" in script_txt
+    assert "job = SP(theory=qmtheory, gradients=False, hessian=False)\n" in script_txt
+    assert "job.run()\n" in script_txt
+    assert "job.result.save()\n" in script_txt
 
 
-def test_default_QMMM_SP(generate_calcjob, generate_inputs):
+def test_default_mm_sp(generate_calcjob, generate_inputs):
+    """Test the defaults for MM based single point chemshell script generation."""
+    inputs = generate_inputs(
+        mm={"theory": "DL_POLY"},
+        structure_fname="butanol.cjson",
+        ff_fname="butanol.ff",
+        sp={"gradients": True},
+    )
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
 
-    inputs = generate_inputs(qm={"method": "HF"}, structure_fname="h2o_dimer.cjson", ff_fname="h2o_dimer.ff")
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+    assert len(calc_info.local_copy_list) == 2
 
-    assert len(calcInfo.local_copy_list) == 2 
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
 
-    scritpFile = tmpPth / ChemShellCalculation.FILE_SCRIPT
-    assert scritpFile.exists()
-
-    scriptText = scritpFile.read_text()
-    assert "from chemsh import Fragment\n" in scriptText
-    assert "structure = Fragment(coords='h2o_dimer.cjson')\n" in scriptText
-    assert "from chemsh import NWChem\n" in scriptText
-    assert "qmtheory = NWChem( method='HF')\n" in scriptText
-    assert "from chemsh import DL_POLY\n" in scriptText
-    assert "mmtheory = DL_POLY(ff='h2o_dimer.ff')\n" in scriptText
-    assert "from chemsh import QMMM\n" in scriptText 
-    assert "qmmm = QMMM(frag=structure, qm=qmtheory, mm=mmtheory, qm_region=[0, 1, 2])\n" in scriptText
-    assert "from chemsh import SP\n" in scriptText 
-    assert "job = SP(theory=qmmm, gradients=False, hessian=False)\n" in scriptText 
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "structure = Fragment(coords='butanol.cjson')\n" in script_txt
+    assert "from chemsh import DL_POLY\n" in script_txt
+    assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff')\n" in script_txt
+    assert "from chemsh import SP\n" in script_txt
+    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in script_txt
 
 
-def test_default_QM_Opt(generate_calcjob, generate_inputs):
+def test_default_qmmm_sp(generate_calcjob, generate_inputs):
+    """Test the defaults for qmmm based single point script generation."""
+    inputs = generate_inputs(
+        qm={"method": "HF"}, structure_fname="h2o_dimer.cjson", ff_fname="h2o_dimer.ff"
+    )
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
 
+    assert len(calc_info.local_copy_list) == 2
+
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
+
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "structure = Fragment(coords='h2o_dimer.cjson')\n" in script_txt
+    assert "from chemsh import NWChem\n" in script_txt
+    assert "qmtheory = NWChem( method='HF')\n" in script_txt
+    assert "from chemsh import DL_POLY\n" in script_txt
+    assert "mmtheory = DL_POLY(ff='h2o_dimer.ff')\n" in script_txt
+    assert "from chemsh import QMMM\n" in script_txt
+    assert "qmmm = QMMM(frag=structure, qm=qmtheory, " in script_txt
+    assert "mm=mmtheory, qm_region=[0, 1, 2])\n" in script_txt
+    assert "from chemsh import SP\n" in script_txt
+    assert "job = SP(theory=qmmm, gradients=False, hessian=False)\n" in script_txt
+
+
+def test_default_qm_opt(generate_calcjob, generate_inputs):
+    """Test defaults for qm optimisation script generation."""
     inputs = generate_inputs(opt={"maxcycle": 100}, qm={"method": "dft", "charge": 0})
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
 
-    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
-    assert scriptFile.exists()
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
 
-    scriptText = scriptFile.read_text() 
-    assert "from chemsh import Fragment\n" in scriptText  
-    assert "structure = Fragment(coords='water.cjson')\n" in scriptText 
-    assert "from chemsh import NWChem\n" in scriptText 
-    assert "qmtheory = NWChem(frag=structure, method='dft', charge=0)" in scriptText
-    assert "from chemsh import Opt\n" in scriptText 
-    assert "job = Opt(theory=qmtheory, maxcycle=100)\n" in scriptText
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "structure = Fragment(coords='water.cjson')\n" in script_txt
+    assert "from chemsh import NWChem\n" in script_txt
+    assert "qmtheory = NWChem(frag=structure, method='dft', charge=0)" in script_txt
+    assert "from chemsh import Opt\n" in script_txt
+    assert "job = Opt(theory=qmtheory, maxcycle=100)\n" in script_txt
 
-    assert calcInfo.retrieve_list == [ChemShellCalculation.FILE_STDOUT, ChemShellCalculation.FILE_RESULTS, ChemShellCalculation.FILE_DLFIND]
-
-
-def test_expanded_MM_parameters(generate_calcjob, generate_inputs):
-
-    inputs = generate_inputs(mm={"theory": "DL_POLY", "timestep": 0.0001, "rcut": 10.0}, structure_fname="butanol.cjson", ff_fname="butanol.ff", sp={"gradients": True})
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
-
-    assert len(calcInfo.local_copy_list) == 2 
-
-    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
-    assert scriptFile.exists()
-
-    scriptText = scriptFile.read_text() 
-    assert "from chemsh import Fragment\n" in scriptText  
-    assert "structure = Fragment(coords='butanol.cjson')\n" in scriptText 
-    assert "from chemsh import DL_POLY\n" in scriptText 
-    assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff', timestep=0.0001, rcut=10.0)\n" in scriptText 
-    assert "from chemsh import SP\n" in scriptText 
-    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in scriptText 
+    assert calc_info.retrieve_list == [
+        ChemShellCalculation.FILE_STDOUT,
+        ChemShellCalculation.FILE_RESULTS,
+        ChemShellCalculation.FILE_DLFIND,
+    ]
 
 
+def test_expanded_mm_parameters(generate_calcjob, generate_inputs):
+    """Test for expanded DL_POLY based MM optional parameters."""
+    inputs = generate_inputs(
+        mm={"theory": "DL_POLY", "timestep": 0.0001, "rcut": 10.0},
+        structure_fname="butanol.cjson",
+        ff_fname="butanol.ff",
+        sp={"gradients": True},
+    )
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
 
-def test_structure_as_StructureData_object(generate_calcjob, generate_inputs, water_structure_object):
-    
+    assert len(calc_info.local_copy_list) == 2
 
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
+
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "structure = Fragment(coords='butanol.cjson')\n" in script_txt
+    assert "from chemsh import DL_POLY\n" in script_txt
+    assert "mmtheory = DL_POLY(frag=structure, ff='butanol.ff'," in script_txt
+    assert "timestep=0.0001, rcut=10.0)\n" in script_txt
+    assert "from chemsh import SP\n" in script_txt
+    assert "job = SP(theory=mmtheory, gradients=True, hessian=False)\n" in script_txt
+
+
+def test_structure_as_structuredata_object(
+    generate_calcjob, generate_inputs, water_structure_object
+):
+    """Test taking a StructureData object as an input."""
     inputs = generate_inputs(structure_fname=water_structure_object)
 
-    tmpPth, calcInfo = generate_calcjob(ChemShellCalculation, inputs)
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
 
-    structureFile = tmpPth / ChemShellCalculation.FILE_TMP_STRUCTURE
-    assert structureFile.exists()
-    chkStr = """3
+    structure_file = tmp_pth / ChemShellCalculation.FILE_TMP_STRUCTURE
+    assert structure_file.exists()
+    chk_str = """3
 Lattice="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" pbc="False False False"
 O            0.0000000000       0.0000000000       0.0000000000
 H           -0.7546064020       0.5900323550       0.0000000000
 H            0.7546064020       0.5900323550       0.0000000000"""
-    assert structureFile.read_text() == chkStr
+    assert structure_file.read_text() == chk_str
 
-    scriptFile = tmpPth / ChemShellCalculation.FILE_SCRIPT 
-    assert scriptFile.exists()
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
 
-    scriptText = scriptFile.read_text() 
-    assert "from chemsh import Fragment\n" in scriptText  
-    assert "structure = Fragment(coords='{0:s}')\n".format(ChemShellCalculation.FILE_TMP_STRUCTURE) in scriptText
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    tmp_structure_file = ChemShellCalculation.FILE_TMP_STRUCTURE
+    assert f"structure = Fragment(coords='{tmp_structure_file:s}')\n" in script_txt

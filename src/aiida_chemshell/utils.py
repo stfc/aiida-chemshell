@@ -1,5 +1,5 @@
 from enum import Enum, auto 
-
+from aiida.orm import StructureData 
 
 class ChemShellQMTheory(Enum):
     """Enum fr the ChemShell theory interfaces."""
@@ -24,3 +24,30 @@ class ChemShellMMTheory(Enum):
     DL_POLY   = auto() 
     GULP      = auto() 
     NAMD      = auto() 
+
+
+def chemsh_punch_to_structure_data(data : str) -> StructureData:
+
+    structure = StructureData(pbc=[False, False, False]) 
+
+    lines = data.split('\n')
+
+    i = 0 
+    while i < len(lines):
+
+        if "coordinates records" in lines[i]:
+            natms = int(lines[i].split()[-1])
+            for a in range(natms):
+                i += 1 
+                line = lines[i].split() 
+                atm = line[0] 
+                x = float(line[1])
+                y = float(line[2])
+                z = float(line[3])
+                structure.append_atom(position=(x, y, z), symbols=atm)
+
+        i += 1     
+
+    return structure 
+
+# def structure_data_to_chemsh_punch(structure : StructureData, fname : str = "aiida_chemshell.pun") -> str:

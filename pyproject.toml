@@ -16,7 +16,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["aiida", "workflows", "chemshell", ]
 classifiers = [
-    "Intended Audience :: Science/Research/Education",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering", 
     "Framework :: AiiDA"

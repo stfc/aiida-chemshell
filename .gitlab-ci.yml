@@ -95,6 +95,7 @@ pages:
     - apt-get install -y build-essential 
     - pip install --upgrade pip 
     - pip install sphinx sphinx-toolbox numpydoc piccolo-theme
+    - pip install anybadge 
   script:
     - cd docs/
     - make html 

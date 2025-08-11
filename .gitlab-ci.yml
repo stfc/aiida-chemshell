@@ -91,9 +91,9 @@ pages:
   variables:
     GIT_STATEGY: clone 
     before_script:
-    - apt-get install build-essential 
-    - pip install --upgrade pip 
-    - pip install sphinx sphinx-toolbox numpydoc piccolo-theme
+      - apt-get install build-essential 
+      - pip install --upgrade pip 
+      - pip install sphinx sphinx-toolbox numpydoc piccolo-theme
   script:
     - cd docs/
     - make html 

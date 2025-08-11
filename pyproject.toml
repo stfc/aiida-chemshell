@@ -13,7 +13,7 @@ dependencies = [
     "aiida-core >= 2.6",
 ]
 readme = "README.md"
-license = {file: "LICENSE"}
+license = {file = "LICENSE"}
 keywords = ["aiida", "workflows", "chemshell", ]
 classifiers = [
     "Intended Audience :: Science/Research/Education",

@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-GIT_TAG=$(git describe --tags --abbrev=0)
+GIT_TAG=$1
 echo "Git tag: $GIT_TAG" 
 APP_VERSION=$(python -c "
 from aiida_chemshell import __version__

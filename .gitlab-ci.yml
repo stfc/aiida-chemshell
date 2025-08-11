@@ -35,6 +35,7 @@ pytest:
   stage: test 
   before_script:
     - pip install --upgrade pip 
+    - pip install pytest 
     - pip install --no-cache-dir . 
   script:
     - pytest tests/test_inputs.py 

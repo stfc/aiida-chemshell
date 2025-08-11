@@ -1,18 +1,40 @@
 stages:
-  - build
   - test 
+  - build
   - deploy 
 
 image: python:3.11-slim 
 
 version_check:
-  stage: build 
+  stage: test 
   rules:
     - if: $CI_COMMIT_TAG 
   script:
     - pip install --upgrade pip 
     - pip install . 
     - ./utils/version_check.sh 
+
+styling_check:
+  stage: test 
+  rules: 
+    - if: $CI_COMMIT_BRANCH == "main"
+  before_script:
+    - pip install --upgrade pip 
+    - pip install ruff 
+  script:
+    - ruff check 
+    - ruff format --check 
+
+pytest:
+  stage: test 
+  before_script:
+    - pip install --upgrade pip 
+    - pip install pytest 
+    - pip install --no-cache-dir . 
+  script:
+    - pytest tests/test_inputs.py 
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
 
 
 build_dist:
@@ -29,18 +51,7 @@ build_dist:
       - dist/*tar.gz 
     expire_in: 1 week 
   rules: 
-   - if: $CI_COMMIT_BRANCH == "main"
-
-pytest:
-  stage: test 
-  before_script:
-    - pip install --upgrade pip 
-    - pip install pytest 
-    - pip install --no-cache-dir . 
-  script:
-    - pytest tests/test_inputs.py 
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+   - if: $CI_COMMIT_TAG 
 
 git-release:
   stage: deploy 

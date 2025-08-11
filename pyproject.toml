@@ -3,7 +3,7 @@ requires = ["setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.0.1"
+version = "0.0.1-alpha"
 name = "aiida-chemshell"
 description = "AiiDA workflow plugin for the ChemShell chemical modelling software package"
 authors = [
@@ -13,6 +13,7 @@ dependencies = [
     "aiida-core >= 2.6",
 ]
 readme = "README.md"
+license = {file: "LICENSE"}
 keywords = ["aiida", "workflows", "chemshell", ]
 classifiers = [
     "Intended Audience :: Science/Research/Education",
@@ -20,6 +21,7 @@ classifiers = [
     "Topic :: Scientific/Engineering", 
     "Framework :: AiiDA"
 ]
+requires-python = ">=3.10"
 
 [project.urls]
 Source = "https://gitlab.stfc.ac.uk/sil23665/aiida-chemshell"

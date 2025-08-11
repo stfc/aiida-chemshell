@@ -9,7 +9,7 @@ version_check:
   stage: build 
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_TAG
   script:
     - pip install --upgrade pip 
     - pip install . 
@@ -47,23 +47,18 @@ git-release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
     - if: $CI_COMMIT_TAG 
-      if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main"
   script:
     - echo "Running release job for tag $CI_COMMIT_TAG..."
   release:
     name: "Release $CI_COMMIT_TAG"
+    description: "Release $CI_COMMIT_TAG created using the release-cli provided by gitlab."
     tag_name: "$CI_COMMIT_TAG"
     ref: "$CI_COMMIT_SHA"
-    assets:
-      - name: "Python Wheel"
-        filepath: "dist/*whl"
-        link_type: "package"
-      - name: "Python Source"
-        filepath: "dist/*tar.gz"
-        link_type: "package"
   needs:
     - job: build_dist 
       artifacts: true 
+    - job: version_check
 
 pages:
   stage: deploy 
@@ -83,4 +78,4 @@ pages:
     expire_in: 1 days 
   rules:
     - if: $CI_COMMIT_TAG 
-      if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main"

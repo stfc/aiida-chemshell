@@ -72,10 +72,28 @@ git-release:
       artifacts: true 
     - job: version_check
 
+pypi-release:
+  stage: deploy 
+  rules:
+    - if: $CI_COMMIT_TAG 
+  before_script:
+    - pip install --upgrade pip 
+    - pip install twine 
+  script:
+    - TWINE_PASSWORD="$PYPI_API_TOKEN" TWINE_USERNAME="__token__" twin upload dist/* 
+  needs:
+    - job: build_dist 
+      artifacts: true 
+    - job: version_check
+
 pages:
   stage: deploy 
   variables:
     GIT_STATEGY: clone 
+    before_script:
+    - apt-get install build-essential 
+    - pip install --upgrade pip 
+    - pip install sphinx sphinx-toolbox numpydoc piccolo-theme
   script:
     - cd docs/
     - make html 

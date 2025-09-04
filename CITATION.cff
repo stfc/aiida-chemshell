@@ -1,0 +1,14 @@
+cff-version: 1.2.0 
+title: "AiiD ChemShell Plugin"
+massage: "If you use this software, please cite it as below."
+type: software 
+authors:
+  - family-names: Speake 
+    given-names: Benjamin 
+    orcid: "https://orcid.org/0000-0002-5690-9470"
+identifiers:
+  - type: doi 
+    value: tbc 
+repository-code: "https://github.com/stfc/aiida-chemshell"
+abstract: "AiiDA plugin for the ChemShell multiscale computational chemistry package."
+license: GPL-3.0 

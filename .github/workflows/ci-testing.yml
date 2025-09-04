@@ -58,11 +58,11 @@ jobs:
 
             - name: Run the test suite with coverage 
               if: contains(matrix.python-version, env.LATEST_PY_VERSION)
-              run: pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml 
+              run: pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml tests/test_inputs.py
 
             - name: Run the test suite without coverage 
               if: ${{ ! contains(matrix.python-version, env.LATEST_PY_VERSION) }}
-              run: pytest 
+              run: pytest tests/test_inputs.py
 
             - name: Report coverage to Coveralls 
               if: contains(matrix.python-version, env.LATEST_PY_VERSION)

@@ -1,0 +1,72 @@
+name: ci-testing 
+
+on: 
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main 
+
+env:
+    LATEST_PY_VERSION: "3.12"
+
+jobs:
+
+    style-check:
+        runs-on: ubuntu-latest 
+        steps:
+            - name: Checkout Repository 
+              uses: actions/checkout@v4
+
+            - name: Setup Python 
+              uses: actions/setup-python@v5 
+              with:
+                python-version: ${{ env.LATEST_PY_VERSION }}
+
+            - name: Install requirements 
+              run: | 
+                python -m pip install --upgrade pip 
+                pip install ruff 
+
+            - name: Run the linter 
+              run: ruff check 
+
+            - name: Run the format checker  
+              run: ruff format --check 
+
+    pytest: 
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                python-version: ["3.10", "3.11", "3.12"]
+
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v4 
+
+            - name: Setup Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5 
+              with:
+                python-version: ${{ matrix.python-version }}
+
+            - name: Install the package and requirements 
+              run: | 
+                python -m pip install --upgrade pip 
+                pip install .[dev]
+
+            - name: Run the test suite with coverage 
+              if: contains(matrix.python-version, env.LATEST_PY_VERSION)
+              run: pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml 
+
+            - name: Run the test suite without coverage 
+              if: ${{ ! contains(matrix.python-version, env.LATEST_PY_VERSION) }}
+              run: pytest 
+
+            - name: Report coverage to Coveralls 
+              if: contains(matrix.python-version, env.LATEST_PY_VERSION)
+              uses: coverallsapp/github-action@v2 
+              with: 
+                file: coverage.xml 
+                base-path: aiida_chemshell

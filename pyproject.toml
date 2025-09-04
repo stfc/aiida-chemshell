@@ -24,7 +24,7 @@ classifiers = [
 requires-python = ">=3.10"
 
 [project.urls]
-Source = "https://gitlab.stfc.ac.uk/sil23665/aiida-chemshell"
+Source = "https://github.com/stfc/aiida-chemshell"
 
 [project.entry-points."aiida.calculations"]
 "chemshell" = "aiida_chemshell.calculations:ChemShellCalculation"

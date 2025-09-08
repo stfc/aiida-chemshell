@@ -1,8 +1,10 @@
 [![Release](https://img.shields.io/github/v/release/stfc/aiida-chemshell)](https://github.com/stfc/aiida-chemshell/releases)
 [![PyPI](https://img.shields.io/pypi/v/aiida-chemshell)](https://pypi.org/project/aiida-chemshell/)
+
+[![Docs status](https://github.com/stfc/aiida-chemshell/actions/workflows/ci-docs.yml/badge.svg?branch=main)](https://stfc.github.io/aiida-chemshell/)
 [![Pipeline Status](https://github.com/stfc/aiida-chemshell/actions/workflows/ci-testing.yml/badge.svg?branch=main)](https://github.com/stfc/aiida-chemshell/actions)
 [![Coverage Status]( https://coveralls.io/repos/github/stfc/aiida-chemshell/badge.svg?branch=main)](https://coveralls.io/github/stfc/aiida-chemshell?branch=main)
-[![Docs status](https://github.com/stfc/aiida-chemshell/actions/workflows/ci-docs.yml/badge.svg?branch=main)](https://stfc.github.io/aiida-chemshell/)
+
 [![DOI](https://zenodo.org/badge/1050396974.svg)](https://doi.org/10.5281/zenodo.17055004)
 
 # aiida-chemshell

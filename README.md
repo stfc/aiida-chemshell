@@ -67,8 +67,8 @@ from aiida import load_profile
 load_profile("user_profile")  # This is not required if running in a verdi shell environment 
 
 builder = load_code("chemsh").get_builder() 
-builder.structure = SinglefileData(file="water.cjson")
-builder.QM_parameters = Dict({"theory": "NWChem", "method": "HF", "basis": "3-21G"})
+builder.structure = SinglefileData(file="absolute/path/to/water.cjson")
+builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF", "basis": "3-21G"})
 builder.calculation_parameters = Dict({"gradients": False, "hessian": False})
 
 results, node = run.get_node(builder)
@@ -91,10 +91,10 @@ from aiida import load_profile
 load_profile("user_profile")  # This is not required if running in a verdi shell environment 
 
 builder = load_code("chemsh").get_builder()
-builder.structure = SinglefileData(file="h2o_dimer.cjson")
-builder.QM_parameters = Dict({"theory": "NWChem", "method": "DFT", "basis": "6-31G"})
-builder.MM_parameters = Dict({"theory": "DL_POLY"})
-builder.forceFieldFile = SinglefileData(file="h2o_dimer.ff")
+builder.structure = SinglefileData(file="absolute/path/to/h2o_dimer.cjson")
+builder.qm_parameters = Dict({"theory": "NWChem", "method": "DFT", "basis": "6-31G"})
+builder.mm_parameters = Dict({"theory": "DL_POLY"})
+builder.forceFieldFile = SinglefileData(file="absolute/path/to/h2o_dimer.ff")
 builder.optimisation_parameters = Dict({"algorithm": "lbfgs", "maxcyle": 100})
 
 results, node = run.get_node(builder)

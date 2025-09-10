@@ -14,11 +14,10 @@ computational chemistry software package.
 
 ## Installation 
 
-This plugin should be installed alongside the AiiDA.core package, typically using [`pip`](https://pip.pypa.io/en/stable/) python package manager. 
+This plugin is available through PyPI and should be installed using [`pip`](https://pip.pypa.io/en/stable/) python package manager. 
 
 ```
-cd aiida_chemshell 
-pip install . 
+pip install aiida-chemshell 
 ```
 
 ## Requirements 

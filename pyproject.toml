@@ -10,7 +10,7 @@ authors = [
     {name = "Dr. Benjamin T. Speake", email = "benjamin.speake@stfc.ac.uk"},
 ]
 dependencies = [
-    "aiida-core >= 2.6",
+    "aiida-core >= 2.5",
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -38,6 +38,7 @@ where = ["src",]
 
 [project.optional-dependencies]
 dev = [
+    "aiida-core>=2.6", # Required to support aiida.tools.pytest_fixtures 
     "pytest>=8.0", 
     "pytest-cov>=6.0",
     "ruff>=0.11.0",

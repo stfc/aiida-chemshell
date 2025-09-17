@@ -67,10 +67,9 @@ def test_structure_validation(generate_calcjob, get_test_data_file):
         generate_calcjob(ChemShellCalculation, inputs)
     except ValueError as e:
         assert (
-            "Structure file must be either an '.xyz', '.pun' or \
-                        '.cjson' formatted structure file."
-            in str(e)
-        )
+            "Structure file must be either an '.xyz', '.pun' or "
+            "'.cjson' formatted structure file."
+        ) in str(e)
     except Exception as e:
         raise AssertionError(
             f"Wrong error caught during invalid structure file type: {str(e)}"
@@ -113,7 +112,7 @@ def test_sp_calculation_input_validation(generate_calcjob, generate_inputs):
         )
 
     # Test gradient input must be bool
-    inputs = generate_inputs(sp={"gradients": "true", "hessian": "false"})
+    inputs = generate_inputs(sp={"gradients": "true"})
     try:
         generate_calcjob(ChemShellCalculation, inputs)
     except ValueError as e:
@@ -126,3 +125,73 @@ def test_sp_calculation_input_validation(generate_calcjob, generate_inputs):
         raise AssertionError(
             "No error caught during single point parameter validation."
         )
+
+    inputs = generate_inputs(sp={"hessian": "false"})
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "must be a Boolean value" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Incorrect error caught during single point parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError(
+            "No error caught during single point parameter validation."
+        )
+
+
+def test_optimisation_input_validation(generate_calcjob, generate_inputs):
+    """Test the parameter validation for the basic sp calculation inputs."""
+    inputs = generate_inputs(opt={"mincycle": 5, "maxcycle": 100})
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "mincycle" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during optimisation parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError(
+            "No error caught during optimisation parameter validation."
+        )
+
+
+def test_qm_input_validation(generate_calcjob, generate_inputs):
+    """Test the parameter validation for the QM inputs."""
+    inputs = generate_inputs(
+        qm={"theory": "NWChem", "method": "HF", "basis": "3-21G", "chrg": -1.0}
+    )
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "chrg" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during QM parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught during QM parameter validation.")
+    inputs = generate_inputs(
+        qm={
+            "theory": "NWChem",
+            "method": "HF",
+            "basis": "3-21G",
+            "charge": -1.0,
+            "direct": True,
+            "diis": True,
+            "mult": "1",
+        }
+    )
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "mult" in str(e)
+        assert "must be of type float" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during QM parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught during QM parameter validation.")

@@ -51,7 +51,7 @@ def test_sp_calculation_nwchem_dft(
     chemsh_code, get_test_data_file, water_structure_object
 ):
     """DFT based single point test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = water_structure_object
     builder.qm_parameters = Dict(
@@ -88,7 +88,7 @@ def test_sp_calculation_nwchem_dft(
 
 def test_sp_calculation_dlpoly(chemsh_code, get_test_data_file):
     """MM based single point test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("butanol.cjson")
     builder.mm_parameters = Dict({"theory": "DL_POLY"})
@@ -113,7 +113,7 @@ def test_sp_calculation_dlpoly(chemsh_code, get_test_data_file):
 
 def test_sp_calculation_qmmm(chemsh_code, get_test_data_file):
     """QM/MM based single point test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("h2o_dimer.cjson")
     builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})
@@ -141,7 +141,7 @@ def test_sp_calculation_qmmm(chemsh_code, get_test_data_file):
 
 def test_opt_calculation_nwchem(chemsh_code, get_test_data_file):
     """QM based geometry optimisation test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("water.cjson")
     builder.qm_parameters = Dict(
@@ -172,7 +172,7 @@ def test_opt_calculation_nwchem(chemsh_code, get_test_data_file):
 
 def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     """MM based geometry optimisation test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("butanol.cjson")
     builder.mm_parameters = Dict({"theory": "DL_POLY"})
@@ -203,7 +203,7 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
 
 def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
     """QM/MM geometry optimisation test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("h2o_dimer.cjson")
     builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})

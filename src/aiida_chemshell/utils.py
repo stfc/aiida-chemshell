@@ -33,7 +33,8 @@ class ChemShellMMTheory(Enum):
     NAMD = auto()
 
 
-def chemsh_punch_to_structure_data(data: str) -> StructureData:
+# Not covered by test suite as this function is not yet used by production code
+def chemsh_punch_to_structure_data(data: str) -> StructureData:  # pragma: no cover
     """Create a AiiDA StructureData object from a ChemShell punch file."""
     structure = StructureData(pbc=[False, False, False])
 

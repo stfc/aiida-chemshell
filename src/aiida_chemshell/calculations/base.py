@@ -40,9 +40,11 @@ class ChemShellCalculation(CalcJob):
             valid_type=(SinglefileData, StructureData),
             validator=cls.validate_structure_file,
             required=True,
-            help="The input structure for the ChemShell calculation either contained \
-                within an '.xyz', '.pun' or '.cjson' file or as a StructureData \
-                    instance.",
+            help=(
+                "The input structure for the ChemShell calculation either contained"
+                "within an '.xyz', '.pun' or '.cjson' file or as a StructureData"
+                "instance."
+            ),
         )
 
         ## Task object parameters
@@ -58,9 +60,11 @@ class ChemShellCalculation(CalcJob):
             valid_type=Dict,
             validator=cls.validate_optimisation_parameters,
             required=False,
-            help="A dictionary of parameters for the ChemShell geometry optimisation \
-                task. If this input is provided, a geometry optimisation task will be \
-                     configured and added to this job.",
+            help=(
+                "A dictionary of parameters for the ChemShell geometry optimisation "
+                "task. If this input is provided, a geometry optimisation task will be "
+                "configured and added to this job."
+            ),
         )
 
         ## Theory objects parameters
@@ -69,8 +73,10 @@ class ChemShellCalculation(CalcJob):
             valid_type=Dict,
             validator=cls.validate_qm_parameters,
             required=False,
-            help="A dictionary of parameters for to be passed to the Theory object \
-                for the ChemShell calculation.",
+            help=(
+                "A dictionary of parameters for to be passed to the Theory object "
+                "for the ChemShell calculation."
+            ),
         )
         spec.input(
             "mm_parameters",
@@ -86,8 +92,10 @@ class ChemShellCalculation(CalcJob):
             "force_field_file",
             valid_type=SinglefileData,
             required=False,
-            help="A file containing the force field parameters for the ChemShell \
-                MM interface.",
+            help=(
+                "A file containing the force field parameters for the ChemShell "
+                "MM interface."
+            ),
         )
         spec.input(
             "qmmm_parameters",
@@ -107,17 +115,21 @@ class ChemShellCalculation(CalcJob):
             "gradients",
             valid_type=ArrayData,
             required=False,
-            help="The gradients (and hessian) of the system if requested. The \
-                gradients are contained within an AiiDA ArrayData object with the \
-                    key 'gradients'.",
+            help=(
+                "The gradients (and hessian) of the system if requested. The "
+                "gradients are contained within an AiiDA ArrayData object with the "
+                "key 'gradients'."
+            ),
         )
         spec.output(
             "optimised_structure",
             valid_type=SinglefileData,
             required=False,
-            help="The optimised structure of the given system, if a geometry \
-                optimisation task was configured and successfully completed. The \
-                    structure is contained within a ChemShell '.pun' file.",
+            help=(
+                "The optimised structure of the given system, if a geometry "
+                "optimisation task was configured and successfully completed. The "
+                "structure is contained within a ChemShell '.pun' file."
+            ),
         )
 
         ## Metadata
@@ -136,26 +148,32 @@ class ChemShellCalculation(CalcJob):
         spec.exit_code(
             301,
             "ERROR_MISSING_FINAL_ENERGY",
-            message="ChemShell calculation failed to compute a final energy for \
-                the given task.",
+            message=(
+                "ChemShell calculation failed to compute a final energy for "
+                "the given task."
+            ),
         )
         spec.exit_code(
             302,
             "ERROR_MISSING_OPTIMISED_STRUCTURE_FILE",
-            message="ChemShell failed to produced the expected optimised structure \
-                file.",
+            message=(
+                "ChemShell failed to produced the expected optimised structure file."
+            ),
         )
         spec.exit_code(
             303,
             "ERROR_RESULTS_FILE_NOT_FOUND",
-            message="ChemShell calculation failed to produce the expected results \
-                file.",
+            message=(
+                "ChemShell calculation failed to produce the expected results file."
+            ),
         )
         spec.exit_code(
             304,
             "ERROR_MISSING_GRADIENTS",
-            message="ChemShell calculation failed to compute the requested \
-                gradients or hessian for the given task.",
+            message=(
+                "ChemShell calculation failed to compute the requested "
+                "gradients or hessian for the given task."
+            ),
         )
 
         return
@@ -182,8 +200,10 @@ class ChemShellCalculation(CalcJob):
         if isinstance(value, SinglefileData):
             if value.filename[-4:] not in [".xyz", ".pun"]:
                 if value.filename[-6:] != ".cjson":
-                    return "Structure file must be either an '.xyz', '.pun' or \
-                        '.cjson' formatted structure file."
+                    return (
+                        "Structure file must be either an '.xyz', '.pun' or "
+                        "'.cjson' formatted structure file."
+                    )
 
         return None
 
@@ -221,9 +241,11 @@ class ChemShellCalculation(CalcJob):
             set(cls.get_valid_calculation_parameter_keys())
         )
         if invalid_keys:
-            return f"The following parameter keys are invalid: \
-                {', '.join(invalid_keys):s}. Valid keys are: \
-                    {', '.join(cls.get_valid_calculation_parameter_keys()):s}"
+            return (
+                f"The following parameter keys are invalid: "
+                f"{', '.join(invalid_keys):s}. Valid keys are: "
+                f"{', '.join(cls.get_valid_calculation_parameter_keys()):s}"
+            )
 
         if "gradients" in value.keys():
             if not isinstance(value.get("gradients"), bool):
@@ -284,9 +306,11 @@ class ChemShellCalculation(CalcJob):
             set(cls.get_valid_optimisation_parameter_keys())
         )
         if invalid_keys:
-            return f"The following parameter keys are invalid: \
-                {', '.join(invalid_keys):s}. Valid keys are: \
-                    {', '.join(cls.get_valid_optimisation_parameter_keys()):s}"
+            return (
+                "The following parameter keys are invalid: "
+                f"{', '.join(invalid_keys):s}. Valid keys are: "
+                f"{', '.join(cls.get_valid_optimisation_parameter_keys()):s}"
+            )
 
         # TODO: check the types of the parameters
 
@@ -308,7 +332,7 @@ class ChemShellCalculation(CalcJob):
             "basis": str,
             "charge": float | int,
             "functional": str,
-            "mult": int | float,
+            "mult": float | int,
             "scftype": str,
             "damping": bool,
             "diis": bool,
@@ -341,35 +365,46 @@ class ChemShellCalculation(CalcJob):
         # Check the specified theory interface
         if value.get("theory", "").upper() not in ChemShellQMTheory.__members__:
             theory = value.get("theory")
-            return f"The specified theory '{theory:s}' is not a valid \
-                ChemShell theory interface within the AiiDA-ChemShell workflow."
+            return (
+                f"The specified theory '{theory:s}' is not a valid "
+                "ChemShell theory interface within the AiiDA-ChemShell workflow."
+            )
 
         valid_keys = cls.get_valid_qm_paramater_keys()
 
         # Check for valid parameter keys
         invalid_keys = set(value.keys()).difference(set(valid_keys.keys()))
         if invalid_keys:
-            return f"The following parameter keys are invalid: \
-                {', '.join(invalid_keys):s}. Valid keys are: \
-                    {', '.join(valid_keys.keys()):s}"
+            return (
+                "The following parameter keys are invalid: "
+                f"{', '.join(invalid_keys):s}. Valid keys are: "
+                f"{', '.join(valid_keys.keys()):s}"
+            )
 
         # Check for valid parameter types
         for key, val in value.items():
             if not isinstance(val, valid_keys[key]):
-                return f"The parameter '{key:s}' must be of type \
-                    {valid_keys[key].__name__:s}."
+                if valid_keys[key] == (float | int):
+                    return (
+                        f"The parameter '{key:s}' must be of type {float.__name__:s}."
+                    )
+                return (
+                    f"The parameter '{key:s}' must be of type "
+                    f"{valid_keys[key].__name__:s}."
+                )
 
         # Check for valid parameter values if value options are restricted
         if "method" in value.keys():
             method = value.get("method").upper()
             if method not in ["HF", "DFT"]:
-                return f"The specified method key ('{method:s}') is \
-                    not valid."
+                return f"The specified method key ('{method:s}') is not valid."
         if "scftype" in value.keys():
             opts = ["RHF", "UHF", "ROHF", "RKS", "UKS", "ROKS"]
             if value.get("scftype").upper() not in opts:
-                return "The 'scftype' parameter must be one of 'RHF', 'UHF' or \
-                    'ROHF' (or analogous 'rks', 'uks' or 'roks')."
+                return (
+                    "The 'scftype' parameter must be one of 'RHF', 'UHF' or "
+                    "'ROHF' (or analogous 'rks', 'uks' or 'roks')."
+                )
 
         return None
 
@@ -484,22 +519,28 @@ class ChemShellCalculation(CalcJob):
         """
         theory = value.get("theory", "").upper()
         if theory not in ChemShellMMTheory.__members__:
-            return f"The specified MM theory '{theory:s}' is not a \
-                valid ChemShell MM interface within the AiiDA-ChemShell workflow."
+            return (
+                "The specified MM theory '{theory:s}' is not a "
+                "valid ChemShell MM interface within the AiiDA-ChemShell workflow."
+            )
 
         valid_keys = cls.get_valid_mm_paramater_keys(theory)
         invalid_keys = set(value.keys()).difference(set(valid_keys.keys()))
         if invalid_keys:
             # Checks for invalid parameter keys
-            return f"The following parameter keys are invalid: \
-                {', '.join(invalid_keys):s}. Valid keys are: \
-                    {', '.join(valid_keys.keys()):s}"
+            return (
+                "The following parameter keys are invalid: "
+                f"{', '.join(invalid_keys):s}. Valid keys are: "
+                f"{', '.join(valid_keys.keys()):s}"
+            )
 
         # Check for valid parameter types
         for key, val in value.items():
             if not isinstance(val, valid_keys[key]):
-                return f"The parameter '{key:s}' must be of type \
-                    {valid_keys[key].__name__:s}."
+                return (
+                    f"The parameter '{key:s}' must be of type "
+                    f"{valid_keys[key].__name__:s}."
+                )
         return None
 
     @classmethod

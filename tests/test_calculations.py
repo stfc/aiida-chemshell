@@ -9,7 +9,7 @@ from aiida_chemshell.calculations.base import ChemShellCalculation
 
 def test_sp_calculation_nwchem_hf(chemsh_code, get_test_data_file):
     """HF based single point test."""
-    code = chemsh_code
+    code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file()
     builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})

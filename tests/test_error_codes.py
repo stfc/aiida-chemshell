@@ -14,7 +14,7 @@ def test_qm_theory_validation(generate_calcjob, generate_inputs):
         pass
     except Exception as e:
         raise AssertionError(
-            "Incorrect error code generated from QM theory input validation"
+            f"Wrong error code generated from QM theory input validation: {str(e)}"
         ) from e
     else:
         raise AssertionError("No error caught when providing invalid QM theory key.")
@@ -31,7 +31,7 @@ def test_mm_theory_validation(generate_calcjob, generate_inputs):
         pass
     except Exception as e:
         raise AssertionError(
-            "Incorrect error code generated from MM theory input validation"
+            f"Wrong error code generated from MM theory input validation: {str(e)}"
         ) from e
     else:
         raise AssertionError("No error caught when providing invalid MM theory key.")
@@ -51,7 +51,7 @@ def test_structure_validation(generate_calcjob, get_test_data_file):
         pass
     except Exception as e:
         raise AssertionError(
-            "Incorrect error caught during no structure file validation:"
+            f"Wrong error caught during no structure file validation: {str(e)}"
         ) from e
     else:
         raise AssertionError("No error caught when providing no structure file.")
@@ -73,7 +73,7 @@ def test_structure_validation(generate_calcjob, get_test_data_file):
         )
     except Exception as e:
         raise AssertionError(
-            "Incorrect error caught during invalid structure file type"
+            f"Wrong error caught during invalid structure file type: {str(e)}"
         ) from e
     else:
         raise AssertionError(
@@ -88,7 +88,7 @@ def test_structure_validation(generate_calcjob, get_test_data_file):
         pass
     except Exception as e:
         raise AssertionError(
-            "Incorrect error caught when provided invalid SinglefileData object"
+            f"Wrong error caught when provided invalid SinglefileData object: {str(e)}"
         ) from e
     else:
         raise AssertionError(
@@ -105,8 +105,7 @@ def test_sp_calculation_input_validation(generate_calcjob, generate_inputs):
         assert "parameter keys are invalid" in str(e)
     except Exception as e:
         raise AssertionError(
-            "Incorrect error caught during single point parameter \
-                             validation"
+            f"Incorrect error caught during single point parameter validation: {str(e)}"
         ) from e
     else:
         raise AssertionError(
@@ -121,8 +120,7 @@ def test_sp_calculation_input_validation(generate_calcjob, generate_inputs):
         assert "must be a Boolean value" in str(e)
     except Exception as e:
         raise AssertionError(
-            "Incorrect error caught during single point parameter \
-                             validation"
+            f"Incorrect error caught during single point parameter validation: {str(e)}"
         ) from e
     else:
         raise AssertionError(

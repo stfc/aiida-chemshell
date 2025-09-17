@@ -195,3 +195,27 @@ def test_qm_input_validation(generate_calcjob, generate_inputs):
         ) from e
     else:
         raise AssertionError("No error caught during QM parameter validation.")
+
+    inputs = generate_inputs(qm={"theory": "NWChem", "method": "KF"})
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "method key ('KF') is not valid" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during QM parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught during QM parameter validation.")
+
+    inputs = generate_inputs(qm={"theory": "NWChem", "scftype": "KF"})
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "The 'scftype' parameter must be" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during QM parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught during QM parameter validation.")

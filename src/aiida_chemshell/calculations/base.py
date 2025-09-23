@@ -364,7 +364,7 @@ class ChemShellCalculation(CalcJob):
         """
         # Check the specified theory interface
         if value.get("theory", "").upper() not in ChemShellQMTheory.__members__:
-            theory = value.get("theory")
+            theory = value.get("theory", "")
             return (
                 f"The specified theory '{theory:s}' is not a valid "
                 "ChemShell theory interface within the AiiDA-ChemShell workflow."

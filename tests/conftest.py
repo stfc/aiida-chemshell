@@ -1,5 +1,6 @@
 """PyTest configurations."""
 
+import os
 import pathlib
 
 import pytest
@@ -34,7 +35,10 @@ def chemsh_code(aiida_code_installed):
 
     def factory(plugin: str = "chemshell") -> InstalledCode:
         return aiida_code_installed(
-            filepath_executable="chemsh", default_calc_job_plugin=plugin
+            filepath_executable=os.environ.get("CHEMSHELL_BIN", "chemsh"),
+            default_calc_job_plugin="chemshell",
+            prepend_text=os.environ.get("CHEMSHELL_PREPEND_TEXT", ""),
+            append_text=os.environ.get("CHEMSHELL_APPEND_TEXT", ""),
         )
 
     return factory

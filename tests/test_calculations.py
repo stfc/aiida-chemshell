@@ -7,12 +7,12 @@ from numpy.linalg import norm
 from aiida_chemshell.calculations.base import ChemShellCalculation
 
 
-def test_sp_calculation_nwchem_hf(chemsh_code, get_test_data_file):
+def test_sp_calculation_qm_hf(chemsh_code, get_test_data_file):
     """HF based single point test."""
     code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file()
-    builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "HF"})
     builder.calculation_parameters = Dict({"gradients": True, "hessian": True})
 
     results, node = run.get_node(builder)
@@ -28,7 +28,7 @@ def test_sp_calculation_nwchem_hf(chemsh_code, get_test_data_file):
 
     eref = -75.585287777076
     assert abs(results.get("energy") - eref) < 1e-8, (
-        "Incorrect energy result for NWChem based SP calculation"
+        "Incorrect energy result for PySCF based SP calculation"
     )
 
     assert "gradients" in results
@@ -42,25 +42,23 @@ def test_sp_calculation_nwchem_hf(chemsh_code, get_test_data_file):
         "Gradients have not been returned in the expected shape for a SP calculation."
     )
 
-    ref = 0.020629319737626634
-    print(norm(grad_data.get_array("gradients")))
+    # ref = 0.020629319737626634
+    ref = 0.02063027856708385
     assert (norm(grad_data.get_array("gradients")) - ref) < 1e-8
 
 
-def test_sp_calculation_nwchem_dft(
-    chemsh_code, get_test_data_file, water_structure_object
-):
+def test_sp_calculation_qm_dft(chemsh_code, get_test_data_file, water_structure_object):
     """DFT based single point test."""
     code = chemsh_code()
     builder = code.get_builder()
     builder.structure = water_structure_object
     builder.qm_parameters = Dict(
         {
-            "theory": "NWChem",
+            "theory": "PySCF",
             "method": "DFT",
             "functional": "BLYP",
             "charge": 0,
-            "scftype": "uks",
+            # "scftype": "uks",
         }
     )
 
@@ -75,9 +73,10 @@ def test_sp_calculation_nwchem_dft(
     assert ChemShellCalculation.FILE_STDOUT in ofiles
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    eref = -75.9468895533
+    # eref = -75.9468895533
+    eref = -75.946889436563
     assert abs(results.get("energy") - eref) < 1e-8, (
-        "Incorrect energy result for NWChem based SP calculation"
+        "Incorrect energy result for PySCF based SP calculation"
     )
 
     assert "gradients" not in results, (
@@ -116,7 +115,8 @@ def test_sp_calculation_qmmm(chemsh_code, get_test_data_file):
     code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("h2o_dimer.cjson")
-    builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})
+    builder.calculation_parameters = Dict({"gradients": True})
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "HF"})
     builder.force_field_file = get_test_data_file("h2o_dimer.ff")
     builder.qmmm_parameters = Dict({"qm_region": [0, 1, 2]})
     builder.mm_parameters = Dict({"theory": "DL_POLY"})
@@ -139,19 +139,17 @@ def test_sp_calculation_qmmm(chemsh_code, get_test_data_file):
     )
 
 
-def test_opt_calculation_nwchem(chemsh_code, get_test_data_file):
+def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
     """QM based geometry optimisation test."""
     code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("water.cjson")
-    builder.qm_parameters = Dict(
-        {"theory": "NWChem", "method": "DFT", "basis": "3-21G"}
-    )
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "DFT", "basis": "3-21G"})
     builder.optimisation_parameters = Dict({})
 
     results, node = run.get_node(builder)
 
-    assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_NWChem`"
+    assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_PySCF`"
 
     assert "Geometry_Optimisation" in node.process_label
     assert "QM" in node.process_label
@@ -164,9 +162,10 @@ def test_opt_calculation_nwchem(chemsh_code, get_test_data_file):
         results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
     )
 
-    eref = -75.951248996895
+    # eref = -75.951248996895
+    eref = -75.951248407932
     assert abs(results.get("energy") - eref) < 1e-8, (
-        "Incorrect energy result for NWChem based optimisation calculation."
+        "Incorrect energy result for PySCF based optimisation calculation."
     )
 
 
@@ -225,7 +224,8 @@ def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
     assert ChemShellCalculation.FILE_STDOUT in ofiles
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    eref = -75.599224873736
+    # eref = -75.599224873736
+    eref = -75.599224879266
 
     assert (abs(results.get("energy") - eref)) < 1e-8, (
         "Incorrect energy result for QM/MM based SP calculation."

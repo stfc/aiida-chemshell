@@ -205,7 +205,7 @@ def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
     code = chemsh_code()
     builder = code.get_builder()
     builder.structure = get_test_data_file("h2o_dimer.cjson")
-    builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF"})
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "HF"})
     builder.force_field_file = get_test_data_file("h2o_dimer_gulp.ff")
     # There seems to be a bug when running this with DL_POLY???
     builder.mm_parameters = Dict({"theory": "GULP"})
@@ -225,7 +225,7 @@ def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     # eref = -75.599224873736
-    eref = -75.599224879266
+    eref = -75.59922485546
 
     assert (abs(results.get("energy") - eref)) < 1e-8, (
         "Incorrect energy result for QM/MM based SP calculation."

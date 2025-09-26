@@ -9,7 +9,7 @@ on:
       - main 
 
 env:
-    LATEST_PY_VERSION: "3.12"
+    TEST_IMAGE_PY_VERSION: "3.12"
 
 jobs:
 
@@ -22,7 +22,7 @@ jobs:
             - name: Setup Python 
               uses: actions/setup-python@v5 
               with:
-                python-version: ${{ env.LATEST_PY_VERSION }}
+                python-version: ${{ env.TEST_IMAGE_PY_VERSION }}
 
             - name: Install requirements 
               run: | 
@@ -38,6 +38,10 @@ jobs:
     pytest: 
         runs-on: ubuntu-latest
 
+        permissions:
+            contents: read 
+            packages: read
+            
         strategy:
             matrix:
                 python-version: ["3.10", "3.11", "3.12"]
@@ -56,16 +60,27 @@ jobs:
                 python -m pip install --upgrade pip 
                 pip install .[dev]
 
+            - name: Log in to GitHub Container Registry]
+              if: contains(matrix.python-version, env.TEST_IMAGE_PY_VERSION)
+              uses: docker/login-action@v3
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+
             - name: Run the test suite with coverage 
-              if: contains(matrix.python-version, env.LATEST_PY_VERSION)
-              run: pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml tests/test_inputs.py tests/test_error_codes.py 
+              if: contains(matrix.python-version, env.TEST_IMAGE_PY_VERSION)
+              run: |
+                PYTEST_CMD='pytest --cov=aiida_chemshell --cov-report=xml:/home/chemsh_usr/aiida-chemshell/coverage.xml aiida-chemshell/' 
+                IMAGE_NAME=ghcr.io/stfc/aiida-chemshell/test:latest 
+                docker run --rm -v $(pwd):/home/chemsh_usr/aiida-chemshell $IMAGE_NAME $PYTEST_CMD 
 
             - name: Run the test suite without coverage 
-              if: ${{ ! contains(matrix.python-version, env.LATEST_PY_VERSION) }}
+              if: ${{ ! contains(matrix.python-version, env.TEST_IMAGE_PY_VERSION) }}
               run: pytest tests/test_inputs.py
 
             - name: Report coverage to Coveralls 
-              if: contains(matrix.python-version, env.LATEST_PY_VERSION)
+              if: contains(matrix.python-version, env.TEST_IMAGE_PY_VERSION)
               uses: coverallsapp/github-action@v2 
               with: 
                 file: coverage.xml 

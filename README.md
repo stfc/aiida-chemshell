@@ -36,7 +36,7 @@ The following is an example of a basic YAML configuration file:
 label: chemsh
 description: ChemShell 
 computer: localhost 
-filepath_executable: chemsh 
+filepath_executable: /absolute/path/to/chemsh
 default_calc_job_plugin: chemshell
 use_double_quotes: false 
 with_mpi: false 
@@ -68,7 +68,7 @@ from aiida import load_profile
 load_profile("user_profile")  # This is not required if running in a verdi shell environment 
 
 builder = load_code("chemsh").get_builder() 
-builder.structure = SinglefileData(file="absolute/path/to/water.cjson")
+builder.structure = SinglefileData(file="/absolute/path/to/water.cjson")
 builder.qm_parameters = Dict({"theory": "NWChem", "method": "HF", "basis": "3-21G"})
 builder.calculation_parameters = Dict({"gradients": False, "hessian": False})
 
@@ -92,10 +92,10 @@ from aiida import load_profile
 load_profile("user_profile")  # This is not required if running in a verdi shell environment 
 
 builder = load_code("chemsh").get_builder()
-builder.structure = SinglefileData(file="absolute/path/to/h2o_dimer.cjson")
+builder.structure = SinglefileData(file="/absolute/path/to/h2o_dimer.cjson")
 builder.qm_parameters = Dict({"theory": "NWChem", "method": "DFT", "basis": "6-31G"})
 builder.mm_parameters = Dict({"theory": "DL_POLY"})
-builder.force_field_file = SinglefileData(file="absolute/path/to/h2o_dimer.ff")
+builder.force_field_file = SinglefileData(file="/absolute/path/to/h2o_dimer.ff")
 builder.optimisation_parameters = Dict({"algorithm": "lbfgs", "maxcyle": 100})
 
 results, node = run.get_node(builder)
@@ -103,4 +103,4 @@ results, node = run.get_node(builder)
 print("Final Energy = ", result.get("energy"))
 ```
 
-This can either be run as a script or as directly within a verdi shell python environment. 
+This can either be run as a script or as directly within a verdi shell python environment.

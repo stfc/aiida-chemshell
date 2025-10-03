@@ -28,7 +28,7 @@ class ChemShellParser(Parser):
 
         # Extract the final energy
         try:
-            self.out("energy", Float(results["energy"][0]))
+            self.out("energy", Float(results["energy"][0], label="Final SCF Energy"))
         except (KeyError, ValueError):
             return self.exit_codes.ERROR_MISSING_FINAL_ENERGY
         except ModificationNotAllowed as e:
@@ -36,13 +36,17 @@ class ChemShellParser(Parser):
 
         # Extract gradients/hessian if they are requested
         if "calculation_parameters" in self.node.inputs:
+            array_desc = "1st and/or 2nd derivatives calculated with ChemShell"
             if self.node.inputs.calculation_parameters.get("gradients", False):
                 try:
                     gradients = numpy.array(results["gradients"])
                 except (KeyError, ValueError):
                     return self.exit_codes.ERROR_MISSING_GRADIENTS
                 else:
-                    grad_data = ArrayData()
+                    grad_data = ArrayData(
+                        label="Energy Derivative Arrays",
+                        description=array_desc,
+                    )
                     grad_data.set_array("gradients", gradients)
                     self.out("gradients", grad_data)
             if self.node.inputs.calculation_parameters.get("hessian", False):
@@ -54,19 +58,26 @@ class ChemShellParser(Parser):
                     if "gradients" in self.outputs:
                         self.outputs["gradients"].set_array("hessian", hessian)
                     else:
-                        grad_data = ArrayData()
+                        grad_data = ArrayData(
+                            label="Energy Derivative Arrays",
+                            description=array_desc,
+                        )
                         grad_data.set_array("hessian", hessian)
                         self.out("gradients", grad_data)
 
         # If the calculation was a geometry optimisation, store the optimised structure
         if "optimisation_parameters" in self.node.inputs:
             if ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
+                descrip = "Optimised structure from a ChemShell optimisation"
                 # Store the optimised structure file
                 with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "r") as f:
                     self.out(
                         "optimised_structure",
                         SinglefileData(
-                            file=f, filename=ChemShellCalculation.FILE_DLFIND
+                            file=f,
+                            filename=ChemShellCalculation.FILE_DLFIND,
+                            label="Structure File",
+                            description=descrip,
                         ),
                     )
             else:

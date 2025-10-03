@@ -30,9 +30,17 @@ def test_sp_calculation_qm_hf(chemsh_code, get_test_data_file):
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for PySCF based SP calculation"
     )
+    assert "Final SCF Energy" in results.get("energy").label, (
+        "Incorrect energy output node label"
+    )
 
-    assert "gradients" in results
+    assert "gradients" in results, "Missing gradient array data output node."
     grad_data = results.get("gradients")
+
+    assert "Energy Derivative Arrays" in grad_data.label, (
+        f"Incorrect node label for gradient array output node. {grad_data.label}"
+    )
+    assert grad_data.description != "", "Missing gradient array node description"
 
     assert grad_data.get_arraynames() == ["gradients", "hessian"], (
         "Gradients and Hessian have not been correctly parsed for an SP calculation."
@@ -161,6 +169,8 @@ def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
     assert (
         results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
     )
+    assert "Structure File" in results.get("optimised_structure").label
+    assert "Optimised structure" in results.get("optimised_structure").description
 
     # eref = -75.951248996895
     eref = -75.951248407932

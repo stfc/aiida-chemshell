@@ -160,6 +160,20 @@ class ChemShellCalculation(CalcJob):
 
         spec.inputs.validator = inputs_validator_wrapper
 
+        spec.output(
+            "trajectory_path",
+            valid_type=SinglefileData,
+            required=False,
+            help="XYZ trajectory file for the geometry optimisation",
+        )
+        spec.output(
+            "trajectory_force",
+            valid_type=SinglefileData,
+            required=False,
+            help="XYZ trajectory containing forces at each step of a geometry "
+            "optimisation",
+        )
+
         ## Metadata
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
@@ -871,5 +885,8 @@ class ChemShellCalculation(CalcJob):
         # file containing the optimised structure
         if "optimisation_parameters" in self.inputs:
             calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
+            if self.inputs.optimisation_parameters.get("save_path", False):
+                calc_info.retrieve_list.append(ChemShellCalculation.FILE_TRJPTH)
+                calc_info.retrieve_list.append(ChemShellCalculation.FILE_TRJFRC)
 
         return calc_info

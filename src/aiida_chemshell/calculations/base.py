@@ -41,8 +41,8 @@ class ChemShellCalculation(CalcJob):
             validator=cls.validate_structure_file,
             required=True,
             help=(
-                "The input structure for the ChemShell calculation either contained"
-                "within an '.xyz', '.pun' or '.cjson' file or as a StructureData"
+                "The input structure for the ChemShell calculation either contained "
+                "within an '.xyz', '.pun' or '.cjson' file or as a StructureData "
                 "instance."
             ),
         )
@@ -170,8 +170,10 @@ class ChemShellCalculation(CalcJob):
             "trajectory_force",
             valid_type=SinglefileData,
             required=False,
-            help="XYZ trajectory containing forces at each step of a geometry "
-            "optimisation",
+            help=(
+                "XYZ trajectory containing forces at each step of a geometry "
+                "optimisation"
+            ),
         )
 
         ## Metadata
@@ -579,7 +581,7 @@ class ChemShellCalculation(CalcJob):
         theory = value.get("theory", "").upper()
         if theory not in ChemShellMMTheory.__members__:
             return (
-                "The specified MM theory '{theory:s}' is not a "
+                f"The specified MM theory '{theory:s}' is not a "
                 "valid ChemShell MM interface within the AiiDA-ChemShell workflow."
             )
 

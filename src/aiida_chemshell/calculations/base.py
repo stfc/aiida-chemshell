@@ -23,6 +23,8 @@ class ChemShellCalculation(CalcJob):
     FILE_DLFIND = "_dl_find.cjson"
     FILE_TMP_STRUCTURE = "input_structure.xyz"
     FILE_RESULTS = "result.json"
+    FILE_TRJPTH = "_dl_find/path.xyz"
+    FILE_TRJFRC = "_dl_find/force.xyz"
 
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
@@ -343,6 +345,7 @@ class ChemShellCalculation(CalcJob):
             "delta",
             "tsrelative",
             "thermal",
+            "save_path",
         )
 
     @classmethod

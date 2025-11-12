@@ -68,6 +68,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          path: /home/chemsh_usr/
 
       - name: Run the test suite with coverage 
         run: |

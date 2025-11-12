@@ -2,7 +2,7 @@
 
 from aiida.orm import Dict
 
-from aiida_chemshell.calculations import ChemShellCalculation
+from aiida_chemshell.calculations.base import ChemShellCalculation
 
 
 def test_qm_theory_validation(generate_calcjob, generate_inputs):

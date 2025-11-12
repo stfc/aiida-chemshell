@@ -64,6 +64,7 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+      options: --user 1001:121
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -71,7 +72,7 @@ jobs:
       - name: Run the test suite with coverage 
         run: |
           pip install . 
-          pytest --cov=aiida_chemshell --cov-report=xml:/home/chemsh_usr/aiida-chemshell/coverage.xml' 
+          pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml' 
 
       - name: Report coverage to Coveralls 
         uses: coverallsapp/github-action@v2 

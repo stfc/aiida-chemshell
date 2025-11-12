@@ -72,9 +72,9 @@ jobs:
 
       - name: Run the test suite with coverage 
         run: |
-          PYTEST_CMD='pytest --cov=aiida_chemshell --cov-report=xml:/home/chemsh_usr/aiida-chemshell/coverage.xml aiida-chemshell/' 
+          PYTEST_CMD='cd aiida-chemshell && pip install . && pytest --cov=aiida_chemshell --cov-report=xml:/home/chemsh_usr/aiida-chemshell/coverage.xml' 
           IMAGE_NAME=ghcr.io/stfc/aiida-chemshell/testing:latest 
-          docker run --rm -v $(pwd):/home/chemsh_usr/aiida-chemshell $IMAGE_NAME $PYTEST_CMD 
+          docker run --rm -v $(pwd):/home/chemsh_usr/aiida-chemshell $IMAGE_NAME bash -c  "$PYTEST_CMD" 
 
       - name: Report coverage to Coveralls 
         uses: coverallsapp/github-action@v2 

@@ -69,9 +69,14 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5 
+        with:
+          python-version: "3.12"
+
       - name: Run the test suite with coverage 
         run: |
-          pip install . 
+          pip install --no-user .[dev]
           pytest --cov=aiida_chemshell --cov-report=xml:coverage.xml' 
 
       - name: Report coverage to Coveralls 

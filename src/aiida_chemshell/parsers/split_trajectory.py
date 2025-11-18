@@ -29,6 +29,6 @@ class SplitTrajectoryParser(Parser):
         #             file_name
         #         )
         if len(traj_folder.list_object_names()) < 1:
-            print("ERROR :: no returned trajectory files")
+            return self.exit_codes.ERROR_NO_TRAJECTORY_FILES
         self.out("trajectory_folder", traj_folder)
         return ExitCode(0)

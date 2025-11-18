@@ -49,6 +49,13 @@ class SplitTrajectory(CalcJob):
             "parser_name"
         ].default = "chemshell.split_traj"
 
+        # Exit Codes
+        spec.exit_code(
+            300,
+            "ERROR_NO_TRAJECTORY_FILES",
+            message="No trajectory files have been produced.",
+        )
+
         return
 
     def prepare_for_submission(self, folder: Folder) -> CalcInfo:

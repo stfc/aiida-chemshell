@@ -181,7 +181,7 @@ class ChemShellCalculation(CalcJob):
         ## Metadata
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
-            "num_mpiprocs_per_machine": 1,
+            "num_mpiprocs_per_machine": 4,
         }
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
 
@@ -848,9 +848,21 @@ class ChemShellCalculation(CalcJob):
         # Define the AiiDA code parameters
         code_info = CodeInfo()
         code_info.code_uuid = self.inputs.code.uuid
-        code_info.cmdline_params = [
-            ChemShellCalculation.FILE_SCRIPT,
-        ]
+        if "chemsh.x" in str(self.inputs.code.filepath_executable):
+            code_info.cmdline_params = [
+                ChemShellCalculation.FILE_SCRIPT,
+            ]
+        else:
+            n_machines = self.inputs.metadata.options.resources.get("num_machines")
+            n_mpi_pm = self.inputs.metadata.options.resources.get(
+                "num_mpiprocs_per_machine"
+            )
+            tot_mpi = n_machines * n_mpi_pm
+            code_info.cmdline_params = [
+                "-np",
+                self.inputs.metadata.options.resources.get("tot_num_mpiprocs", tot_mpi),
+                ChemShellCalculation.FILE_SCRIPT,
+            ]
         code_info.stdout_name = ChemShellCalculation.FILE_STDOUT
 
         # Setup the calculation information object

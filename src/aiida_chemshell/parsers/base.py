@@ -73,6 +73,39 @@ class ChemShellParser(Parser):
                         ChemShellCalculation.FILE_STDOUT, "r"
                     )
                 )
+            elif self.node.inputs.optimisation_parameters.get("save_path", False):
+                if (
+                    ChemShellCalculation.FILE_TRJPTH
+                    in self.retrieved.list_object_names()
+                ):
+                    with self.retrieved.open(
+                        ChemShellCalculation.FILE_TRJPTH, "r"
+                    ) as f:
+                        self.out(
+                            "trajectory_path",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_TRJPTH.replace(
+                                    "/", "_"
+                                ),
+                                label="ChemShell optimisation trajectory.",
+                            ),
+                        )
+                    with self.retrieved.open(
+                        ChemShellCalculation.FILE_TRJFRC, "r"
+                    ) as f:
+                        self.out(
+                            "trajectory_force",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_TRJFRC.replace(
+                                    "/", "_"
+                                ),
+                                label="ChemShell optimisation trajectory.",
+                            ),
+                        )
+                else:
+                    return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
             elif ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
                 descrip = "Optimised structure from a ChemShell optimisation"
                 input_pk = self.node.inputs.structure.pk

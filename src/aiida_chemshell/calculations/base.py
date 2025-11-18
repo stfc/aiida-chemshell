@@ -891,7 +891,11 @@ class ChemShellCalculation(CalcJob):
         if "optimisation_parameters" in self.inputs:
             calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
             if self.inputs.optimisation_parameters.get("save_path", False):
-                calc_info.retrieve_list.append(ChemShellCalculation.FILE_TRJPTH)
-                calc_info.retrieve_list.append(ChemShellCalculation.FILE_TRJFRC)
+                calc_info.retrieve_list.append(
+                    "_dl_find/" + ChemShellCalculation.FILE_TRJPTH
+                )
+                calc_info.retrieve_list.append(
+                    "_dl_find/" + ChemShellCalculation.FILE_TRJFRC
+                )
 
         return calc_info

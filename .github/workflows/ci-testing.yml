@@ -86,9 +86,6 @@ jobs:
           IMAGE_NAME=ghcr.io/stfc/aiida-chemshell/testing:latest 
           docker run --rm -v $(pwd):/opt/aiida-chemshell $IMAGE_NAME bash -c "$PYTEST_CMD"
 
-      - name: Rest ownership 
-        run: chown -R . 
-
       - name: Report coverage to Coveralls 
         uses: coverallsapp/github-action@v2 
         with: 

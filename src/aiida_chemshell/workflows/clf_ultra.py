@@ -1,7 +1,16 @@
 """CLF-ULTRA ChemShell + Janus workflow."""
 
-from aiida.engine import ToContext, WorkChain
-from aiida.orm import Code, Dict, Float, Int, List, SinglefileData, StructureData
+from aiida.engine import ToContext, WorkChain, calcfunction
+from aiida.orm import (
+    Code,
+    Dict,
+    Float,
+    FolderData,
+    List,
+    SinglefileData,
+    Str,
+    StructureData,
+)
 from aiida.plugins.factories import CalculationFactory
 
 ChemShellCalculation = CalculationFactory("chemshell")
@@ -28,6 +37,7 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
             help="The structure on which to perform the geometry optimisation",
         )
         spec.input("chemshell", valid_type=Code, required=True, help="")
+        spec.input("janus", valid_type=Code, required=True, help="")
 
         spec.input(
             "force_field_file",
@@ -45,10 +55,19 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
             ),
         )
 
-        spec.output("final_energy", valid_type=Float)
-        spec.output("natms", valid_type=Int)
+        spec.output("final_qm_energy", valid_type=Float)
+        # spec.output("mlip_outputs", valid_type=Dict)
+        spec.output("trajectory_files", valid_type=FolderData)
+        spec.output("energy_difference", valid_type=Float)
 
-        spec.outline(cls.optimise, cls.generate_xyz_files, cls.result)
+        spec.outline(
+            cls.optimise,
+            cls.generate_xyz_files,
+            cls.extract_final_structure,
+            cls.mlip_sp,
+            cls.calculate_energy_difference,
+            cls.result,
+        )
         return
 
     def optimise(self):
@@ -56,11 +75,11 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
         inputs = {
             "qm_parameters": Dict(
                 {
-                    "theory": "NWChem",
-                    "method": "dft",
-                    "functional": "b3lyp",
-                    "basis": "cc-pvtz",
-                    # Add D3 correction
+                    "theory": "NWChem",  # NWChem
+                    "method": "dft",  # DFT
+                    "functional": "B3LYP",  # B3LYP
+                    "basis": "cc-pvtz",  # cc=pvtz
+                    # "d3": True # Add D3 correction
                 }
             ),
             "optimisation_parameters": Dict({"save_path": True}),
@@ -68,8 +87,8 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
             "code": self.inputs.chemshell,
             "metadata": {
                 "options": {
-                    "resources": {"num_mpiprocs_per_machine": 4, "num_machines": 1},
-                    "withmpi": True,
+                    "resources": {"num_mpiprocs_per_machine": 8, "num_machines": 1},
+                    # "withmpi": True,
                 }
             },
         }
@@ -77,16 +96,89 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
         return ToContext(optimise=future)
 
     def generate_xyz_files(self):
-        """Convert the paths to individual extended XYZ files."""
-        trjp = self.ctx.optimise.outputs.trajectory_path.get_content(mode="r")
-        trjf = self.ctx.optimise.outputs.trajectory_force.get_content(mode="r")
-        trjp = trjp.split("\n")
-        trjf = trjf.split("\n")
-        natms = int(trjp[0])
-        self.out("natms", natms)
+        """Convert the paths to individual extended XYZ filesn for each step."""
+        inputs = {
+            "path": self.ctx.optimise.outputs.trajectory_path,
+            "force": self.ctx.optimise.outputs.trajectory_force,
+            "code": self.inputs.chemshell,
+            "metadata": {
+                "options": {
+                    "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
+                    # "withmpi": True,
+                }
+            },
+        }
+        from aiida_chemshell.calculations.splt_trajectory import SplitTrajectory
+
+        future = self.submit(SplitTrajectory, **inputs)
+        return ToContext(split_trajectory=future)
+
+    def extract_final_structure(self):
+        """Extract the optimised structure from the XYZ trajectory folder."""
+        self.ctx.final_structure = extract_final_structure(
+            self.ctx.split_trajectory.outputs.trajectory_folder
+        )
+        return
+
+    def mlip_sp(self):
+        """Run a single point energy with Janus-Core on the optimised structure."""
+        structure = self.ctx.final_structure
+        from aiida_mlip.helpers.help_load import load_model
+
+        model = load_model(None, "mace_mp")
+        inputs = {
+            "metadata": {"options": {"resources": {"num_machines": 1}}},
+            "code": self.inputs.janus,
+            # "arch": Str(model.architecture),
+            "struct": structure,
+            "model": model,
+            "device": Str("cpu"),
+            # "calc_kwargs": Dict({"dispersion": True}),
+        }
+        mlip_sp = CalculationFactory("mlip.sp")
+        future = self.submit(mlip_sp, **inputs)
+        return ToContext(mlip_sp=future)
+
+    def calculate_energy_difference(self):
+        """Calculate the difference in final energies."""
+        self.ctx.energy_difference = calculate_difference(
+            self.ctx.optimise.outputs.energy, self.ctx.mlip_sp.outputs.results_dict
+        )
         return
 
     def result(self) -> None:
         """Report the final results."""
-        self.out("final_energy", self.ctx.optimise.outputs.energy)
+        self.out("final_qm_energy", self.ctx.optimise.outputs.energy)
+        self.out(
+            "trajectory_files", self.ctx.split_trajectory.outputs.trajectory_folder
+        )
+        # self.out(
+        #     "mlip_outputs",
+        #     self.ctx.mlip_sp.outputs.results_dict
+        # )
+        self.out("energy_difference", self.ctx.energy_difference)
         return
+
+
+@calcfunction
+def extract_final_structure(folder: FolderData) -> StructureData:
+    """Extract the final optimised structure from a folder of xyz files."""
+    structure_file = folder.list_object_names()[-1]
+    structure = StructureData()
+    structure._parse_xyz(folder.get_object_content(structure_file, mode="r") + "\n")
+    return structure
+
+
+@calcfunction
+def calculate_difference(qm_energy: Float, ml_results: Dict) -> Float:
+    """Calculate the difference between the final energies."""
+    ml_energy = ml_results["info"]["mace_mp_energy"]
+    diff = qm_energy - ml_energy
+    return Float(
+        diff,
+        label="Final Energy Difference",
+        description=(
+            "Difference in final energies between DFT calculation and "
+            "MACE_mp energy calculation using Janus-core."
+        ),
+    )

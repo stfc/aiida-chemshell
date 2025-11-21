@@ -225,9 +225,6 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
 
 #     results, node = run.get_node(builder)
 
-#     # print(results.get("retrieved").get_object_content("_scheduler-stderr.txt"))
-#     print(results.get("retrieved").get_object_content(ChemShellCalculation.FILE_STDOUT))
-
 #     assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_qmmm`"
 
 #     assert "Geometry_Optimisation" in node.process_label

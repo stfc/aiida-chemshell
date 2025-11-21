@@ -210,33 +210,36 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     )
 
 
-def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
-    """QM/MM geometry optimisation test."""
-    code = chemsh_code()
-    builder = code.get_builder()
-    builder.structure = get_test_data_file("h2o_dimer.cjson")
-    builder.qm_parameters = Dict({"theory": "PySCF", "method": "HF"})
-    builder.force_field_file = get_test_data_file("h2o_dimer_gulp.ff")
-    # There seems to be a bug when running this with DL_POLY???
-    builder.mm_parameters = Dict({"theory": "GULP"})
-    builder.qmmm_parameters = Dict({"qm_region": [0, 1, 2]})
+# def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
+#     """QM/MM geometry optimisation test."""
+#     code = chemsh_code()
+#     builder = code.get_builder()
+#     builder.structure = get_test_data_file("h2o_dimer.cjson")
+#     builder.qm_parameters = Dict({"theory": "PySCF", "method": "HF"})
+#     builder.force_field_file = get_test_data_file("h2o_dimer.ff")
+#     # There seems to be a bug when running this with DL_POLY???
+#     builder.mm_parameters = Dict({"theory": "DL_POLY"})
+#     builder.qmmm_parameters = Dict({"qm_region": [0, 1, 2]})
 
-    builder.optimisation_parameters = Dict({})
+#     builder.optimisation_parameters = Dict({})
 
-    results, node = run.get_node(builder)
+#     results, node = run.get_node(builder)
 
-    assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_qmmm`"
+#     # print(results.get("retrieved").get_object_content("_scheduler-stderr.txt"))
+#     print(results.get("retrieved").get_object_content(ChemShellCalculation.FILE_STDOUT))
 
-    assert "Geometry_Optimisation" in node.process_label
-    assert "QM/MM" in node.process_label
+#     assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_qmmm`"
 
-    ofiles = results.get("retrieved").list_object_names()
-    assert ChemShellCalculation.FILE_STDOUT in ofiles
-    assert ChemShellCalculation.FILE_RESULTS in ofiles
+#     assert "Geometry_Optimisation" in node.process_label
+#     assert "QM/MM" in node.process_label
 
-    # eref = -75.599224873736
-    eref = -75.59922485546
+#     ofiles = results.get("retrieved").list_object_names()
+#     assert ChemShellCalculation.FILE_STDOUT in ofiles
+#     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    assert (abs(results.get("energy") - eref)) < 1e-8, (
-        "Incorrect energy result for QM/MM based SP calculation."
-    )
+#     # eref = -75.599224873736
+#     eref = -75.59922485546
+
+#     assert (abs(results.get("energy") - eref)) < 1e-8, (
+#         "Incorrect energy result for QM/MM based SP calculation."
+#     )

@@ -203,6 +203,10 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     assert (
         results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
     )
+    assert (
+        "Optimised structure from a ChemShell optimisation of butanol.cjson"
+        in results.get("optimised_structure").description
+    )
 
     eref = 0.017155540777
     assert abs(results.get("energy") - eref) < 1e-8, (

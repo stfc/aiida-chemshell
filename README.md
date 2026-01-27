@@ -5,7 +5,7 @@
 [![Pipeline Status](https://github.com/stfc/aiida-chemshell/actions/workflows/ci-testing.yml/badge.svg?branch=main)](https://github.com/stfc/aiida-chemshell/actions)
 [![Coverage Status]( https://coveralls.io/repos/github/stfc/aiida-chemshell/badge.svg?branch=main)](https://coveralls.io/github/stfc/aiida-chemshell?branch=main)
 
-[![DOI](https://zenodo.org/badge/1050396974.svg)](https://doi.org/10.5281/zenodo.17055004)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18392782.svg)](https://doi.org/10.5281/zenodo.18392782)
 
 # aiida-chemshell
 

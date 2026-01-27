@@ -20,7 +20,7 @@ class ChemShellCalculation(CalcJob):
 
     FILE_SCRIPT = "chemshell_input.py"
     FILE_STDOUT = "output.log"
-    FILE_DLFIND = "_dl_find.pun"
+    FILE_DLFIND = "_dl_find.cjson"
     FILE_TMP_STRUCTURE = "input_structure.xyz"
     FILE_RESULTS = "result.json"
 
@@ -754,6 +754,8 @@ class ChemShellCalculation(CalcJob):
             script += f"hessian={hess_str:s})\n"
 
         script += "job.run()\njob.result.save()\n"
+        if "optimisation_parameters" in self.inputs:
+            script += f'structure.save("{ChemShellCalculation.FILE_DLFIND}")\n'
 
         return script
 

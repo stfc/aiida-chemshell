@@ -69,6 +69,11 @@ class ChemShellParser(Parser):
         if "optimisation_parameters" in self.node.inputs:
             if ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
                 descrip = "Optimised structure from a ChemShell optimisation"
+                input_pk = self.node.inputs.structure.pk
+                descrip += f" of node {input_pk}"
+                if isinstance(self.node.inputs.structure, SinglefileData):
+                    input_fname = self.node.inputs.structure.filename
+                    descrip += f" ({input_fname})"
                 # Store the optimised structure file
                 with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "r") as f:
                     self.out(

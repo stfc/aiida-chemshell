@@ -3,7 +3,7 @@
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec
-from aiida.orm import ArrayData, Dict, Float, SinglefileData, StructureData
+from aiida.orm import ArrayData, Dict, Float, SinglefileData, Str, StructureData
 
 from aiida_chemshell.utils import ChemShellMMTheory, ChemShellQMTheory
 
@@ -130,6 +130,12 @@ class ChemShellCalculation(CalcJob):
                 "optimisation task was configured and successfully completed. The "
                 "structure is contained within a ChemShell '.pun' file."
             ),
+        )
+        spec.output(
+            "vibrational_analysis",
+            valid_type=Str,
+            required=False,
+            help="The vibrational analysis from ChemShell/DL_FIND",
         )
 
         ## Metadata
@@ -282,6 +288,7 @@ class ChemShellCalculation(CalcJob):
             "dimer",
             "delta",
             "tsrelative",
+            "thermal",
         )
 
     @classmethod

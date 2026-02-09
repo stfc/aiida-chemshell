@@ -5,7 +5,7 @@ import json
 import numpy
 from aiida.common import ModificationNotAllowed
 from aiida.engine import ExitCode
-from aiida.orm import ArrayData, Float, SinglefileData
+from aiida.orm import ArrayData, Float, SinglefileData, Str
 from aiida.parsers.parser import Parser
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -23,7 +23,7 @@ class ChemShellParser(Parser):
 
         # Read the 'json' formatted results file
         results = json.loads(
-            self.retrieved.get_object_content(ChemShellCalculation.FILE_RESULTS)
+            self.retrieved.get_object_content(ChemShellCalculation.FILE_RESULTS, "rb")
         )
 
         # Extract the final energy
@@ -67,7 +67,13 @@ class ChemShellParser(Parser):
 
         # If the calculation was a geometry optimisation, store the optimised structure
         if "optimisation_parameters" in self.node.inputs:
-            if ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
+            if self.node.inputs.optimisation_parameters.get("thermal", False):
+                self.parse_vibrational_analysis(
+                    self.retrieved.get_object_content(
+                        ChemShellCalculation.FILE_STDOUT, "r"
+                    )
+                )
+            elif ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
                 descrip = "Optimised structure from a ChemShell optimisation"
                 input_pk = self.node.inputs.structure.pk
                 descrip += f" of node {input_pk}"
@@ -89,3 +95,19 @@ class ChemShellParser(Parser):
                 return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
         return ExitCode(0)
+
+    def parse_vibrational_analysis(self, stdout: str) -> None:
+        """Extract the vibrational analysis from ChemShell output log."""
+        read = False
+        thermo_analysis = []
+        for line in stdout.split("\n"):
+            if "Thermochemical analysis" in line:
+                read = True
+            elif "total S vib" in line:
+                thermo_analysis.append(line)
+                read = False
+
+            if read:
+                thermo_analysis.append(line)
+        self.out("vibrational_analysis", Str("\n".join(thermo_analysis)))
+        return

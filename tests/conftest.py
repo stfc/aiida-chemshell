@@ -69,7 +69,7 @@ def generate_inputs(chemsh_code, get_test_data_file):
         structure_fname: str | StructureData = "water.cjson",
         ff_fname: str | None = None,
         opt: dict | None = None,
-    ):
+    ) -> dict:
         if isinstance(structure_fname, str):
             structure = get_test_data_file(structure_fname)
         else:

@@ -2,7 +2,7 @@
 
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
-from aiida.engine import CalcJob, CalcJobProcessSpec
+from aiida.engine import CalcJob, CalcJobProcessSpec, PortNamespace
 from aiida.orm import ArrayData, Dict, Float, SinglefileData, Str, StructureData
 
 from aiida_chemshell.utils import ChemShellMMTheory, ChemShellQMTheory
@@ -138,6 +138,22 @@ class ChemShellCalculation(CalcJob):
             help="The vibrational analysis from ChemShell/DL_FIND",
         )
 
+        # Validate inputs namespace
+        existing_validator = spec.inputs.validator
+
+        def inputs_validator_wrapper(inputs, namespace):
+            """Wrap the existing and custom input namespace validators."""
+            if existing_validator:
+                error = existing_validator(inputs, namespace)
+                if error:
+                    return error
+            error = cls.validate_inputs_namespace(inputs, namespace)
+            if error:
+                return error
+            return None
+
+        spec.inputs.validator = inputs_validator_wrapper
+
         ## Metadata
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
@@ -183,6 +199,22 @@ class ChemShellCalculation(CalcJob):
         )
 
         return
+
+    @classmethod
+    def validate_inputs_namespace(
+        cls, value: Dict, namespace: PortNamespace
+    ) -> str | None:
+        """Perform additional validation checks on the total inputs namespace."""
+        if "mm_parameters" in value and "force_field_file" not in value:
+            return "A force field must be specified to use molecular mechanics."
+        if "force_field_file" in value and "mm_parameters" not in value:
+            return "A MM theory code must be specified to use molecular mechanics."
+        if "qmmm_parameters" in value:
+            if "qm_parameters" not in value:
+                return "Missing QM parameters for QM/MM calculation"
+            if "mm_parameters" not in value:
+                return "Missing MM parameters for QM/MM calculation"
+        return None
 
     @classmethod
     def validate_structure_file(

@@ -5,7 +5,7 @@ import json
 import numpy
 from aiida.common import ModificationNotAllowed
 from aiida.engine import ExitCode
-from aiida.orm import ArrayData, Dict, Float, SinglefileData, Str
+from aiida.orm import ArrayData, Dict, Float, SinglefileData
 from aiida.parsers.parser import Parser
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -99,19 +99,8 @@ class ChemShellParser(Parser):
     def parse_vibrational_analysis(self, stdout: str) -> None:
         """Extract the vibrational analysis from ChemShell output log."""
         read = False
-        thermo_analysis = []
-        for line in stdout.split("\n"):
-            if "Thermochemical analysis" in line:
-                read = True
-            elif "total S vib" in line:
-                thermo_analysis.append(line)
-                read = False
-
-            if read:
-                thermo_analysis.append(line)
-        self.out("vibrational_analysis", Str("\n".join(thermo_analysis)))
-
         energies = {}
+        modes = []
         for line in stdout.split("\n"):
             if read:
                 line_vals = line.split()
@@ -127,10 +116,22 @@ class ChemShellParser(Parser):
                     energies[f"Enthalpy / {line_vals[4]}"] = float(line_vals[3])
                 elif "total S vib" in line:
                     energies[f"Entropy / {line_vals[4]}"] = float(line_vals[3])
+                elif "Mode" in line or "total" in line:
+                    pass
+                else:
+                    # All remaining lines should be part of the modes table
+                    modes.append(numpy.array([float(x) for x in line_vals[2:]]))
 
             if "Thermochemical analysis" in line:
                 read = True
             elif "total S vib" in line:
                 read = False
         self.out("vibrational_energies", Dict(energies))
+        modes = numpy.asarray(modes)
+        modes_data_node = ArrayData(
+            label="Vibrational Modes",
+            description="Calculated vibrational modes for the system.",
+        )
+        modes_data_node.set_array("Modes", modes)
+        self.out("vibrational_modes", modes_data_node)
         return

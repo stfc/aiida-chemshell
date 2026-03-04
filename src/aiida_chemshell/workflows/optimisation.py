@@ -1,13 +1,7 @@
 """Workflows for geometry optimisation based taks."""
 
 from aiida.engine import ToContext, WorkChain
-from aiida.orm import (
-    Bool,
-    Dict,
-    Float,
-    SinglefileData,
-    Str,
-)
+from aiida.orm import ArrayData, Bool, Dict, Float, SinglefileData, Str
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
 
@@ -51,16 +45,16 @@ class GeometryOptimisationWorkChain(WorkChain):
             help="The final optimised geometry of the given structure.",
         )
         spec.output(
-            "vibrational_analysis",
-            valid_type=Str,
-            required=False,
-            help="The vibrational analysis for the optimised structure.",
-        )
-        spec.output(
             "vibrational_energies",
             valid_type=Dict,
             required=False,
             help="The calculated thermochemical properties of the optimised structure",
+        )
+        spec.output(
+            "vibrational_modes",
+            valid_type=ArrayData,
+            required=False,
+            help="The calculated vibrational modes for the optimised structure.",
         )
 
         ## Workflow ##
@@ -128,11 +122,9 @@ class GeometryOptimisationWorkChain(WorkChain):
         if self.inputs.get("vibrational_analysis", False):
             self.out("final_energy", self.ctx.energy.outputs.energy)
             self.out(
-                "vibrational_analysis", self.ctx.energy.outputs.vibrational_analysis
-            )
-            self.out(
                 "vibrational_energies", self.ctx.energy.outputs.vibrational_energies
             )
+            self.out("vibrational_modes", self.ctx.energy.outputs.vibrational_modes)
         else:
             self.out("final_energy", self.ctx.optimise.outputs.energy)
         return

@@ -28,16 +28,13 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
         "Incorrect final energy for geometry optimisation workflow."
     )
 
-    assert "Temperature:     300.00 Kelvin" in str(results.get("vibrational_analysis"))
-    assert " Mode     Eigenvalue Frequency" in str(results.get("vibrational_analysis"))
-    assert "total vibrational energy correction" in str(
-        results.get("vibrational_analysis")
-    )
-
     assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0
     assert results.get("vibrational_energies").get("ZPE / J/mol") == 57173.49993
     assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.84524
     assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01430
 
-    # print(results.get("vibrational_analysis"))
-    # assert False
+    assert results.get("vibrational_modes").get_shape("Modes") == (3, 5)
+
+    modes = results.get("vibrational_modes").get_array("Modes")
+    assert (modes[0][0] - 1799.584) < 1e-10, "Incorrect frequency reported for mode 1"
+    assert (modes[2][2] - 0.0089900284) < 1e-10, "Incorrect ZPE reported for mode 3"

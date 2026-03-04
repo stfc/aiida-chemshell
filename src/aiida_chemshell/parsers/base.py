@@ -5,7 +5,7 @@ import json
 import numpy
 from aiida.common import ModificationNotAllowed
 from aiida.engine import ExitCode
-from aiida.orm import ArrayData, Float, SinglefileData
+from aiida.orm import ArrayData, Dict, Float, SinglefileData
 from aiida.parsers.parser import Parser
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -23,7 +23,7 @@ class ChemShellParser(Parser):
 
         # Read the 'json' formatted results file
         results = json.loads(
-            self.retrieved.get_object_content(ChemShellCalculation.FILE_RESULTS)
+            self.retrieved.get_object_content(ChemShellCalculation.FILE_RESULTS, "rb")
         )
 
         # Extract the final energy
@@ -67,7 +67,13 @@ class ChemShellParser(Parser):
 
         # If the calculation was a geometry optimisation, store the optimised structure
         if "optimisation_parameters" in self.node.inputs:
-            if ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
+            if self.node.inputs.optimisation_parameters.get("thermal", False):
+                self.parse_vibrational_analysis(
+                    self.retrieved.get_object_content(
+                        ChemShellCalculation.FILE_STDOUT, "r"
+                    )
+                )
+            elif ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
                 descrip = "Optimised structure from a ChemShell optimisation"
                 input_pk = self.node.inputs.structure.pk
                 descrip += f" of node {input_pk}"
@@ -89,3 +95,43 @@ class ChemShellParser(Parser):
                 return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
         return ExitCode(0)
+
+    def parse_vibrational_analysis(self, stdout: str) -> None:
+        """Extract the vibrational analysis from ChemShell output log."""
+        read = False
+        energies = {}
+        modes = []
+        for line in stdout.split("\n"):
+            if read:
+                line_vals = line.split()
+                if "Temperature:" in line:
+                    energies[f"Temperature / {line_vals[2]}"] = float(line_vals[1])
+                elif "E_electronic" in line:
+                    energies[f"E_electronic correction / {line_vals[7]}"] = float(
+                        line_vals[6]
+                    )
+                elif "total ZPE" in line:
+                    energies[f"ZPE / {line_vals[3]}"] = float(line_vals[2])
+                elif "total E vib" in line:
+                    energies[f"Enthalpy / {line_vals[4]}"] = float(line_vals[3])
+                elif "total S vib" in line:
+                    energies[f"Entropy / {line_vals[4]}"] = float(line_vals[3])
+                elif "Mode" in line or "total" in line:
+                    pass
+                else:
+                    # All remaining lines should be part of the modes table
+                    modes.append(numpy.array([float(x) for x in line_vals[2:]]))
+
+            if "Thermochemical analysis" in line:
+                read = True
+            elif "total S vib" in line:
+                read = False
+        self.out("vibrational_energies", Dict(energies))
+        modes = numpy.asarray(modes)
+        modes_data_node = ArrayData(
+            label="Vibrational Modes",
+            description="Calculated vibrational modes for the system.",
+        )
+        modes_data_node.set_array("Modes", modes)
+        self.out("vibrational_modes", modes_data_node)
+        return

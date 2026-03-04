@@ -216,6 +216,26 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     )
 
 
+def test_vibrational_calculation(chemsh_code, get_test_data_file):
+    """MM based geometry optimisation test."""
+    code = chemsh_code()
+    builder = code.get_builder()
+    builder.structure = get_test_data_file()
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "hf", "basis": "3-21G"})
+    builder.optimisation_parameters = Dict({"thermal": True})
+
+    results, node = run.get_node(builder)
+
+    assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_dlpoly`"
+
+    assert results.get("vibrational_modes").get_shape("Modes") == (3, 5)
+
+    assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0
+    assert results.get("vibrational_energies").get("ZPE / J/mol") == 58728.93143
+    assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.53277
+    assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01313
+
+
 # def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):
 #     """QM/MM geometry optimisation test."""
 #     code = chemsh_code()

@@ -37,6 +37,43 @@ def test_mm_theory_validation(generate_calcjob, generate_inputs):
         raise AssertionError("No error caught when providing invalid MM theory key.")
 
 
+def test_missing_force_field_file(generate_calcjob, generate_inputs):
+    """Test the co-validation of mm_parameters and force_field_file (force field)."""
+    inputs = generate_inputs(mm={"theory": "DL_POLY"}, structure_fname="butanol.cjson")
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        message = str(e)
+        assert (
+            "A force field must be specified to use molecular mechanics." in message
+        ), "Wrong error message triggered for missing force field validation."
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error code generated from MM theory input validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught when providing invalid MM theory key.")
+
+
+def test_missing_mm_theory_with_force_field_file(generate_calcjob, generate_inputs):
+    """Test the co-validation of mm_parameters and force_field_file (mm_parameters)."""
+    inputs = generate_inputs(structure_fname="butanol.cjson", ff_fname="butanol.ff")
+    del inputs["mm_parameters"]
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        message = str(e)
+        assert (
+            "A MM theory code must be specified to use molecular mechanics." in message
+        ), "Wrong error message triggered for missing mm_parameters with force field."
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error code generated from MM theory input validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError("No error caught when providing invalid MM theory key.")
+
+
 def test_structure_validation(generate_calcjob, get_test_data_file):
     """Test error catching for when no input structure is provided."""
     # Test if no structure is given
@@ -219,3 +256,39 @@ def test_qm_input_validation(generate_calcjob, generate_inputs):
         ) from e
     else:
         raise AssertionError("No error caught during QM parameter validation.")
+
+
+def test_missing_qm_for_qmmm_validation(generate_calcjob, generate_inputs):
+    """Test check for no QM if QM/MM specified."""
+    inputs = generate_inputs(mm={"theory": "DL_POLY"}, ff_fname="butanol.ff")
+    inputs["qmmm_parameters"] = {"qm_region": [0, 1, 2]}
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "Missing QM parameters for QM/MM calculation" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during optimisation parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError(
+            "No error caught during optimisation parameter validation."
+        )
+
+
+def test_missing_mm_for_qmmm_validation(generate_calcjob, generate_inputs):
+    """Test check for no QM if QM/MM specified."""
+    inputs = generate_inputs()
+    inputs["qmmm_parameters"] = {"qm_region": [0, 1, 2]}
+    try:
+        generate_calcjob(ChemShellCalculation, inputs)
+    except ValueError as e:
+        assert "Missing MM parameters for QM/MM calculation" in str(e)
+    except Exception as e:
+        raise AssertionError(
+            f"Wrong error caught during optimisation parameter validation: {str(e)}"
+        ) from e
+    else:
+        raise AssertionError(
+            "No error caught during optimisation parameter validation."
+        )

@@ -33,3 +33,11 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
     assert "total vibrational energy correction" in str(
         results.get("vibrational_analysis")
     )
+
+    assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0
+    assert results.get("vibrational_energies").get("ZPE / J/mol") == 57173.49993
+    assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.84524
+    assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01430
+
+    # print(results.get("vibrational_analysis"))
+    # assert False

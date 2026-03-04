@@ -137,6 +137,18 @@ class ChemShellCalculation(CalcJob):
             required=False,
             help="The vibrational analysis from ChemShell/DL_FIND",
         )
+        spec.output(
+            "vibrational_energies",
+            valid_type=Dict,
+            required=False,
+            help="The calculated thermochemical properties of the system.",
+        )
+        spec.output(
+            "vibrational_modes",
+            valid_type=ArrayData,
+            required=False,
+            help="The calculated vibrational modes of the system.",
+        )
 
         # Validate inputs namespace
         existing_validator = spec.inputs.validator

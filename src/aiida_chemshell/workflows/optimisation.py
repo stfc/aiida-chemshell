@@ -56,6 +56,12 @@ class GeometryOptimisationWorkChain(WorkChain):
             required=False,
             help="The vibrational analysis for the optimised structure.",
         )
+        spec.output(
+            "vibrational_energies",
+            valid_type=Dict,
+            required=False,
+            help="The calculated thermochemical properties of the optimised structure",
+        )
 
         ## Workflow ##
         spec.outline(cls.optimise, cls.energy, cls.result)
@@ -123,6 +129,9 @@ class GeometryOptimisationWorkChain(WorkChain):
             self.out("final_energy", self.ctx.energy.outputs.energy)
             self.out(
                 "vibrational_analysis", self.ctx.energy.outputs.vibrational_analysis
+            )
+            self.out(
+                "vibrational_energies", self.ctx.energy.outputs.vibrational_energies
             )
         else:
             self.out("final_energy", self.ctx.optimise.outputs.energy)

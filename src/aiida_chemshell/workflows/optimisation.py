@@ -71,7 +71,7 @@ class GeometryOptimisationWorkChain(WorkChain):
                     "theory": "NWChem",
                     "method": "dft",
                     "functional": "B3LYP",
-                    "d3": True,
+                    # "d3": True,
                 }
             )
             if "basis_quality" in self.inputs:

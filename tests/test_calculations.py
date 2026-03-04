@@ -228,6 +228,8 @@ def test_vibrational_calculation(chemsh_code, get_test_data_file):
 
     assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_dlpoly`"
 
+    assert "Vibration" in node.process_label
+
     assert results.get("vibrational_modes").get_shape("Modes") == (3, 5)
 
     assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0

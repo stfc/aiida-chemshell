@@ -100,7 +100,12 @@ class GeometryOptimisationWorkChain(WorkChain):
         """Perform a single point energy calculation on the optimised structure."""
         if self.inputs.get("vibrational_analysis", False):
             inputs = {
-                "code": self.exposed_inputs(ChemShellCalculation, namespace="chemsh")["code"],
+                "code": self.exposed_inputs(ChemShellCalculation, namespace="chemsh")[
+                    "code"
+                ],
+                "metadata": self.exposed_inputs(
+                    ChemShellCalculation, namespace="chemsh"
+                )["metadata"],
                 "structure": self.ctx.optimise.outputs.optimised_structure,
                 "qm_parameters": self.ctx.optimise.inputs.qm_parameters,
             }

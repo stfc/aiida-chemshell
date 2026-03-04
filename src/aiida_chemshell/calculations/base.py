@@ -679,6 +679,8 @@ class ChemShellCalculation(CalcJob):
             theory_key = "_(MM)"
 
         if "optimisation_parameters" in self.inputs:
+            if self.inputs.optimisation_parameters.get("thermal", False):
+                return "ChemShell_Vibrational_Frequencies" + theory_key
             return "ChemShell_Geometry_Optimisation" + theory_key
 
         return "ChemShell_Single_Point_Calculation" + theory_key

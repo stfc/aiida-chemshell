@@ -228,16 +228,12 @@ def test_vibrational_calculation(chemsh_code, get_test_data_file):
 
     assert node.is_finished_ok, "CalcJob failed for `test_OptCalculation_dlpoly`"
 
-    thermo_analysis = results.get("vibrational_analysis").value
+    assert results.get("vibrational_modes").get_shape("Modes") == (3, 5)
 
-    assert "Thermochemical analysis" in thermo_analysis
-    assert (
-        "0.1252886592  1819.534  2617.900   0.0041452033   0.0000013454  -0.0000014996"
-        in thermo_analysis
-    )
-    assert "total ZPE      58728.93143 J/mol" in thermo_analysis
-    assert "total E vib        3.53277 J/mol" in thermo_analysis
-    assert "total S vib        0.01313 J/mol/K" in thermo_analysis
+    assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0
+    assert results.get("vibrational_energies").get("ZPE / J/mol") == 58728.93143
+    assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.53277
+    assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01313
 
 
 # def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):

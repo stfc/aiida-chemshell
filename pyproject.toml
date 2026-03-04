@@ -33,6 +33,9 @@ Source = "https://github.com/stfc/aiida-chemshell"
 [project.entry-points."aiida.parsers"]
 "chemshell" = "aiida_chemshell.parsers.base:ChemShellParser"
 
+[project.entry-points."aiida.workflows"]
+"chemshell.opt" = "aiida_chemshell.workflows.optimisation:GeometryOptimisationWorkChain"
+
 [tool.setuptools.packages.find]
 where = ["src",]
 

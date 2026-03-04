@@ -15,7 +15,7 @@ class GeometryOptimisationWorkChain(WorkChain):
         super().define(spec)
 
         ## Inputs ##
-        spec.expose_inputs(ChemShellCalculation, exclude=("metadata"))
+        spec.expose_inputs(ChemShellCalculation, namespace="chemsh")
 
         spec.input(
             "vibrational_analysis",
@@ -64,8 +64,8 @@ class GeometryOptimisationWorkChain(WorkChain):
 
     def optimise(self):
         """Perform the geometry optimisation."""
-        inputs = self.exposed_inputs(ChemShellCalculation)
-        if "qm_parameters" not in self.inputs:
+        inputs = self.exposed_inputs(ChemShellCalculation, namespace="chemsh")
+        if "qm_parameters" not in inputs:
             inputs["qm_parameters"] = Dict(
                 {
                     "theory": "NWChem",
@@ -100,7 +100,7 @@ class GeometryOptimisationWorkChain(WorkChain):
         """Perform a single point energy calculation on the optimised structure."""
         if self.inputs.get("vibrational_analysis", False):
             inputs = {
-                "code": self.exposed_inputs(ChemShellCalculation)["code"],
+                "code": self.exposed_inputs(ChemShellCalculation, namespace="chemsh")["code"],
                 "structure": self.ctx.optimise.outputs.optimised_structure,
                 "qm_parameters": self.ctx.optimise.inputs.qm_parameters,
             }

@@ -8,9 +8,11 @@ from aiida_chemshell.workflows.optimisation import GeometryOptimisationWorkChain
 def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
     """Test a geometry optimisation workflow with vibrational analysis."""
     inputs = {
-        "code": chemsh_code(),
-        "structure": get_test_data_file(),
-        "qm_parameters": {"theory": "PySCF", "method": "HF"},
+        "chemsh": {
+            "code": chemsh_code(),
+            "structure": get_test_data_file(),
+            "qm_parameters": {"theory": "PySCF", "method": "HF"},
+        },
         "basis_quality": "fast",
         "vibrational_analysis": True,
     }

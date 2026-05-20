@@ -1,7 +1,9 @@
 """Workflows for geometry optimisation based taks."""
 
+from aiida.common.exceptions import MissingEntryPointError
 from aiida.engine import ToContext, WorkChain
 from aiida.orm import ArrayData, Bool, Dict, Float, SinglefileData, Str
+from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
 
@@ -31,6 +33,36 @@ class GeometryOptimisationWorkChain(WorkChain):
             help="Set basis set quality for QM calculation based on defined options.",
         )
 
+        try:
+            mlip_train_calc = CalculationFactory("mlip.train")
+        except MissingEntryPointError:
+            pass
+        else:
+            print("Exposiing the mlip inputs...")
+            spec.expose_inputs(
+                mlip_train_calc,
+                namespace="mlip",
+                namespace_options={
+                    "required": False,
+                    "populate_defaults": False,
+                    "help": (
+                        "Optional inputs to fine-tune the MLIP model using aiida-mlip."
+                    ),
+                },
+            )
+            spec.expose_outputs(
+                mlip_train_calc,
+                namespace="mlip",
+                namespace_options={
+                    "required": False,
+                    "populate_defaults": False,
+                    "help": (
+                        "Optional outputs from fine-tuning the MLIP model using "
+                        "aiida-mlip."
+                    ),
+                },
+            )
+
         ## Outputs ##
         spec.output(
             "final_energy",
@@ -58,7 +90,7 @@ class GeometryOptimisationWorkChain(WorkChain):
         )
 
         ## Workflow ##
-        spec.outline(cls.optimise, cls.energy, cls.result)
+        spec.outline(cls.optimise, cls.energy, cls.train_mlip, cls.result)
 
         return
 
@@ -117,8 +149,45 @@ class GeometryOptimisationWorkChain(WorkChain):
                 self.ctx.optimise.inputs.optimisation_parameters.get_dict()
             )
             inputs["optimisation_parameters"]["thermal"] = True
+            if self.inputs.get("mlip", None):
+                inputs["optimisation_parameters"]["save_path"] = True
             future = self.submit(ChemShellCalculation, **inputs)
             return ToContext(energy=future)
+        return None
+
+    def generate_mlip_training_inputs(self):
+        """Convert the optimisation path files to Janus compatible inputs."""
+        if "mlip" in self.inputs:
+            inputs = {
+                "path": self.ctx.optimise.outputs.trajectory_path,
+                "force": self.ctx.optimise.outputs.trajectory_force,
+                "code": self.inputs.chemshell,
+                "metadata": {
+                    "options": {
+                        "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
+                        # "withmpi": True,
+                    }
+                },
+            }
+            from aiida_chemshell.calculations.file_conversion import (
+                CreateJanusTrainingInputsCalcJob,
+            )
+
+            future = self.submit(CreateJanusTrainingInputsCalcJob, **inputs)
+            return ToContext(create_mlip_inputs=future)
+        return None
+
+    def train_mlip(self):
+        """Train a given MLIP model."""
+        try:
+            mlip_train_calc = CalculationFactory("mlip.train")
+        except MissingEntryPointError:
+            pass
+        else:
+            if "mlip" in self.inputs:
+                mlip_inputs = self.exposed_inputs(mlip_train_calc, namespace="mlip")
+                future = self.submit(mlip_train_calc, **mlip_inputs)
+                return ToContext(mlip_training=future)
         return None
 
     def result(self):

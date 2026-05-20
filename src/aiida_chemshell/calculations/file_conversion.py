@@ -3,10 +3,10 @@
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec
-from aiida.orm import FolderData, SinglefileData, Str
+from aiida.orm import SinglefileData, Str
 
 
-class SplitTrajectory(CalcJob):
+class CreateJanusTrainingInputsCalcJob(CalcJob):
     """CalcJob to split an XYZ trajectory into individual ext XYZ files."""
 
     @classmethod
@@ -34,10 +34,22 @@ class SplitTrajectory(CalcJob):
         )
 
         spec.output(
-            "trajectory_folder",
-            valid_type=FolderData,
+            "training_input",
+            valid_type=SinglefileData,
             required=True,
-            help="The directory containing the resulting extXYZ files.",
+            help="The main training data set in extended XYZ format.",
+        )
+        spec.output(
+            "validation_input",
+            valid_type=SinglefileData,
+            required=True,
+            help="The validation data set in extended XYZ format.",
+        )
+        spec.output(
+            "test_input",
+            valid_type=SinglefileData,
+            requried=True,
+            help="The testing data set in extended XYZ format.",
         )
 
         ## Metadata
@@ -47,7 +59,7 @@ class SplitTrajectory(CalcJob):
         }
         spec.inputs["metadata"]["options"][
             "parser_name"
-        ].default = "chemshell.split_traj"
+        ].default = "chemshell.file_conversion.mlip_training"
 
         # Exit Codes
         spec.exit_code(
@@ -86,9 +98,7 @@ class SplitTrajectory(CalcJob):
         calc_info.codes_info = [code_info]
         calc_info.retrieve_temporary_list = []
         calc_info.provenance_exclude_list = []
-        calc_info.retrieve_temporary_list = [
-            "trajectory*xyz",
-        ]
+        calc_info.retrieve_temporary_list = ["train.xyz", "valid.xyz", "test.xyz"]
         calc_info.local_copy_list = [
             (
                 self.inputs.path.uuid,
@@ -109,33 +119,29 @@ class SplitTrajectory(CalcJob):
         return """
 with open("path.xyz", "r") as f:
     path = f.readlines()
-with open("path_force.xyz", 'r') as f:
+with open("path_force.xyz", "r") as f:
     force = f.readlines()
+
 natms = int(path[0])
-xyz_str = "\\n{0:8s} {1:12.8f} {2:12.8f} {3:12.8f} {4:12.8f} {5:12.8f} {6:12.8f}"
-i = 2
-step = 0
-while i < len(path):
-    # Write a new xyz file for given step
-    with open(f"trajectory_{step:03d}.xyz", 'w') as f:
-        # write the number of atoms
-        f.write(f"{natms:10d}")
-        # Write the header line
-        f.write(f"\\nProperties=\\"species:S:1:pos:R:3:force:R:3\\" Step={step}")
-        for j in range(natms):
-            path_line = path[i + j].split()
-            force_line = force[i + j].split()
-            f.write(
-                xyz_str.format(
-                    path_line[0],
-                    float(path_line[1]),
-                    float(path_line[2]),
-                    float(path_line[3]),
-                    float(force_line[1]),
-                    float(force_line[2]),
-                    float(force_line[3])
-                )
-            )
-    i += natms + 2
-    step += 1
+nsteps = len(path) // (natms + 2)
+valid_interval = 5
+test_interval = 10
+if nsteps < test_interval:
+    test_interval = nsteps
+    valid_interval = (nsteps // 2) + 1
+for step in range(nsteps):
+    if (step + 1) % test_interval == 0:
+        fname = "test.xyz"
+    elif (step + 1) % valid_interval == 0:
+        fname = "valid.xyz"
+    else:
+        fname = "train.xyz"
+    with open(fname, "a") as f:
+        f.write(f"{natms}\\n")
+        f.write('Properties="species:S:1:pos:R:3:force:R:3"\\n')
+        for i in range(2, natms + 2):
+            index = (step * (natms + 2)) + i
+            f.write(path[index].strip("\\n") + "   ")
+            f.write("   ".join(force[index].split()[1:]))
+            f.write("\\n")
 """

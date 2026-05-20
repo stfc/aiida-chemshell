@@ -32,7 +32,7 @@ Source = "https://github.com/stfc/aiida-chemshell"
 
 [project.entry-points."aiida.parsers"]
 "chemshell" = "aiida_chemshell.parsers.base:ChemShellParser"
-"chemshell.split_traj" = "aiida_chemshell.parsers.split_trajectory:SplitTrajectoryParser"
+"chemshell.file_conversion.mlip_training" = "aiida_chemshell.parsers.file_conversion:CreateJanusTrainingInputsParser"
 
 [project.entry-points."aiida.workflows"]
 "chemshell.opt" = "aiida_chemshell.workflows.optimisation:GeometryOptimisationWorkChain"

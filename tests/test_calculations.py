@@ -178,6 +178,25 @@ def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
         "Incorrect energy result for PySCF based optimisation calculation."
     )
 
+    assert "optimisation_path" in results, "Missing optimisation_path output node."
+    optimisation_path = results.get("optimisation_path")
+
+    assert optimisation_path.description != "", (
+        "Missing optimisation_path array node description"
+    )
+
+    assert optimisation_path.get_arraynames() == ["energies"], (
+        "Optimisation path energies entry missing."
+    )
+
+    assert optimisation_path.get_shape("energies")[0] == 7, (
+        "Incorrect number of entries for the optimisation_path energies."
+    )
+
+    assert abs(optimisation_path.get_array("energies")[-1] - eref) < 1e-7, (
+        "Incorrect final energy in optimisation_path energy series."
+    )
+
 
 def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     """MM based geometry optimisation test."""

@@ -134,6 +134,14 @@ class ChemShellCalculation(CalcJob):
             ),
         )
         spec.output(
+            "optimisation_path",
+            valid_type=ArrayData,
+            required=False,
+            help=(
+                "Values calculated at each step of an optimisation based calculation."
+            ),
+        )
+        spec.output(
             "vibrational_energies",
             valid_type=Dict,
             required=False,

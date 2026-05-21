@@ -104,6 +104,11 @@ class ChemShellParser(Parser):
                                 label="ChemShell optimisation trajectory.",
                             ),
                         )
+                    self.parse_optimisation_path(
+                        self.retrieved.get_object_content(
+                            ChemShellCalculation.FILE_STDOUT, "r"
+                        )
+                    )
                 else:
                     return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
             elif ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
@@ -124,6 +129,11 @@ class ChemShellParser(Parser):
                             description=descrip,
                         ),
                     )
+                self.parse_optimisation_path(
+                    self.retrieved.get_object_content(
+                        ChemShellCalculation.FILE_STDOUT, "r"
+                    )
+                )
             else:
                 return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
@@ -167,4 +177,19 @@ class ChemShellParser(Parser):
         )
         modes_data_node.set_array("Modes", modes)
         self.out("vibrational_modes", modes_data_node)
+        return
+
+    def parse_optimisation_path(self, stdout: str) -> None:
+        """Extract per step values from the optimisation job."""
+        energies = []
+        for line in stdout.split("\n"):
+            if "Energy calculation finished" in line:
+                energies.append(float(line.split()[-1]))
+
+        results = ArrayData(
+            label="Optimisation Path Properties",
+            description="Values calculated at each step of an optimisation.",
+        )
+        results.set_array("energies", numpy.asarray(energies))
+        self.out("optimisation_path", results)
         return

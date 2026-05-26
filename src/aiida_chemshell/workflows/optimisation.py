@@ -38,7 +38,6 @@ class GeometryOptimisationWorkChain(WorkChain):
         except MissingEntryPointError:
             pass
         else:
-            print("Exposiing the mlip inputs...")
             spec.expose_inputs(
                 mlip_train_calc,
                 namespace="mlip",
@@ -126,6 +125,10 @@ class GeometryOptimisationWorkChain(WorkChain):
             inputs["optimisation_parameters"] = Dict({})
 
         future = self.submit(ChemShellCalculation, **inputs)
+        future.label = ChemShellCalculation.default_process_label(future)
+        future.description = (
+            f"Geometry optimisation step from WorkChainNode pk: {self.node.pk}"
+        )
         return ToContext(optimise=future)
 
     def energy(self):
@@ -152,6 +155,11 @@ class GeometryOptimisationWorkChain(WorkChain):
             if self.inputs.get("mlip", None):
                 inputs["optimisation_parameters"]["save_path"] = True
             future = self.submit(ChemShellCalculation, **inputs)
+            future.label = ChemShellCalculation.default_process_label(future)
+            future.description = (
+                f"Vibrational frequency calculation step from WorkChainNode "
+                f"pk: {self.node.pk}"
+            )
             return ToContext(energy=future)
         return None
 
@@ -174,6 +182,10 @@ class GeometryOptimisationWorkChain(WorkChain):
             )
 
             future = self.submit(CreateJanusTrainingInputsCalcJob, **inputs)
+            future.label = "Generate MLIP training data set from geometry optimisation."
+            future.description = (
+                f"Data extraction step from WorkChainNode pk: {self.node.pk}"
+            )
             return ToContext(create_mlip_inputs=future)
         return None
 
@@ -187,6 +199,10 @@ class GeometryOptimisationWorkChain(WorkChain):
             if "mlip" in self.inputs:
                 mlip_inputs = self.exposed_inputs(mlip_train_calc, namespace="mlip")
                 future = self.submit(mlip_train_calc, **mlip_inputs)
+                future.label = "MLIP Fine-Tuning."
+                future.description = (
+                    f"MLIP fine-tuning step from WorkChainNode pk: {self.node.pk}"
+                )
                 return ToContext(mlip_training=future)
         return None
 

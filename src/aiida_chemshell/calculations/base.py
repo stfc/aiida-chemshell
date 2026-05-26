@@ -696,17 +696,32 @@ class ChemShellCalculation(CalcJob):
         str
             The process label based on what inputs have been provided.
         """
+        return ChemShellCalculation.default_process_label(self)
+
+    @classmethod
+    def default_process_label(cls, node) -> str:
+        """
+        AiiDA Process label definition (Class Method).
+
+        Defines the process label to be associated with the created ProcessNode
+        stored in the AiiDA database.
+
+        Returns
+        -------
+        str
+            The process label based on what inputs have been provided.
+        """
         theory_key = ""
-        if "qm_parameters" in self.inputs:
-            if "mm_parameters" in self.inputs:
+        if "qm_parameters" in node.inputs:
+            if "mm_parameters" in node.inputs:
                 theory_key = "_(QM/MM)"
             else:
                 theory_key = "_(QM)"
         else:
             theory_key = "_(MM)"
 
-        if "optimisation_parameters" in self.inputs:
-            if self.inputs.optimisation_parameters.get("thermal", False):
+        if "optimisation_parameters" in node.inputs:
+            if node.inputs.optimisation_parameters.get("thermal", False):
                 return "ChemShell_Vibrational_Frequencies" + theory_key
             return "ChemShell_Geometry_Optimisation" + theory_key
 

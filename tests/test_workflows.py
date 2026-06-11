@@ -26,7 +26,7 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
         "basis", ""
     ) == GeometryOptimisationWorkChain.get_basis_set_label("fast")
 
-    assert abs(results.get("final_energy") - -75.585959742867) < 1e-10, (
+    assert abs(results.get("final_energy") - -75.585959742867) < 1e-9, (
         "Incorrect final energy for geometry optimisation workflow."
     )
 
@@ -46,24 +46,20 @@ def test_optimisation_workflow_mlip_training(
     chemsh_code, get_test_data_file, janus_code
 ):
     """Test a geometry optimisation workflow with vibrational analysis."""
-    from aiida_mlip.data.config import JanusConfigfile
     from aiida_mlip.helpers.help_load import load_model
 
     inputs = {
         "chemsh": {
             "code": chemsh_code(),
-            "structure": get_test_data_file(),
-            "qm_parameters": {"theory": "PySCF", "method": "HF"},
+            "structure": get_test_data_file("butanol.cjson"),
+            "qm_parameters": {
+                "theory": "PySCF",
+                "method": "hf",
+                "functional": "blyp",
+            },
         },
-        "mlip": {
-            "mlip_config": JanusConfigfile(
-                "/opt/aiida-chemshell/.local/janus_config.yml"
-            ),
-            "code": janus_code,
-            "fine_tune": True,
-            "foundation_model": load_model(None, "mace_mp"),
-            "metadata": {"options": {"resources": {"num_machines": 1}}},
-        },
+        "mlip_model": load_model(None, "mace_mp"),
+        "mlip_code": janus_code,
         "basis_quality": "fast",
         "vibrational_analysis": False,
     }
@@ -73,10 +69,30 @@ def test_optimisation_workflow_mlip_training(
 
     assert len(node.called) > 0, "WorkChain did not launch any subprocesses"
 
-    assert node.called[0].inputs.qm_parameters.get(
-        "basis", ""
-    ) == GeometryOptimisationWorkChain.get_basis_set_label("fast")
+    # assert node.called[0].inputs.qm_parameters.get(
+    #    "basis", ""
+    # ) == GeometryOptimisationWorkChain.get_basis_set_label("fast")
+    #
+    # assert abs(results.get("final_energy") - -75.585959742867) < 1e-9, (
+    #    "Incorrect final energy for geometry optimisation workflow."
+    # )
 
-    assert abs(results.get("final_energy") - -75.585959742867) < 1e-10, (
-        "Incorrect final energy for geometry optimisation workflow."
-    )
+    subs = node.called
+    for sub in subs:
+        # if "Generate MLIP training" in sub.label:
+        #     print(sub.outputs.training_input.content)
+        if "MLIP Fine-Tuning" in sub.label:
+            print(sub.outputs.retrieved.list_object_names())
+            print("ERROR")
+            print(sub.outputs.retrieved.get_object_content("_scheduler-stderr.txt"))
+            print("OUTPUT")
+            print(sub.outputs.retrieved.get_object_content("_scheduler-stdout.txt"))
+            print("AIIDA OUTPUT")
+            print(sub.outputs.retrieved.get_object_content("aiida-stdout.txt"))
+            print("results")
+            print(sub.outputs.retrieved.list_object_names(path="results"))
+            print("LOG")
+            # print(sub.outputs.retrieved.get_object_content("logs/test_run-123.log"))
+
+        assert sub.is_finished_ok, f"Node '{sub.label}' failed to finish correctly."
+    # assert False

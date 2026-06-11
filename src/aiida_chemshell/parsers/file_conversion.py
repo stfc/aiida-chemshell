@@ -1,5 +1,7 @@
 """Defines the parser for the split trajectory CalcJob."""
 
+import os
+
 from aiida.engine import ExitCode
 from aiida.orm import SinglefileData
 from aiida.parsers.parser import Parser
@@ -11,8 +13,10 @@ class CreateJanusTrainingInputsParser(Parser):
     def parse(self, **kwargs):
         """AiiDA parser plugin for SplitTrajectory CalcJob."""
         description_str = "MLIP {} data set extracted from ChemShell calculation."
+        retrieved_temporary_folder = kwargs.get("retrieved_temporary_folder", None)
 
-        with self.retrieved.open("train.xyz", "r") as f:
+        # with self.retrieved.open("train.xyz", "r") as f:
+        with open(os.path.join(retrieved_temporary_folder, "train.xyz"), "rb") as f:
             self.out(
                 "training_input",
                 SinglefileData(
@@ -23,7 +27,8 @@ class CreateJanusTrainingInputsParser(Parser):
                 ),
             )
 
-        with self.retrieved.open("test.xyz", "r") as f:
+        # with self.retrieved.open("test.xyz", "r") as f:
+        with open(os.path.join(retrieved_temporary_folder, "test.xyz"), "rb") as f:
             self.out(
                 "test_input",
                 SinglefileData(
@@ -34,7 +39,8 @@ class CreateJanusTrainingInputsParser(Parser):
                 ),
             )
 
-        with self.retrieved.open("valid.xyz", "r") as f:
+        # with self.retrieved.open("valid.xyz", "r") as f:
+        with open(os.path.join(retrieved_temporary_folder, "valid.xyz"), "rb") as f:
             self.out(
                 "validation_input",
                 SinglefileData(

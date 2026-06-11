@@ -85,3 +85,43 @@ def generate_parameter_string(params: dict) -> str:
         else:
             s += f"{key}={params[key]}, "
     return s.rstrip(", ")
+
+
+def generate_default_mlip_fine_tune_config():
+    """Generate a default configuration for mlip fine-tuning via Janus."""
+    return {
+        # "multiheads_finetuning": True,
+        "foundation_filter_elements": True,
+        "foundation_model_readout": True,
+        "foundation_model_elements": False,
+        "loss": "universal",
+        "weight_pt_head": 10.0,
+        "energy_weight": 1.0,
+        "forces_weight": 10.0,
+        "stress_weight": 10.0,
+        "stress_key": "stress",
+        "energy_key": "energy",
+        "forces_key": "forces",
+        "compute_stress": False,
+        "compute_forces": True,
+        "clip_grad": 10,
+        "error_table": "PerAtomRMSE",
+        "scaling": "rms_forces_scaling",
+        "force_mh_ft_lr": True,
+        "lr": 0.0001,
+        "batch_size": 2,
+        "max_num_epochs": 10,
+        "ema": True,
+        "ema_decay": 0.99999,
+        "amsgrad": True,
+        "default_dtype": "float64",
+        "device": "cpu",
+        "restart_latest": True,
+        # "seed": 2024,
+        "keep_isolated_atoms": True,
+        "save_cpu": True,
+        "weight_decay": 1e-8,
+        "eval_interval": 1,
+        # "enable_cueq": True,
+        "E0s": {1: -13.664311914087541, 6: -1030.2235576550245, 8: -2043.4891174666404},
+    }

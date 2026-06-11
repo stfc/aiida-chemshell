@@ -3,7 +3,7 @@
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec
-from aiida.orm import SinglefileData, Str
+from aiida.orm import ArrayData, SinglefileData, Str
 
 
 class CreateJanusTrainingInputsCalcJob(CalcJob):
@@ -24,6 +24,12 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
             valid_type=SinglefileData,
             required=True,
             help="An XYZ trajectory file containing the forces at each step.",
+        )
+        spec.input(
+            "energies",
+            valid_type=ArrayData,
+            required=True,
+            help="The calculated dft energy of each step in the data series.",
         )
 
         spec.input(
@@ -48,7 +54,7 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         spec.output(
             "test_input",
             valid_type=SinglefileData,
-            requried=True,
+            required=True,
             help="The testing data set in extended XYZ format.",
         )
 
@@ -76,6 +82,10 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         with folder.open("input.py", "w") as f:
             f.write(script)
 
+        with folder.open("energies.txt", "w") as f:
+            for val in self.inputs.energies.get_array("energies"):
+                f.write(f"{val:.10f}\n")
+
         code_info = CodeInfo()
         code_info.code_uuid = self.inputs.code.uuid
         if "chemsh.x" in str(self.inputs.code.filepath_executable):
@@ -96,7 +106,6 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
 
         calc_info = CalcInfo()
         calc_info.codes_info = [code_info]
-        calc_info.retrieve_temporary_list = []
         calc_info.provenance_exclude_list = []
         calc_info.retrieve_temporary_list = ["train.xyz", "valid.xyz", "test.xyz"]
         calc_info.local_copy_list = [
@@ -121,7 +130,10 @@ with open("path.xyz", "r") as f:
     path = f.readlines()
 with open("path_force.xyz", "r") as f:
     force = f.readlines()
-
+energies = []
+with open("energies.txt", 'r') as f:
+    for line in f:
+        energies.append(float(line))
 natms = int(path[0])
 nsteps = len(path) // (natms + 2)
 valid_interval = 5
@@ -138,7 +150,9 @@ for step in range(nsteps):
         fname = "train.xyz"
     with open(fname, "a") as f:
         f.write(f"{natms}\\n")
-        f.write('Properties="species:S:1:pos:R:3:force:R:3"\\n')
+        f.write(f'Step={step}  ')
+        f.write(f'Properties=species:S:1:pos:R:3:dft_forces:R:3 pbc="F F F" ')
+        f.write(f'energy={energies[step]}\\n')
         for i in range(2, natms + 2):
             index = (step * (natms + 2)) + i
             f.write(path[index].strip("\\n") + "   ")

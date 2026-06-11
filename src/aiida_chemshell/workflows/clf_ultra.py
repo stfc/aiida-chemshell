@@ -97,21 +97,21 @@ class CLFULTRAOptimisationWorkChain(WorkChain):
 
     def generate_xyz_files(self):
         """Convert the paths to individual extended XYZ filesn for each step."""
-        inputs = {
-            "path": self.ctx.optimise.outputs.trajectory_path,
-            "force": self.ctx.optimise.outputs.trajectory_force,
-            "code": self.inputs.chemshell,
-            "metadata": {
-                "options": {
-                    "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
-                    # "withmpi": True,
-                }
-            },
-        }
-        from aiida_chemshell.calculations.splt_trajectory import SplitTrajectory
+        # inputs = {
+        #     "path": self.ctx.optimise.outputs.trajectory_path,
+        #     "force": self.ctx.optimise.outputs.trajectory_force,
+        #     "code": self.inputs.chemshell,
+        #     "metadata": {
+        #         "options": {
+        #             "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
+        #             # "withmpi": True,
+        #         }
+        #     },
+        # }
 
-        future = self.submit(SplitTrajectory, **inputs)
-        return ToContext(split_trajectory=future)
+        # future = self.submit(SplitTrajectory, **inputs)
+        # return ToContext(split_trajectory=future)
+        return
 
     def extract_final_structure(self):
         """Extract the optimised structure from the XYZ trajectory folder."""

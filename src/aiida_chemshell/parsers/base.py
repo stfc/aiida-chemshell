@@ -119,7 +119,7 @@ class ChemShellParser(Parser):
                     input_fname = self.node.inputs.structure.filename
                     descrip += f" ({input_fname})"
                 # Store the optimised structure file
-                with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "r") as f:
+                with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "rb") as f:
                     self.out(
                         "optimised_structure",
                         SinglefileData(

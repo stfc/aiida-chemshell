@@ -5,6 +5,7 @@ from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec, PortNamespace
 from aiida.orm import ArrayData, Dict, Float, SinglefileData, StructureData
 
+from aiida_chemshell.units import UnitsConverter
 from aiida_chemshell.utils import ChemShellMMTheory, ChemShellQMTheory
 
 
@@ -742,10 +743,19 @@ class ChemShellCalculation(CalcJob):
 
         script = "from chemsh import Fragment\n"
         if isinstance(self.inputs.structure, SinglefileData):
-            fname = self.inputs.structure.filename
+            script += (
+                f"structure = Fragment(coords='{self.inputs.structure.filename:s}')\n"
+            )
         else:
-            fname = ChemShellCalculation.FILE_TMP_STRUCTURE
-        script += f"structure = Fragment(coords='{fname:s}')\n"
+            atom_names = [site.kind_name for site in self.inputs.structure.sites]
+            coords = [
+                [UnitsConverter.angstrom_to_bohr(r) for r in site.position]
+                for site in self.inputs.structure.sites
+            ]
+            script += (
+                f"structure = Fragment(coords={str(coords):s}, names="
+                f"{str(atom_names):s})\n"
+            )
 
         ## Setup Theory objects
 

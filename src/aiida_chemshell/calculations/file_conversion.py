@@ -3,7 +3,9 @@
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec
-from aiida.orm import ArrayData, SinglefileData, Str
+from aiida.orm import ArrayData, Dict, SinglefileData, Str
+
+from aiida_chemshell.units import UnitsConverter
 
 
 class CreateJanusTrainingInputsCalcJob(CalcJob):
@@ -29,7 +31,13 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
             "energies",
             valid_type=ArrayData,
             required=True,
-            help="The calculated dft energy of each step in the data series.",
+            help="The calculated dft energy of each step in the data series in a.u.",
+        )
+        spec.input(
+            "atom_energies",
+            valid_type=Dict,
+            required=True,
+            help="The isolated atomic energies for the training set.",
         )
 
         spec.input(
@@ -76,6 +84,19 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
 
         return
 
+    def create_isolated_atom_energy_xyz(self) -> str:
+        """Create the isolated atomistic energies in the required XYZ format."""
+        xyz_str = ""
+        zero = 0.0
+        for atom in self.inputs.atom_energies.keys():
+            xyz_str += "1\nProperties=species:S:1:pos:R:3:dft_forces:R:3 "
+            energy = UnitsConverter.hartree_to_ev(self.inputs.atom_energies[atom])
+            xyz_str += f"dft_energy={energy} "
+            xyz_str += 'config_type=IsolatedAtom pbc="F F F"\n'
+            xyz_str += f"{atom:8s} {zero:.4f} {zero:.4f} {zero:.4f} "
+            xyz_str += f"{zero:.4f} {zero:.4f} {zero:.4f}\n"
+        return xyz_str
+
     def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         """Perform the python task to split the input trajectories."""
         script = self.generate_script()
@@ -84,7 +105,10 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
 
         with folder.open("energies.txt", "w") as f:
             for val in self.inputs.energies.get_array("energies"):
-                f.write(f"{val:.10f}\n")
+                f.write(f"{UnitsConverter.hartree_to_ev(val):.10f}\n")
+
+        with folder.open("isolated_atoms.xyz", "w") as f:
+            f.write(self.create_isolated_atom_energy_xyz())
 
         code_info = CodeInfo()
         code_info.code_uuid = self.inputs.code.uuid
@@ -158,4 +182,8 @@ for step in range(nsteps):
             f.write(path[index].strip("\\n") + "   ")
             f.write("   ".join(force[index].split()[1:]))
             f.write("\\n")
+with open("isolated_atoms.xyz", "r") as f:
+    atoms = f.read()
+with open("train.xyz", "a") as f:
+    f.write(atoms)
 """

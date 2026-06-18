@@ -6,6 +6,7 @@ from aiida.orm import ArrayData, Bool, Code, Dict, Float, SinglefileData, Str
 from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
+from aiida_chemshell.workflows.isolated_atoms import IsolatedAtomicEnergiesWorkChain
 
 
 class GeometryOptimisationWorkChain(WorkChain):
@@ -101,6 +102,7 @@ class GeometryOptimisationWorkChain(WorkChain):
         spec.outline(
             cls.optimise,
             cls.energy,
+            cls.isolated_atom_energies,
             cls.generate_mlip_training_inputs,
             cls.train_mlip,
             cls.result,
@@ -178,6 +180,18 @@ class GeometryOptimisationWorkChain(WorkChain):
             return ToContext(energy=future)
         return None
 
+    def isolated_atom_energies(self):
+        """Calculate isolated atomic energies for all species in the input structure."""
+        if "mlip_model" in self.inputs:
+            inputs = {
+                "structure": self.inputs.chemsh.structure,
+                "code": self.inputs.chemsh.code,
+                "qm_parameters": self.inputs.chemsh.qm_parameters,
+            }
+            future = self.submit(IsolatedAtomicEnergiesWorkChain, **inputs)
+            return ToContext(isolated_atoms=future)
+        return None
+
     def generate_mlip_training_inputs(self):
         """Convert the optimisation path files to Janus compatible inputs."""
         if "mlip_model" in self.inputs:
@@ -185,6 +199,7 @@ class GeometryOptimisationWorkChain(WorkChain):
                 "path": self.ctx.optimise.outputs.trajectory_path,
                 "force": self.ctx.optimise.outputs.trajectory_force,
                 "energies": self.ctx.optimise.outputs.optimisation_path,
+                "atom_energies": self.ctx.isolated_atoms.outputs.atom_energies,
                 "code": self.inputs.chemsh.code,
                 "metadata": {
                     "options": {

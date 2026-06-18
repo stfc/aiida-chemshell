@@ -123,5 +123,4 @@ def generate_default_mlip_fine_tune_config():
         "weight_decay": 1e-8,
         "eval_interval": 1,
         # "enable_cueq": True,
-        "E0s": {1: -13.664311914087541, 6: -1030.2235576550245, 8: -2043.4891174666404},
     }

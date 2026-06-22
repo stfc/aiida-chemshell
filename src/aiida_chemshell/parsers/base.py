@@ -87,7 +87,7 @@ class ChemShellParser(Parser):
                         SinglefileData(
                             file=f,
                             filename=ChemShellCalculation.FILE_DLFIND,
-                            label="ChemShell Punch Structure File",
+                            label="CJSON Structure File",
                             description=descrip,
                         ),
                     )

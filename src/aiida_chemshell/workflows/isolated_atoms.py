@@ -70,7 +70,11 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
 
     def _atom_types_from_structuredata(self, structure: StructureData) -> None:
         """Determine the unique atom types from a StructureData object."""
-        self.unique_atoms = [site.kind_name for site in structure.sites]
+        self.unique_atoms = []
+        for site in structure.sites:
+            if site.kind_name not in self.unique_atoms:
+                self.unique_atoms.append(site.kind_name)
+        return
 
     def _atom_types_from_file(self) -> None:
         """Determine the unique atom types from a SinglefileData object."""

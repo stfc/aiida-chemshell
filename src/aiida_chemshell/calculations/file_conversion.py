@@ -2,7 +2,7 @@
 
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
-from aiida.engine import CalcJob, CalcJobProcessSpec
+from aiida.engine import CalcJob, CalcJobProcessSpec, PortNamespace
 from aiida.orm import ArrayData, Dict, SinglefileData, Str
 
 from aiida_chemshell.units import UnitsConverter
@@ -50,12 +50,14 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         spec.output(
             "training_input",
             valid_type=SinglefileData,
+            validator=cls.validate_path_file,
             required=True,
             help="The main training data set in extended XYZ format.",
         )
         spec.output(
             "validation_input",
             valid_type=SinglefileData,
+            vlidatory=cls.validate_path_file,
             required=True,
             help="The validation data set in extended XYZ format.",
         )
@@ -83,6 +85,22 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         )
 
         return
+
+    @classmethod
+    def validate_path_file(
+        cls, value: SinglefileData, namepsace: PortNamespace
+    ) -> str | None:
+        """Perform validation checks on the input path xyz files."""
+        if not isinstance(value, SinglefileData):
+            return "Input trajectory needs to be a SinglefileData node."
+        content = value.get_content("r")
+        lines = content.split("\n")
+        natoms = int(lines[0])
+        if len(lines) % (natoms + 2) != 0:
+            return "Invalid XYZ trajectory structure detected."
+        if len(lines) // (natoms + 2) < 5:
+            return "Not enough individual configurations within input trajectory."
+        return None
 
     def create_isolated_atom_energy_xyz(self) -> str:
         """Create the isolated atomistic energies in the required XYZ format."""

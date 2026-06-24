@@ -48,6 +48,10 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
     def atom_energies(self):
         """Run ChemShell single point calculations for each atom type."""
         calculations = {}
+        if self.inputs.qm_parameters["theory"] == "PySCF":
+            raise Exception(
+                "Isolated atom calculations not supported by PySCF QM backend."
+            )
         for atom_symbol in self.unique_atoms:
             structure = StructureData()
             structure.append_atom(position=(0.0, 0.0, 0.0), symbols=atom_symbol)

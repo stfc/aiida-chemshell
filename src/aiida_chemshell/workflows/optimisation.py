@@ -2,7 +2,7 @@
 
 from aiida.common.exceptions import MissingEntryPointError
 from aiida.engine import ToContext, WorkChain
-from aiida.orm import ArrayData, Bool, Code, Dict, Float, SinglefileData, Str
+from aiida.orm import ArrayData, Bool, Code, Dict, Float, SinglefileData
 from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -25,13 +25,6 @@ class GeometryOptimisationWorkChain(WorkChain):
             valid_type=Bool,
             required=False,
             help="Calculate vibrational modes of resulting structure. (default=True)",
-        )
-        spec.input(
-            "basis_quality",
-            valid_type=Str,
-            validator=cls.validate_basis_quality_input,
-            required=False,
-            help="Set basis set quality for QM calculation based on defined options.",
         )
 
         ## Outputs ##
@@ -58,13 +51,6 @@ class GeometryOptimisationWorkChain(WorkChain):
             valid_type=ArrayData,
             required=False,
             help="The calculated vibrational modes for the optimised structure.",
-        )
-
-        spec.output(
-            "test_file",
-            valid_type=SinglefileData,
-            required=False,
-            help="",
         )
 
         # Optional inputs/outputs for using the results to fine tune a MLIP model
@@ -119,17 +105,8 @@ class GeometryOptimisationWorkChain(WorkChain):
                     "theory": "NWChem",
                     "method": "dft",
                     "functional": "B3LYP",
-                    # "d3": True,
+                    "basis": "cc-pvdz",
                 }
-            )
-            if "basis_quality" in self.inputs:
-                inputs["qm_parameters"]["basis"] = self.get_basis_set_label(
-                    self.inputs.basis_quality.value
-                )
-        elif "basis_quality" in self.inputs:
-            inputs["qm_parameters"] = inputs.get("qm_parameters").get_dict()
-            inputs["qm_parameters"]["basis"] = self.get_basis_set_label(
-                self.inputs.basis_quality.value
             )
         if "force_field_file" in inputs:
             if "mm_parameters" not in inputs:
@@ -305,37 +282,3 @@ class GeometryOptimisationWorkChain(WorkChain):
         else:
             self.out("final_energy", self.ctx.optimise.outputs.energy)
         return
-
-    @classmethod
-    def validate_basis_quality_input(cls, value: Str, _) -> str | None:
-        """
-        Validate the basis set quality key input.
-
-        Parameters
-        ----------
-        value : Str | None
-            The input key for the basis set quality mapping.
-
-        Returns
-        -------
-        str | None
-            Returns `None` if input is valid otherwise returns an error message.
-        """
-        if value.value.lower() not in ["fast", "balanced", "quality"]:
-            return (
-                "Invalid basis set quality key, valid keys are: 'fast', 'balanced' or "
-                "'quality'."
-            )
-        return None
-
-    @classmethod
-    def get_basis_set_label(cls, key: str) -> str:
-        """Define a custom dictionary of basis set labels for user convenience."""
-        match key.lower():
-            case "fast":
-                return "3-21G"
-            case "balanced":
-                return "cc-pvdz"
-            case "quality":
-                return "aug-cc-pvtz"
-        return ""

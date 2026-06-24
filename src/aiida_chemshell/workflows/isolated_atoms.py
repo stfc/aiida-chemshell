@@ -56,6 +56,11 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
             structure = StructureData()
             structure.append_atom(position=(0.0, 0.0, 0.0), symbols=atom_symbol)
             structure.set_pbc((False, False, False))
+            structure.label = f"{atom_symbol} atom"
+            structure.description = (
+                f"Isolated {atom_symbol} atom extracted from "
+                f"{self.inputs.structure.filename}"
+            )
             builder = self.inputs.code.get_builder()
             builder.structure = structure
             builder.qm_parameters = self.inputs.qm_parameters

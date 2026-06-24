@@ -81,18 +81,57 @@ class ChemShellParser(Parser):
                     input_fname = self.node.inputs.structure.filename
                     descrip += f" ({input_fname})"
                 # Store the optimised structure file
-                with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "r") as f:
+                with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "rb") as f:
                     self.out(
                         "optimised_structure",
                         SinglefileData(
                             file=f,
                             filename=ChemShellCalculation.FILE_DLFIND,
-                            label="Structure File",
+                            label="CJSON Structure File",
                             description=descrip,
                         ),
                     )
+                self.parse_optimisation_path(
+                    self.retrieved.get_object_content(
+                        ChemShellCalculation.FILE_STDOUT, "r"
+                    )
+                )
             else:
                 return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
+
+            if self.node.inputs.optimisation_parameters.get("save_path", False):
+                if (
+                    ChemShellCalculation.FILE_TRJPTH
+                    in self.retrieved.list_object_names()
+                ):
+                    with self.retrieved.open(
+                        ChemShellCalculation.FILE_TRJPTH, "r"
+                    ) as f:
+                        self.out(
+                            "trajectory_path",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_TRJPTH.replace(
+                                    "/", "_"
+                                ),
+                                label="ChemShell optimisation trajectory.",
+                            ),
+                        )
+                    with self.retrieved.open(
+                        ChemShellCalculation.FILE_TRJFRC, "r"
+                    ) as f:
+                        self.out(
+                            "trajectory_force",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_TRJFRC.replace(
+                                    "/", "_"
+                                ),
+                                label="ChemShell optimisation trajectory.",
+                            ),
+                        )
+                else:
+                    return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
         return ExitCode(0)
 
@@ -134,4 +173,19 @@ class ChemShellParser(Parser):
         )
         modes_data_node.set_array("Modes", modes)
         self.out("vibrational_modes", modes_data_node)
+        return
+
+    def parse_optimisation_path(self, stdout: str) -> None:
+        """Extract per step values from the optimisation job."""
+        energies = []
+        for line in stdout.split("\n"):
+            if "Energy calculation finished" in line:
+                energies.append(float(line.split()[-1]))
+
+        results = ArrayData(
+            label="Optimisation Path Properties",
+            description="Values calculated at each step of an optimisation.",
+        )
+        results.set_array("energies", numpy.asarray(energies))
+        self.out("optimisation_path", results)
         return

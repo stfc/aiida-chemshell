@@ -5,6 +5,7 @@ from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec, PortNamespace
 from aiida.orm import ArrayData, Dict, Float, SinglefileData, StructureData
 
+from aiida_chemshell.units import UnitsConverter
 from aiida_chemshell.utils import ChemShellMMTheory, ChemShellQMTheory
 
 
@@ -23,6 +24,8 @@ class ChemShellCalculation(CalcJob):
     FILE_DLFIND = "_dl_find.cjson"
     FILE_TMP_STRUCTURE = "input_structure.xyz"
     FILE_RESULTS = "result.json"
+    FILE_TRJPTH = "path.xyz"
+    FILE_TRJFRC = "path_force.xyz"
 
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
@@ -41,8 +44,8 @@ class ChemShellCalculation(CalcJob):
             validator=cls.validate_structure_file,
             required=True,
             help=(
-                "The input structure for the ChemShell calculation either contained"
-                "within an '.xyz', '.pun' or '.cjson' file or as a StructureData"
+                "The input structure for the ChemShell calculation either contained "
+                "within an '.xyz', '.pun' or '.cjson' file or as a StructureData "
                 "instance."
             ),
         )
@@ -132,6 +135,14 @@ class ChemShellCalculation(CalcJob):
             ),
         )
         spec.output(
+            "optimisation_path",
+            valid_type=ArrayData,
+            required=False,
+            help=(
+                "Values calculated at each step of an optimisation based calculation."
+            ),
+        )
+        spec.output(
             "vibrational_energies",
             valid_type=Dict,
             required=False,
@@ -160,10 +171,26 @@ class ChemShellCalculation(CalcJob):
 
         spec.inputs.validator = inputs_validator_wrapper
 
+        spec.output(
+            "trajectory_path",
+            valid_type=SinglefileData,
+            required=False,
+            help="XYZ trajectory file for the geometry optimisation",
+        )
+        spec.output(
+            "trajectory_force",
+            valid_type=SinglefileData,
+            required=False,
+            help=(
+                "XYZ trajectory containing forces at each step of a geometry "
+                "optimisation"
+            ),
+        )
+
         ## Metadata
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
-            "num_mpiprocs_per_machine": 1,
+            "num_mpiprocs_per_machine": 4,
         }
         spec.inputs["metadata"]["options"]["parser_name"].default = "chemshell"
 
@@ -327,6 +354,7 @@ class ChemShellCalculation(CalcJob):
             "delta",
             "tsrelative",
             "thermal",
+            "save_path",
         )
 
     @classmethod
@@ -565,7 +593,7 @@ class ChemShellCalculation(CalcJob):
         theory = value.get("theory", "").upper()
         if theory not in ChemShellMMTheory.__members__:
             return (
-                "The specified MM theory '{theory:s}' is not a "
+                f"The specified MM theory '{theory:s}' is not a "
                 "valid ChemShell MM interface within the AiiDA-ChemShell workflow."
             )
 
@@ -669,17 +697,32 @@ class ChemShellCalculation(CalcJob):
         str
             The process label based on what inputs have been provided.
         """
+        return ChemShellCalculation.default_process_label(self)
+
+    @classmethod
+    def default_process_label(cls, node) -> str:
+        """
+        AiiDA Process label definition (Class Method).
+
+        Defines the process label to be associated with the created ProcessNode
+        stored in the AiiDA database.
+
+        Returns
+        -------
+        str
+            The process label based on what inputs have been provided.
+        """
         theory_key = ""
-        if "qm_parameters" in self.inputs:
-            if "mm_parameters" in self.inputs:
+        if "qm_parameters" in node.inputs:
+            if "mm_parameters" in node.inputs:
                 theory_key = "_(QM/MM)"
             else:
                 theory_key = "_(QM)"
         else:
             theory_key = "_(MM)"
 
-        if "optimisation_parameters" in self.inputs:
-            if self.inputs.optimisation_parameters.get("thermal", False):
+        if "optimisation_parameters" in node.inputs:
+            if node.inputs.optimisation_parameters.get("thermal", False):
                 return "ChemShell_Vibrational_Frequencies" + theory_key
             return "ChemShell_Geometry_Optimisation" + theory_key
 
@@ -700,10 +743,19 @@ class ChemShellCalculation(CalcJob):
 
         script = "from chemsh import Fragment\n"
         if isinstance(self.inputs.structure, SinglefileData):
-            fname = self.inputs.structure.filename
+            script += (
+                f"structure = Fragment(coords='{self.inputs.structure.filename:s}')\n"
+            )
         else:
-            fname = ChemShellCalculation.FILE_TMP_STRUCTURE
-        script += f"structure = Fragment(coords='{fname:s}')\n"
+            atom_names = [site.kind_name for site in self.inputs.structure.sites]
+            coords = [
+                [UnitsConverter.angstrom_to_bohr(r) for r in site.position]
+                for site in self.inputs.structure.sites
+            ]
+            script += (
+                f"structure = Fragment(coords={str(coords):s}, names="
+                f"{str(atom_names):s})\n"
+            )
 
         ## Setup Theory objects
 
@@ -829,9 +881,21 @@ class ChemShellCalculation(CalcJob):
         # Define the AiiDA code parameters
         code_info = CodeInfo()
         code_info.code_uuid = self.inputs.code.uuid
-        code_info.cmdline_params = [
-            ChemShellCalculation.FILE_SCRIPT,
-        ]
+        if "chemsh.x" in str(self.inputs.code.filepath_executable):
+            code_info.cmdline_params = [
+                ChemShellCalculation.FILE_SCRIPT,
+            ]
+        else:
+            n_machines = self.inputs.metadata.options.resources.get("num_machines")
+            n_mpi_pm = self.inputs.metadata.options.resources.get(
+                "num_mpiprocs_per_machine"
+            )
+            tot_mpi = n_machines * n_mpi_pm
+            code_info.cmdline_params = [
+                "-np",
+                self.inputs.metadata.options.resources.get("tot_num_mpiprocs", tot_mpi),
+                ChemShellCalculation.FILE_SCRIPT,
+            ]
         code_info.stdout_name = ChemShellCalculation.FILE_STDOUT
 
         # Setup the calculation information object
@@ -871,5 +935,12 @@ class ChemShellCalculation(CalcJob):
         # file containing the optimised structure
         if "optimisation_parameters" in self.inputs:
             calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
+            if self.inputs.optimisation_parameters.get("save_path", False):
+                calc_info.retrieve_list.append(
+                    "_dl_find/" + ChemShellCalculation.FILE_TRJPTH
+                )
+                calc_info.retrieve_list.append(
+                    "_dl_find/" + ChemShellCalculation.FILE_TRJFRC
+                )
 
         return calc_info

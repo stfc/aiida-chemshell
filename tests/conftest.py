@@ -44,6 +44,21 @@ def chemsh_code(aiida_code_installed):
     return factory
 
 
+@pytest.fixture(scope="function")
+def janus_code(aiida_code_installed):
+    """Return a Janus AiiDA code instance."""
+    import os
+    import shutil
+
+    janus_path = shutil.which("janus") or os.environ.get("JANUS_PATH")
+
+    return aiida_code_installed(
+        label="janus",
+        default_calc_job_plugin="mlip.sp",
+        filepath_executable=janus_path,
+    )
+
+
 @pytest.fixture
 def water_structure_object() -> StructureData:
     """Return a AiiDA StructureData object of a water molecule."""

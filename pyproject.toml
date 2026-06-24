@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools",]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,20 +7,18 @@ version = "0.1.10"
 name = "aiida-chemshell"
 description = "AiiDA workflow plugin for the ChemShell chemical modelling software package"
 authors = [
-    {name = "Dr. Benjamin T. Speake", email = "benjamin.speake@stfc.ac.uk"},
+    { name = "Dr. Benjamin T. Speake", email = "benjamin.speake@stfc.ac.uk" },
 ]
-dependencies = [
-    "aiida-core >= 2.5",
-]
+dependencies = ["aiida-core >= 2.5"]
 readme = "README.md"
-license = {file = "LICENSE"}
-keywords = ["aiida", "workflows", "chemshell", ]
+license = { file = "LICENSE" }
+keywords = ["aiida", "workflows", "chemshell"]
 classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering", 
+    "Topic :: Scientific/Engineering",
     "Framework :: AiiDA",
-    "Development Status :: 5 - Production/Stable"
+    "Development Status :: 5 - Production/Stable",
 ]
 requires-python = ">=3.10"
 
@@ -29,36 +27,34 @@ Source = "https://github.com/stfc/aiida-chemshell"
 
 [project.entry-points."aiida.calculations"]
 "chemshell" = "aiida_chemshell.calculations.base:ChemShellCalculation"
+"chemshell.file_conversion.mlip_training" = "aiida_chemshell.calculations.file_conversion:CreateJanusTrainingInputsCalcJob"
 
 [project.entry-points."aiida.parsers"]
 "chemshell" = "aiida_chemshell.parsers.base:ChemShellParser"
+"chemshell.file_conversion.mlip_training" = "aiida_chemshell.parsers.file_conversion:CreateJanusTrainingInputsParser"
 
 [project.entry-points."aiida.workflows"]
 "chemshell.opt" = "aiida_chemshell.workflows.optimisation:GeometryOptimisationWorkChain"
+"chemshell.atomic_energies" = "aiida_chemshell.workflows.isolated_atoms:IsolatedAtomicEnergiesWorkChain"
 
 [tool.setuptools.packages.find]
-where = ["src",]
+where = ["src"]
 
 [project.optional-dependencies]
 dev = [
     "aiida-core>=2.6", # Required to support aiida.tools.pytest_fixtures 
-    "pytest>=8.0", 
+    "pytest>=8.0",
     "pytest-cov>=6.0",
     "ruff>=0.11.0",
-    "pre-commit"
+    "pre-commit",
 ]
-docs = [
-    "sphinx>=8.0.2",
-    "piccolo-theme>=0.14.0",
-    "sphinx-toolbox",
-    "numpydoc",
-]
+docs = ["sphinx>=8.0.2", "piccolo-theme>=0.14.0", "sphinx-toolbox", "numpydoc"]
 
 [tool.ruff]
-target-version = "py310" 
-line-length = 88 
+target-version = "py310"
+line-length = 88
 indent-width = 4
-exclude = ["conf.py",]
+exclude = ["conf.py"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/conftest.py" = ["B008"]
@@ -68,13 +64,16 @@ select = [
     # flake8-bugbear
     "B",
     # pylint
-    "C", "R",
+    "C",
+    "R",
     # pydocstyle
     "D",
     # pycodestyle
-    "E", "W",
+    "E",
+    "W",
     # Pyflakes
-    "F", "FA",
+    "F",
+    "FA",
     # isort
     "I",
     # pep8-naming
@@ -82,9 +81,7 @@ select = [
     # pyupgrade
     "UP",
 ]
-ignore = [
-    "C901",
-]
+ignore = ["C901"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

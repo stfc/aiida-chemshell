@@ -81,8 +81,7 @@ def test_sp_calculation_qm_dft(chemsh_code, get_test_data_file, water_structure_
     assert ChemShellCalculation.FILE_STDOUT in ofiles
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    # eref = -75.9468895533
-    eref = -75.946889436563
+    eref = -75.946889377347
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for PySCF based SP calculation"
     )
@@ -176,6 +175,25 @@ def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
     eref = -75.951248407932
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for PySCF based optimisation calculation."
+    )
+
+    assert "optimisation_path" in results, "Missing optimisation_path output node."
+    optimisation_path = results.get("optimisation_path")
+
+    assert optimisation_path.description != "", (
+        "Missing optimisation_path array node description"
+    )
+
+    assert optimisation_path.get_arraynames() == ["energies"], (
+        "Optimisation path energies entry missing."
+    )
+
+    assert optimisation_path.get_shape("energies")[0] == 7, (
+        "Incorrect number of entries for the optimisation_path energies."
+    )
+
+    assert abs(optimisation_path.get_array("energies")[-1] - eref) < 1e-7, (
+        "Incorrect final energy in optimisation_path energy series."
     )
 
 

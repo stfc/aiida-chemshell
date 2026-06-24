@@ -1,9 +1,12 @@
 """Workflows for geometry optimisation based taks."""
 
+from aiida.common.exceptions import MissingEntryPointError
 from aiida.engine import ToContext, WorkChain
-from aiida.orm import ArrayData, Bool, Dict, Float, SinglefileData, Str
+from aiida.orm import ArrayData, Bool, Code, Dict, Float, SinglefileData
+from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
+from aiida_chemshell.workflows.isolated_atoms import IsolatedAtomicEnergiesWorkChain
 
 
 class GeometryOptimisationWorkChain(WorkChain):
@@ -22,13 +25,6 @@ class GeometryOptimisationWorkChain(WorkChain):
             valid_type=Bool,
             required=False,
             help="Calculate vibrational modes of resulting structure. (default=True)",
-        )
-        spec.input(
-            "basis_quality",
-            valid_type=Str,
-            validator=cls.validate_basis_quality_input,
-            required=False,
-            help="Set basis set quality for QM calculation based on defined options.",
         )
 
         ## Outputs ##
@@ -57,8 +53,46 @@ class GeometryOptimisationWorkChain(WorkChain):
             help="The calculated vibrational modes for the optimised structure.",
         )
 
+        # Optional inputs/outputs for using the results to fine tune a MLIP model
+        # using the janus-core project via the aiida-mlip plugin.
+        try:
+            CalculationFactory("mlip.train")
+        except MissingEntryPointError:
+            pass
+        else:
+            from aiida_mlip.data.model import ModelData
+
+            spec.input(
+                "mlip_model",
+                valid_type=ModelData,
+                required=False,
+                help="The MLIP foundation model to apply fine-tuning to.",
+            )
+            spec.input(
+                "mlip_code",
+                valid_type=Code,
+                required=False,
+                help="The Janus-core AiiDA code instance.",
+            )
+            spec.output(
+                "fine_tuned_model", valid_type=ModelData, required=False, help=""
+            )
+            spec.output(
+                "fine_tuned_model_compiled",
+                valid_type=SinglefileData,
+                required=False,
+                help="",
+            )
+
         ## Workflow ##
-        spec.outline(cls.optimise, cls.energy, cls.result)
+        spec.outline(
+            cls.optimise,
+            cls.energy,
+            cls.isolated_atom_energies,
+            cls.generate_mlip_training_inputs,
+            cls.train_mlip,
+            cls.result,
+        )
 
         return
 
@@ -71,17 +105,8 @@ class GeometryOptimisationWorkChain(WorkChain):
                     "theory": "NWChem",
                     "method": "dft",
                     "functional": "B3LYP",
-                    # "d3": True,
+                    "basis": "cc-pvdz",
                 }
-            )
-            if "basis_quality" in self.inputs:
-                inputs["qm_parameters"]["basis"] = self.get_basis_set_label(
-                    self.inputs.basis_quality.value
-                )
-        elif "basis_quality" in self.inputs:
-            inputs["qm_parameters"] = inputs.get("qm_parameters").get_dict()
-            inputs["qm_parameters"]["basis"] = self.get_basis_set_label(
-                self.inputs.basis_quality.value
             )
         if "force_field_file" in inputs:
             if "mm_parameters" not in inputs:
@@ -92,8 +117,14 @@ class GeometryOptimisationWorkChain(WorkChain):
             return None
         if "optimisation_parameters" not in inputs:
             inputs["optimisation_parameters"] = Dict({})
+        if "mlip_model" in self.inputs:
+            inputs["optimisation_parameters"]["save_path"] = True
 
         future = self.submit(ChemShellCalculation, **inputs)
+        future.label = ChemShellCalculation.default_process_label(future)
+        future.description = (
+            f"Geometry optimisation step from WorkChainNode pk: {self.node.pk}"
+        )
         return ToContext(optimise=future)
 
     def energy(self):
@@ -118,12 +149,136 @@ class GeometryOptimisationWorkChain(WorkChain):
             )
             inputs["optimisation_parameters"]["thermal"] = True
             future = self.submit(ChemShellCalculation, **inputs)
+            future.label = ChemShellCalculation.default_process_label(future)
+            future.description = (
+                f"Vibrational frequency calculation step from WorkChainNode "
+                f"pk: {self.node.pk}"
+            )
             return ToContext(energy=future)
+        return None
+
+    def isolated_atom_energies(self):
+        """Calculate isolated atomic energies for all species in the input structure."""
+        if "mlip_model" in self.inputs:
+            inputs = {
+                "structure": self.inputs.chemsh.structure,
+                "code": self.inputs.chemsh.code,
+                "qm_parameters": self.ctx.optimise.inputs.qm_parameters,
+            }
+            future = self.submit(IsolatedAtomicEnergiesWorkChain, **inputs)
+            future.label = "Isolated Atomic Energy WorkChain"
+            future.description = (
+                f"Isolated atom energies extracted from Node: "
+                f"{self.inputs.structure.pk} for ChemShell optimisation "
+                f"WorkChain: {self.node.pk} to be used for MLIP fine-tuning."
+            )
+            return ToContext(isolated_atoms=future)
+        return None
+
+    def generate_mlip_training_inputs(self):
+        """Convert the optimisation path files to Janus compatible inputs."""
+        if "mlip_model" in self.inputs:
+            inputs = {
+                "path": self.ctx.optimise.outputs.trajectory_path,
+                "force": self.ctx.optimise.outputs.trajectory_force,
+                "energies": self.ctx.optimise.outputs.optimisation_path,
+                "atom_energies": self.ctx.isolated_atoms.outputs.atom_energies,
+                "code": self.inputs.chemsh.code,
+                "metadata": {
+                    "options": {
+                        "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
+                        # "withmpi": True,
+                    }
+                },
+            }
+            from aiida_chemshell.calculations.file_conversion import (
+                CreateJanusTrainingInputsCalcJob,
+            )
+
+            future = self.submit(CreateJanusTrainingInputsCalcJob, **inputs)
+            future.label = "Generate MLIP training data set from geometry optimisation."
+            future.description = (
+                f"Data extraction step from WorkChainNode pk: {self.node.pk}"
+            )
+            return ToContext(create_mlip_inputs=future)
+        return None
+
+    def train_mlip(self):
+        """Train a given MLIP model."""
+        try:
+            mlip_train_calc = CalculationFactory("mlip.train")
+        except MissingEntryPointError:
+            pass
+        else:
+            pass
+            if "mlip_model" in self.inputs:
+                # This needs to be properly addressed within aiida-mlip
+                computer = self.inputs.get("mlip_code", None).computer
+                work_dir = computer.get_workdir()
+                with open("train.xyz", mode="wb") as f:
+                    f.write(self.ctx.create_mlip_inputs.outputs.training_input.content)
+                with open("test.xyz", mode="wb") as f:
+                    f.write(self.ctx.create_mlip_inputs.outputs.test_input.content)
+                with open("valid.xyz", mode="wb") as f:
+                    f.write(
+                        self.ctx.create_mlip_inputs.outputs.validation_input.content
+                    )
+                with computer.get_transport() as transport:
+                    from pathlib import Path
+
+                    transport.putfile(
+                        Path("train.xyz").absolute(), f"{work_dir}/train.xyz"
+                    )
+                    transport.putfile(
+                        Path("test.xyz").absolute(), f"{work_dir}/test.xyz"
+                    )
+                    transport.putfile(
+                        Path("valid.xyz").absolute(), f"{work_dir}/valid.xyz"
+                    )
+
+                import yaml
+                from aiida_mlip.data.config import JanusConfigfile
+
+                from aiida_chemshell.utils import generate_default_mlip_fine_tune_config
+
+                config_dict = generate_default_mlip_fine_tune_config()
+                config_dict["train_file"] = f"{work_dir}/train.xyz"
+                config_dict["test_file"] = f"{work_dir}/test.xyz"
+                config_dict["valid_file"] = f"{work_dir}/valid.xyz"
+                config_dict["name"] = "ChemShell_Workflow_Test"
+
+                with open("mlip_config.yml", "w+") as f:
+                    yaml.dump(config_dict, f, default_flow_style=False)
+
+                mlip_inputs = {
+                    "mlip_config": JanusConfigfile(Path("mlip_config.yml").absolute()),
+                    "code": self.inputs.get("mlip_code", None),
+                    "fine_tune": True,
+                    "foundation_model": self.inputs.get("mlip_model", None),
+                    "metadata": {"options": {"resources": {"num_machines": 1}}},
+                }
+                # Submit the mlip training job
+                future = self.submit(mlip_train_calc, **mlip_inputs)
+                future.label = "MLIP Fine-Tuning."
+                future.description = (
+                    f"MLIP fine-tuning step from WorkChainNode pk: {self.node.pk}"
+                )
+                return ToContext(mlip_training=future)
         return None
 
     def result(self):
         """Extract the final workflow results."""
-        self.out("optimised_structure", self.ctx.optimise.outputs.optimised_structure)
+        if "mlip_model" in self.inputs:
+            self.out("optimised_structure", self.ctx.optimise.outputs.trajectory_path)
+            self.out("fine_tuned_model", self.ctx.mlip_training.outputs.model)
+            self.out(
+                "fine_tuned_model_compiled",
+                self.ctx.mlip_training.outputs.compiled_model,
+            )
+        else:
+            self.out(
+                "optimised_structure", self.ctx.optimise.outputs.optimised_structure
+            )
         if self.inputs.get("vibrational_analysis", False):
             self.out("final_energy", self.ctx.energy.outputs.energy)
             self.out(
@@ -133,37 +288,3 @@ class GeometryOptimisationWorkChain(WorkChain):
         else:
             self.out("final_energy", self.ctx.optimise.outputs.energy)
         return
-
-    @classmethod
-    def validate_basis_quality_input(cls, value: Str, _) -> str | None:
-        """
-        Validate the basis set quality key input.
-
-        Parameters
-        ----------
-        value : Str | None
-            The input key for the basis set quality mapping.
-
-        Returns
-        -------
-        str | None
-            Returns `None` if input is valid otherwise returns an error message.
-        """
-        if value.value.lower() not in ["fast", "balanced", "quality"]:
-            return (
-                "Invalid basis set quality key, valid keys are: 'fast', 'balanced' or "
-                "'quality'."
-            )
-        return None
-
-    @classmethod
-    def get_basis_set_label(cls, key: str) -> str:
-        """Define a custom dictionary of basis set labels for user convenience."""
-        match key.lower():
-            case "fast":
-                return "3-21G"
-            case "balanced":
-                return "cc-pvdz"
-            case "quality":
-                return "aug-cc-pvtz"
-        return ""

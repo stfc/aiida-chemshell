@@ -105,11 +105,11 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
         atom_symbols: list[str] = data.get("symbol", [])
         atom_numbers: list[int] = data.get("number", [])
         if len(atom_symbols) == 0:
-            self.unique_atoms = [
-                PeriodicTable.atom_z_to_symbol(number) for number in atom_numbers
-            ]
+            self.unique_atoms = list(
+                {PeriodicTable.atom_z_to_symbol(number) for number in atom_numbers}
+            )
         else:
-            self.unique_atoms = atom_symbols
+            self.unique_atoms = list(set(atom_symbols))
         return
 
     def _atom_types_from_pun(self) -> None:

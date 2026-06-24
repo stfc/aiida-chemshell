@@ -166,6 +166,12 @@ class GeometryOptimisationWorkChain(WorkChain):
                 "qm_parameters": self.ctx.optimise.inputs.qm_parameters,
             }
             future = self.submit(IsolatedAtomicEnergiesWorkChain, **inputs)
+            future.label = "Isolated Atomic Energy WorkChain"
+            future.description = (
+                f"Isolated atom energies extracted from Node: "
+                f"{self.inputs.structure.pk} for ChemShell optimisation "
+                f"WorkChain: {self.node.pk} to be used for MLIP fine-tuning."
+            )
             return ToContext(isolated_atoms=future)
         return None
 

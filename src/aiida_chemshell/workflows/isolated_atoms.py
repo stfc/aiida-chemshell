@@ -58,8 +58,8 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
             structure.set_pbc((False, False, False))
             structure.label = f"{atom_symbol} atom"
             structure.description = (
-                f"Isolated {atom_symbol} atom extracted from "
-                f"{self.inputs.structure.filename}"
+                f"Isolated {atom_symbol} atom extracted from Node: "
+                f"{self.inputs.structure.pk}"
             )
             builder = self.inputs.code.get_builder()
             builder.structure = structure
@@ -74,6 +74,16 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
             list(self.unique_atoms),
             [self.ctx.get(atom).outputs.energy for atom in self.unique_atoms],
         )
+        if isinstance(self.inputs.structure, StructureData):
+            results_dict.label = (
+                f"Atomistic energies for all unique atoms extracted from Node: "
+                f"{self.inputs.structure.pk}"
+            )
+        else:
+            results_dict.label = (
+                "Atomistic energies for all unique atoms extracted from "
+                f"{self.inputs.structure.filename} (Node: {self.inputs.structure.pk})"
+            )
         self.out("atom_energies", results_dict)
         return
 

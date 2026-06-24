@@ -186,7 +186,7 @@ class GeometryOptimisationWorkChain(WorkChain):
             inputs = {
                 "structure": self.inputs.chemsh.structure,
                 "code": self.inputs.chemsh.code,
-                "qm_parameters": self.inputs.chemsh.qm_parameters,
+                "qm_parameters": self.ctx.optimise.inputs.qm_parameters,
             }
             future = self.submit(IsolatedAtomicEnergiesWorkChain, **inputs)
             return ToContext(isolated_atoms=future)

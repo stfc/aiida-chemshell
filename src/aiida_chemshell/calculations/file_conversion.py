@@ -50,14 +50,12 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         spec.output(
             "training_input",
             valid_type=SinglefileData,
-            validator=cls.validate_path_file,
             required=True,
             help="The main training data set in extended XYZ format.",
         )
         spec.output(
             "validation_input",
             valid_type=SinglefileData,
-            validator=cls.validate_path_file,
             required=True,
             help="The validation data set in extended XYZ format.",
         )
@@ -97,6 +95,7 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         lines = content.split("\n")
         natoms = int(lines[0])
         if len(lines) % (natoms + 2) != 0:
+            print(lines)
             return "Invalid XYZ trajectory structure detected."
         if len(lines) // (natoms + 2) < 5:
             return "Not enough individual configurations within input trajectory."

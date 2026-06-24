@@ -61,10 +61,13 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
                 f"Isolated {atom_symbol} atom extracted from Node: "
                 f"{self.inputs.structure.pk}"
             )
-            builder = self.inputs.code.get_builder()
-            builder.structure = structure
-            builder.qm_parameters = self.inputs.qm_parameters
-            future = self.submit(builder)
+            inputs = {
+                "structure": structure,
+                "qm_parameters": self.inputs.qm_parameters,
+                "code": self.inputs.code,
+            }
+            future = self.submit(ChemShellCalculation, **inputs)
+            future.description = f"Single point energy for {atom_symbol} atom."
             calculations[atom_symbol] = future
         return ToContext(**calculations)
 

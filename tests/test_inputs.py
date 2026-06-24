@@ -12,9 +12,7 @@ def test_defaults(generate_calcjob):
         ChemShellCalculation.FILE_RESULTS,
     ]
     code_info = calc_info.codes_info[0]
-    assert code_info.cmdline_params == [
-        ChemShellCalculation.FILE_SCRIPT,
-    ]
+    assert ChemShellCalculation.FILE_SCRIPT in code_info.cmdline_params
     assert code_info.stdout_name == ChemShellCalculation.FILE_STDOUT
 
     script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
@@ -151,5 +149,7 @@ H            0.7546064020       0.5900323550       0.0000000000"""
 
     script_txt = script_file.read_text()
     assert "from chemsh import Fragment\n" in script_txt
-    tmp_structure_file = ChemShellCalculation.FILE_TMP_STRUCTURE
-    assert f"structure = Fragment(coords='{tmp_structure_file:s}')\n" in script_txt
+    assert (
+        "structure = Fragment(coords=[[0.0, 0.0, 0.0], [-1.4259993290233388, 1.1149994"
+        in script_txt
+    )

@@ -57,7 +57,7 @@ class CreateJanusTrainingInputsCalcJob(CalcJob):
         spec.output(
             "validation_input",
             valid_type=SinglefileData,
-            vlidatory=cls.validate_path_file,
+            validator=cls.validate_path_file,
             required=True,
             help="The validation data set in extended XYZ format.",
         )

@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.1.12"
+version = "0.1.13"
 name = "aiida-chemshell"
 description = "AiiDA workflow plugin for the ChemShell chemical modelling software package"
 authors = [

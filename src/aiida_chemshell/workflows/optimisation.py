@@ -210,7 +210,6 @@ class GeometryOptimisationWorkChain(WorkChain):
         except MissingEntryPointError:
             pass
         else:
-            pass
             if "mlip_model" in self.inputs:
                 # This needs to be properly addressed within aiida-mlip
                 computer = self.inputs.get("mlip_code", None).computer

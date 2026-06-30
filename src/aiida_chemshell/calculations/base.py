@@ -3,7 +3,15 @@
 from aiida.common import CalcInfo, CodeInfo
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob, CalcJobProcessSpec, PortNamespace
-from aiida.orm import ArrayData, Dict, Float, SinglefileData, StructureData
+from aiida.orm import (
+    ArrayData,
+    Dict,
+    Float,
+    Int,
+    SinglefileData,
+    StructureData,
+    TrajectoryData,
+)
 
 from aiida_chemshell.units import UnitsConverter
 from aiida_chemshell.utils import ChemShellMMTheory, ChemShellQMTheory
@@ -40,13 +48,22 @@ class ChemShellCalculation(CalcJob):
         super().define(spec)
         spec.input(
             "structure",
-            valid_type=(SinglefileData, StructureData),
+            valid_type=(SinglefileData, StructureData, TrajectoryData),
             validator=cls.validate_structure_file,
             required=True,
             help=(
                 "The input structure for the ChemShell calculation either contained "
                 "within an '.xyz', '.pun' or '.cjson' file or as a StructureData "
                 "instance."
+            ),
+        )
+        spec.input(
+            "structure_index",
+            valid_type=Int,
+            required=False,
+            help=(
+                "An index to extract a specific structure if the input 'structure' "
+                "contains multiple structures, such as if it is a TrajectoryData node."
             ),
         )
 
@@ -742,19 +759,29 @@ class ChemShellCalculation(CalcJob):
         qmmm_chk = "qm_parameters" in self.inputs and "mm_parameters" in self.inputs
 
         script = "from chemsh import Fragment\n"
-        if isinstance(self.inputs.structure, SinglefileData):
+        if isinstance(self.inputs.structure, StructureData):
+            if len(self.inputs.structure.sites) < 2:
+                atom_names = [site.kind_name for site in self.inputs.structure.sites]
+                coords = [
+                    [UnitsConverter.angstrom_to_bohr(r) for r in site.position]
+                    for site in self.inputs.structure.sites
+                ]
+                script += (
+                    f"structure = Fragment(coords={str(coords):s}, names="
+                    f"{str(atom_names):s})\n"
+                )
+            else:
+                script += "structure = Fragment(coords="
+                script += f"'{ChemShellCalculation.FILE_TMP_STRUCTURE:s}')\n"
+        elif isinstance(self.inputs.structure, TrajectoryData):
+            script += "structure = Fragment(coords="
+            script += f"'{ChemShellCalculation.FILE_TMP_STRUCTURE:s}')\n"
+        elif "structure_index" in self.inputs:
+            print("Not yet supported.")
+            raise Exception("SinglefileData trajectories not yet supported.")
+        else:  # SinglefileData
             script += (
                 f"structure = Fragment(coords='{self.inputs.structure.filename:s}')\n"
-            )
-        else:
-            atom_names = [site.kind_name for site in self.inputs.structure.sites]
-            coords = [
-                [UnitsConverter.angstrom_to_bohr(r) for r in site.position]
-                for site in self.inputs.structure.sites
-            ]
-            script += (
-                f"structure = Fragment(coords={str(coords):s}, names="
-                f"{str(atom_names):s})\n"
             )
 
         ## Setup Theory objects
@@ -912,13 +939,18 @@ class ChemShellCalculation(CalcJob):
         if isinstance(self.inputs.structure, StructureData):
             with folder.open(ChemShellCalculation.FILE_TMP_STRUCTURE, "wb") as f:
                 f.write(self.inputs.structure._prepare_xyz()[0])
+        elif isinstance(self.inputs.structure, TrajectoryData):
+            with folder.open(ChemShellCalculation.FILE_TMP_STRUCTURE, "wb") as f:
+                index = self.inputs.structure_index.value
+                structure = self.inputs.structure.get_step_structure(index=index)
+                f.write(structure._prepare_xyz()[0])
         else:
             calc_info.local_copy_list.append(
                 (
                     self.inputs.structure.uuid,
                     self.inputs.structure.filename,
                     self.inputs.structure.filename,
-                ),
+                )
             )
 
         # If running with an MM theory a force field file is required and copied

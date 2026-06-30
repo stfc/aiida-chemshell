@@ -3,12 +3,13 @@
 import os
 import pathlib
 
+import numpy
 import pytest
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-from aiida.orm import Dict, InstalledCode, SinglefileData, StructureData
+from aiida.orm import Dict, InstalledCode, SinglefileData, StructureData, TrajectoryData
 
 pytest_plugins = "aiida.tools.pytest_fixtures"
 
@@ -71,6 +72,26 @@ def water_structure_object() -> StructureData:
     """
     structure._parse_xyz(structure_str)
     return structure
+
+
+@pytest.fixture
+def water_trajectory_object() -> TrajectoryData:
+    """Return a AiiDA StructureData object of a water molecule."""
+    trajectory = TrajectoryData()
+    symbols = ["O", "H", "H"]
+    positions = numpy.array(
+        [
+            [[0.0, 0.0, 0.0], [-0.9, 0.590032355, 0.0], [0.9, 0.590032355, 0.0]],
+            [
+                [0.0, 0.0, 0.0],
+                [-0.754606402, 0.590032355, 0.0],
+                [0.754606402, 0.590032355, 0.0],
+            ],
+            [[0.0, 0.0, 0.0], [-0.5, 0.590032355, 0.0], [0.5, 0.590032355, 0.0]],
+        ]
+    )
+    trajectory.set_trajectory(symbols=symbols, positions=positions)
+    return trajectory
 
 
 @pytest.fixture

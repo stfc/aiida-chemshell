@@ -90,7 +90,9 @@ def water_trajectory_object() -> TrajectoryData:
             [[0.0, 0.0, 0.0], [-0.5, 0.590032355, 0.0], [0.5, 0.590032355, 0.0]],
         ]
     )
-    trajectory.set_trajectory(symbols=symbols, positions=positions)
+    trajectory.set_trajectory(
+        symbols=symbols, positions=positions, pbc=[False, False, False]
+    )
     return trajectory
 
 

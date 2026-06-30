@@ -1,5 +1,7 @@
 """Tests for ChemShell input script generation based on various input parameters."""
 
+from aiida.orm import StructureData
+
 from aiida_chemshell.calculations.base import ChemShellCalculation
 
 
@@ -149,7 +151,30 @@ H            0.7546064020       0.5900323550       0.0000000000"""
 
     script_txt = script_file.read_text()
     assert "from chemsh import Fragment\n" in script_txt
-    assert (
-        "structure = Fragment(coords=[[0.0, 0.0, 0.0], [-1.4259993290233388, 1.1149994"
-        in script_txt
-    )
+    assert ChemShellCalculation.FILE_TMP_STRUCTURE in script_txt
+
+
+def test_atom_as_structuredata_object(
+    generate_calcjob, generate_inputs, water_structure_object
+):
+    """Test taking a StructureData object as an input."""
+    structure = StructureData()
+    structure.pbc = [False, False, False]
+    structure.append_atom(symbols="O", position=[0.0, 0.0, 0.0])
+    inputs = generate_inputs(structure_fname=structure)
+
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
+
+    structure_file = tmp_pth / ChemShellCalculation.FILE_TMP_STRUCTURE
+    assert structure_file.exists()
+    chk_str = """1
+Lattice="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" pbc="False False False"
+O            0.0000000000       0.0000000000       0.0000000000"""
+    assert structure_file.read_text() == chk_str
+
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
+
+    script_txt = script_file.read_text()
+    assert "from chemsh import Fragment\n" in script_txt
+    assert "Fragment(coords=[[0.0, 0.0, 0.0]]," in script_txt

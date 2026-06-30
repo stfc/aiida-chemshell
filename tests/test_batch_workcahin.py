@@ -1,13 +1,10 @@
 """Tests for the BatchProcessWorkChain."""
 
-from aiida import __version__ as aiida_core_version
+import pytest
 from aiida.engine import run_get_node
 from aiida.orm import Dict
-from packaging.version import parse as parse_version
 
 from aiida_chemshell.workflows.batch_calculation import BatchProcessWorkChain
-
-AIIDA_LESS_THAN_2_8 = parse_version(aiida_core_version) < parse_version("2.8.0")
 
 
 def test_batch_from_trajectorydata(chemsh_code, water_trajectory_object):
@@ -32,6 +29,7 @@ def test_batch_from_trajectorydata(chemsh_code, water_trajectory_object):
         assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10
 
 
+@pytest.mark.xfail_aiida_2_8
 def test_batch_from_structuredata(chemsh_code, water_trajectory_object):
     """DFT based single point test."""
     trajectory = water_trajectory_object

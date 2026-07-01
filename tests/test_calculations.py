@@ -81,7 +81,8 @@ def test_sp_calculation_qm_dft(chemsh_code, get_test_data_file, water_structure_
     assert ChemShellCalculation.FILE_STDOUT in ofiles
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    eref = -75.946889377347
+    # eref = -75.946889377347 # If using conversion to bohr
+    eref = -75.946889436563
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for PySCF based SP calculation"
     )
@@ -254,6 +255,45 @@ def test_vibrational_calculation(chemsh_code, get_test_data_file):
     assert results.get("vibrational_energies").get("ZPE / J/mol") == 58728.93143
     assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.53277
     assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01313
+
+
+def test_structure_from_trajectorydata(chemsh_code, water_trajectory_object):
+    """DFT based single point test."""
+    code = chemsh_code()
+    builder = code.get_builder()
+    builder.structure = water_trajectory_object
+    builder.structure_index = 1
+    builder.qm_parameters = Dict(
+        {
+            "theory": "PySCF",
+            "method": "DFT",
+            "functional": "BLYP",
+            "charge": 0,
+            # "scftype": "uks",
+        }
+    )
+
+    results, node = run.get_node(builder)
+
+    assert node.is_finished_ok, "CalcJob failed for `test_SPCalculation_nwchem_DFT`"
+
+    assert "Single_Point" in node.process_label
+    assert "QM" in node.process_label
+
+    ofiles = results.get("retrieved").list_object_names()
+    assert ChemShellCalculation.FILE_STDOUT in ofiles
+    assert ChemShellCalculation.FILE_RESULTS in ofiles
+
+    # eref = -75.946889377347 # Use if inputs are in bohr
+    eref = -75.946889436563
+    assert abs(results.get("energy") - eref) < 1e-8, (
+        "Incorrect energy result for PySCF based SP calculation"
+    )
+
+    assert "gradients" not in results, (
+        "Gradients have been returned for a SP calculation, \
+            but they were not requested in the inputs."
+    )
 
 
 # def test_opt_calculation_qmmm(chemsh_code, get_test_data_file):

@@ -3,14 +3,39 @@
 import os
 import pathlib
 
+import numpy
 import pytest
+from aiida import __version__ as aiida_core_version
 from aiida.common.folders import Folder
 from aiida.engine import CalcJob
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-from aiida.orm import Dict, InstalledCode, SinglefileData, StructureData
+from aiida.orm import Dict, InstalledCode, SinglefileData, StructureData, TrajectoryData
+from packaging.version import parse as parse_version
 
 pytest_plugins = "aiida.tools.pytest_fixtures"
+
+
+def pytest_configure(config):
+    """Dynamically register a custom xfail condition based on AiiDA version."""
+    config.addinivalue_line(
+        "markers",
+        "xfail_aiida_2_8: mark test as expected failure if aiida-core is < 2.8",
+    )
+
+
+def pytest_runtest_setup(item):
+    """Evaluate the custom marker before running the test."""
+    marker = item.get_closest_marker("xfail_aiida_2_8")
+    if marker:
+        if parse_version(aiida_core_version) < parse_version("2.8.0"):
+            # Dynamically apply the xfail to this specific test instance
+            item.add_marker(
+                pytest.mark.xfail(
+                    reason="This test requires features present in aiida-core >= 2.8",
+                    raises=ValueError,
+                )
+            )
 
 
 @pytest.fixture
@@ -71,6 +96,31 @@ def water_structure_object() -> StructureData:
     """
     structure._parse_xyz(structure_str)
     return structure
+
+
+@pytest.fixture
+def water_trajectory_object() -> TrajectoryData:
+    """Return a AiiDA StructureData object of a water molecule."""
+    trajectory = TrajectoryData()
+    symbols = ["O", "H", "H"]
+    positions = numpy.array(
+        [
+            [[0.0, 0.0, 0.0], [-0.9, 0.590032355, 0.0], [0.9, 0.590032355, 0.0]],
+            [
+                [0.0, 0.0, 0.0],
+                [-0.754606402, 0.590032355, 0.0],
+                [0.754606402, 0.590032355, 0.0],
+            ],
+            [[0.0, 0.0, 0.0], [-0.5, 0.590032355, 0.0], [0.5, 0.590032355, 0.0]],
+        ]
+    )
+    if parse_version(aiida_core_version) < parse_version("2.8.0"):
+        trajectory.set_trajectory(symbols=symbols, positions=positions)
+    else:
+        trajectory.set_trajectory(
+            symbols=symbols, positions=positions, pbc=[False, False, False]
+        )
+    return trajectory
 
 
 @pytest.fixture

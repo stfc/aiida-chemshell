@@ -100,3 +100,37 @@ def test_batch_from_structuredata_and_trajectorydata(
     for i, sub_node in enumerate(sub_nodes):
         assert sub_node.is_finished_ok, "Sub Process Failed"
         assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10
+
+
+def test_batch_from_file(chemsh_code, get_test_data_file):
+    """DFT based single point test."""
+    structure_file = get_test_data_file("trajectory.xyz")
+    inputs = {
+        "code": chemsh_code(),
+        "structure_files": {
+            structure_file.filename.strip(".xyz").replace(" ", "_"): structure_file
+        },
+        "qm_parameters": Dict(
+            {
+                "theory": "PySCF",
+                "method": "hf",
+            }
+        ),
+    }
+    results, node = run_get_node(BatchProcessWorkChain, **inputs)
+
+    assert node.is_finished_ok, "WorkChain Failed"
+
+    sub_nodes = node.called
+    assert len(sub_nodes) == 5, "Incorrect number of sub processes created."
+
+    final_energies = [
+        -75.585287789025,
+        -75.585594607649,
+        -75.585959615566,
+        -272.88756364993,
+    ]
+
+    for i, sub_node in enumerate(sub_nodes[1:]):
+        assert sub_node.is_finished_ok, "Sub Process Failed"
+        assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10

@@ -1,7 +1,7 @@
 """Tests for performing calculation processes with aiida_chemshell."""
 
 from aiida.engine import run
-from aiida.orm import Dict
+from aiida.orm import Dict, TrajectoryData
 from numpy.linalg import norm
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -302,7 +302,7 @@ def test_neb_calculation(chemsh_code, get_test_data_file):
     builder = code.get_builder()
     builder.structure = get_test_data_file("h2o_dimer.cjson")
     builder.structure2 = get_test_data_file("h2o_dimer_2.cjson")
-    builder.qm_parameters = Dict({"theory": "PySCF", "method": "DFT", "basis": "3-21G"})
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "hf", "basis": "3-21G"})
     builder.optimisation_parameters = Dict({"neb": "frozen"})
 
     results, node = run.get_node(builder)
@@ -311,11 +311,35 @@ def test_neb_calculation(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names()
     assert ChemShellCalculation.FILE_STDOUT in ofiles
-    assert ChemShellCalculation.FILE_DLFIND in ofiles
+    assert ChemShellCalculation.FILE_DLFIND not in ofiles
     assert ChemShellCalculation.FILE_RESULTS in ofiles
 
-    eref = -150.28414107716
+    eref = -149.56942655605
     assert abs(results.get("energy") - eref) < 1e-8
+    assert isinstance(results.get("neb_path", None), TrajectoryData)
+    assert results.get("neb_path").numsteps == 9, (
+        "Incorrect number of steps in NEB path TrajectoryData"
+    )
+    assert results.get("neb_path").numsites == 6, (
+        "Incorrect number of sites in NEB path TrajectoryData"
+    )
+
+    neb_info = results.get("neb_info", None)
+    assert "Step information from an NEB calculation." in neb_info.label, (
+        f"Incorrect node label for NEB info array output node. {neb_info.label}"
+    )
+    assert neb_info.description != "", "Missing NEB info array node description"
+
+    assert neb_info.get_arraynames() == [
+        "path_length",
+        "energy",
+        "work",
+        "effective_mass",
+    ], "Incorrect NEB info array names in output node."
+
+    assert neb_info.get_shape("path_length") == (9,), (
+        "Incorrect number of steps in path_length array."
+    )
 
     return
 

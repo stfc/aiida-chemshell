@@ -217,6 +217,21 @@ class ChemShellCalculation(CalcJob):
             ),
         )
 
+        spec.output(
+            "neb_path",
+            valid_type=TrajectoryData,
+            required=False,
+            help="The pathway determined by a Nudged Elastic Band calculation.",
+        )
+        spec.output(
+            "neb_info",
+            valid_type=ArrayData,
+            required=False,
+            help=(
+                "Information generated at each point along a Nudged Elastic Band path."
+            ),
+        )
+
         ## Metadata
         spec.inputs["metadata"]["options"]["resources"].default = {
             "num_machines": 1,
@@ -905,7 +920,14 @@ class ChemShellCalculation(CalcJob):
 
         script += "job.run()\njob.result.save()\n"
         if "optimisation_parameters" in self.inputs:
-            script += f'structure.save("{ChemShellCalculation.FILE_DLFIND}")\n'
+            if not self.inputs.optimisation_parameters.get(
+                "thermal", False
+            ) and self.inputs.optimisation_parameters.get("neb", "no") not in [
+                "free",
+                "frozen",
+                "perpendicular",
+            ]:
+                script += f'structure.save("{ChemShellCalculation.FILE_DLFIND}")\n'
 
         return script
 
@@ -1004,7 +1026,14 @@ class ChemShellCalculation(CalcJob):
         # If performing a geometry optimisation retrieve the generated _dl_find.pun
         # file containing the optimised structure
         if "optimisation_parameters" in self.inputs:
-            calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
+            if not self.inputs.optimisation_parameters.get(
+                "thermal", False
+            ) and self.inputs.optimisation_parameters.get("neb", "no") not in [
+                "free",
+                "frozen",
+                "perpendicular",
+            ]:
+                calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
             if self.inputs.optimisation_parameters.get("save_path", False):
                 calc_info.retrieve_list.append(
                     "_dl_find/" + ChemShellCalculation.FILE_TRJPTH
@@ -1012,5 +1041,12 @@ class ChemShellCalculation(CalcJob):
                 calc_info.retrieve_list.append(
                     "_dl_find/" + ChemShellCalculation.FILE_TRJFRC
                 )
+            if self.inputs.optimisation_parameters.get("neb", "no") in [
+                "free",
+                "frozen",
+                "perpendicular",
+            ]:
+                calc_info.retrieve_temporary_list.append("nebinfo")
+                calc_info.retrieve_temporary_list.append("nebpath.xyz")
 
         return calc_info

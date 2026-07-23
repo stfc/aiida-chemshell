@@ -1034,7 +1034,9 @@ class ChemShellCalculation(CalcJob):
                 "frozen",
                 "perpendicular",
             ]:
-                calc_info.retrieve_list.append(ChemShellCalculation.FILE_DLFIND)
+                calc_info.retrieve_temporary_list.append(
+                    ChemShellCalculation.FILE_DLFIND
+                )
             if self.inputs.optimisation_parameters.get("save_path", False):
                 calc_info.retrieve_list.append(
                     "_dl_find/" + ChemShellCalculation.FILE_TRJPTH

@@ -11,8 +11,8 @@ def test_defaults(generate_calcjob):
 
     assert calc_info.retrieve_list == [
         ChemShellCalculation.FILE_STDOUT,
-        # ChemShellCalculation.FILE_RESULTS,
     ]
+    assert ChemShellCalculation.FILE_RESULTS in calc_info.retrieve_temporary_list
     code_info = calc_info.codes_info[0]
     assert ChemShellCalculation.FILE_SCRIPT in code_info.cmdline_params
     assert code_info.stdout_name == ChemShellCalculation.FILE_STDOUT
@@ -99,9 +99,9 @@ def test_default_qm_opt(generate_calcjob, generate_inputs):
 
     assert calc_info.retrieve_list == [
         ChemShellCalculation.FILE_STDOUT,
-        # ChemShellCalculation.FILE_RESULTS,
-        ChemShellCalculation.FILE_DLFIND,
     ]
+    assert ChemShellCalculation.FILE_DLFIND in calc_info.retrieve_temporary_list
+    assert ChemShellCalculation.FILE_RESULTS in calc_info.retrieve_temporary_list
 
 
 def test_expanded_mm_parameters(generate_calcjob, generate_inputs):

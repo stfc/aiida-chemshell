@@ -216,7 +216,7 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names()
     assert ChemShellCalculation.FILE_STDOUT in ofiles
-    assert ChemShellCalculation.FILE_DLFIND in ofiles
+    # assert ChemShellCalculation.FILE_DLFIND in ofiles
     # assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     assert (
@@ -311,7 +311,7 @@ def test_neb_calculation(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names()
     assert ChemShellCalculation.FILE_STDOUT in ofiles
-    assert ChemShellCalculation.FILE_DLFIND not in ofiles
+    # assert ChemShellCalculation.FILE_DLFIND not in ofiles
     # assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     eref = -149.56942655605

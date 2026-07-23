@@ -17,11 +17,11 @@ class ChemShellParser(Parser):
 
     def parse(self, **kwargs):
         """Parse the output of a ChemShell calculation."""
-        retrieved_tmp_folder = kwargs.get("retrieved_temporary_folder", None)
+        retrieved_tmp_folder = Path(kwargs.get("retrieved_temporary_folder", ""))
 
         if ChemShellCalculation.FILE_STDOUT not in self.retrieved.list_object_names():
             return self.exit_codes.ERROR_STDOUT_NOT_FOUND
-        results_path = Path(retrieved_tmp_folder) / ChemShellCalculation.FILE_RESULTS  # type: ignore
+        results_path = retrieved_tmp_folder / ChemShellCalculation.FILE_RESULTS
         if not (results_path).exists():
             return self.exit_codes.ERROR_RESULTS_FILE_NOT_FOUND
 
@@ -70,6 +70,7 @@ class ChemShellParser(Parser):
 
         # If the calculation was a geometry optimisation, store the optimised structure
         if "optimisation_parameters" in self.node.inputs:
+            dl_find_path = retrieved_tmp_folder / ChemShellCalculation.FILE_DLFIND
             if self.node.inputs.optimisation_parameters.get("thermal", False):
                 self.parse_vibrational_analysis(
                     self.retrieved.get_object_content(
@@ -81,9 +82,9 @@ class ChemShellParser(Parser):
                 "frozen",
                 "perpendicular",
             ]:
-                self.parse_neb_path(Path(retrieved_tmp_folder) / "nebpath.xyz")
-                self.parse_neb_info(Path(retrieved_tmp_folder) / "nebinfo")
-            elif ChemShellCalculation.FILE_DLFIND in self.retrieved.list_object_names():
+                self.parse_neb_path(retrieved_tmp_folder / "nebpath.xyz")
+                self.parse_neb_info(retrieved_tmp_folder / "nebinfo")
+            elif dl_find_path.exists():
                 descrip = "Optimised structure from a ChemShell optimisation"
                 input_pk = self.node.inputs.structure.pk
                 descrip += f" of node {input_pk}"
@@ -91,7 +92,7 @@ class ChemShellParser(Parser):
                     input_fname = self.node.inputs.structure.filename
                     descrip += f" ({input_fname})"
                 # Store the optimised structure file
-                with self.retrieved.open(ChemShellCalculation.FILE_DLFIND, "rb") as f:
+                with open(dl_find_path, "rb") as f:
                     self.out(
                         "optimised_structure",
                         SinglefileData(

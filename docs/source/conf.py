@@ -35,3 +35,29 @@ html_logo = ""
 
 html_theme = 'piccolo_theme'
 html_static_path = ['_static']
+
+
+# -- Automatic API documentation generation ----------------------------------
+# Regenerate the API reference (.rst stubs) from the source on every build so
+# it stays in sync with the code, both locally and in the CI docs workflow.
+
+def run_apidoc(_):
+    """Run ``sphinx-apidoc`` to (re)generate the API reference stubs."""
+    from sphinx.ext import apidoc
+
+    docs_source = os.path.dirname(__file__)
+    package_dir = os.path.abspath(os.path.join(docs_source, "../../src/aiida_chemshell"))
+    output_dir = os.path.join(docs_source, "api")
+
+    apidoc.main([
+        "--force",         # overwrite existing stubs
+        "--module-first",  # module docstring before submodule listing
+        "--separate",      # one page per module
+        "-o", output_dir,
+        package_dir,
+    ])
+
+
+def setup(app):
+    """Connect the apidoc generation to the Sphinx build."""
+    app.connect("builder-inited", run_apidoc)

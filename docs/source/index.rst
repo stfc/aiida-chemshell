@@ -12,10 +12,10 @@ API
 ===
 
 .. toctree::
-   :maxdepth: 2 
-   :caption: API 
+   :maxdepth: 2
+   :caption: API
 
-   aiida_chemshell
+   api/modules
 
 
 

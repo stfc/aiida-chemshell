@@ -435,7 +435,7 @@ class ChemShellCalculation(CalcJob):
         return None
 
     @classmethod
-    def get_valid_qm_paramater_keys(cls) -> dict[str:type]:
+    def get_valid_qm_parameter_keys(cls) -> dict:
         """
         Return a tuple of valid parameter keys for the ChemShell calculation.
 
@@ -455,7 +455,7 @@ class ChemShellCalculation(CalcJob):
             "damping": bool,
             "diis": bool,
             "direct": bool,
-            "guess": str,  # TODO: file???
+            # "guess": str,  # TODO: file???
             "maxiter": int,
             "path": str,
             "pseudopotential": str | dict,
@@ -488,7 +488,7 @@ class ChemShellCalculation(CalcJob):
                 "ChemShell theory interface within the AiiDA-ChemShell workflow."
             )
 
-        valid_keys = cls.get_valid_qm_paramater_keys()
+        valid_keys = cls.get_valid_qm_parameter_keys()
 
         # Check for valid parameter keys
         invalid_keys = set(value.keys()).difference(set(valid_keys.keys()))
@@ -527,7 +527,7 @@ class ChemShellCalculation(CalcJob):
         return None
 
     @classmethod
-    def get_valid_mm_paramater_keys(cls, theory: str = "") -> dict[str:type]:
+    def get_valid_mm_parameter_keys(cls, theory: str = "") -> dict[str:type]:
         """
         Return a tuple of valid parameter keys for the ChemShell MM interface.
 
@@ -539,8 +539,8 @@ class ChemShellCalculation(CalcJob):
         if theory == "DL_POLY":
             valid_keys = {
                 "theory": str,
-                "input": str | tuple[str],
-                "output": str,
+                # "input": str | tuple[str],
+                # "output": str,
                 # general keys -> TODO: these are files which are not supported
                 # by as AiiDA nodes if in a Dict object
                 "berendsen": float,
@@ -564,8 +564,8 @@ class ChemShellCalculation(CalcJob):
         elif theory == "GULP":
             valid_keys = {
                 "theory": str,
-                "input": str,
-                "output": str,
+                # "input": str,
+                # "output": str,
                 # general keys -> TODO: these are files which are not supported
                 # by as AiiDA nodes if in a Dict object
                 "molecule": bool,
@@ -574,8 +574,8 @@ class ChemShellCalculation(CalcJob):
         elif theory == "NAMD":
             valid_keys = {
                 "theory": str,
-                "input": str,
-                "output": str,
+                # "input": str,
+                # "output": str,
                 # general keys -> TODO: these are files which are not supported
                 # by as AiiDA nodes if in a Dict object
                 "binary": bool,
@@ -615,7 +615,9 @@ class ChemShellCalculation(CalcJob):
                 "wrap_water": bool,
             }
         else:
-            valid_keys = {"theory": str, "input": str, "output": str}
+            valid_keys = {
+                "theory": str,
+            }
         return valid_keys
 
     @classmethod
@@ -642,7 +644,7 @@ class ChemShellCalculation(CalcJob):
                 "valid ChemShell MM interface within the AiiDA-ChemShell workflow."
             )
 
-        valid_keys = cls.get_valid_mm_paramater_keys(theory)
+        valid_keys = cls.get_valid_mm_parameter_keys(theory)
         invalid_keys = set(value.keys()).difference(set(valid_keys.keys()))
         if invalid_keys:
             # Checks for invalid parameter keys

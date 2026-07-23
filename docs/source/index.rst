@@ -7,6 +7,8 @@ aiida_chemshell documentation
 
    introduction
    examples
+   inputs
+   workflows
 
 API
 ===

@@ -111,13 +111,10 @@ class ChemShellParser(Parser):
                 return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
             if self.node.inputs.optimisation_parameters.get("save_path", False):
-                if (
-                    ChemShellCalculation.FILE_TRJPTH
-                    in self.retrieved.list_object_names()
-                ):
-                    with self.retrieved.open(
-                        ChemShellCalculation.FILE_TRJPTH, "r"
-                    ) as f:
+                trj_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJPTH
+                trj_frc_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJFRC
+                if trj_path.exists():
+                    with open(trj_path, "rb") as f:
                         self.out(
                             "trajectory_path",
                             SinglefileData(
@@ -128,9 +125,7 @@ class ChemShellParser(Parser):
                                 label="ChemShell optimisation trajectory.",
                             ),
                         )
-                    with self.retrieved.open(
-                        ChemShellCalculation.FILE_TRJFRC, "r"
-                    ) as f:
+                    with open(trj_frc_path, "rb") as f:
                         self.out(
                             "trajectory_force",
                             SinglefileData(

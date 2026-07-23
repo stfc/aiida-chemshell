@@ -1038,10 +1038,10 @@ class ChemShellCalculation(CalcJob):
                     ChemShellCalculation.FILE_DLFIND
                 )
             if self.inputs.optimisation_parameters.get("save_path", False):
-                calc_info.retrieve_list.append(
+                calc_info.retrieve_temporary_list.append(
                     "_dl_find/" + ChemShellCalculation.FILE_TRJPTH
                 )
-                calc_info.retrieve_list.append(
+                calc_info.retrieve_temporary_list.append(
                     "_dl_find/" + ChemShellCalculation.FILE_TRJFRC
                 )
             if self.inputs.optimisation_parameters.get("neb", "no") in [

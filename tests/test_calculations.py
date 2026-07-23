@@ -205,7 +205,7 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     builder.structure = get_test_data_file("butanol.cjson")
     builder.mm_parameters = Dict({"theory": "DL_POLY"})
     builder.force_field_file = get_test_data_file("butanol.ff")
-    builder.optimisation_parameters = Dict({})
+    builder.optimisation_parameters = Dict({"save_path": True})
 
     results, node = run.get_node(builder)
 
@@ -216,8 +216,6 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
 
     ofiles = results.get("retrieved").list_object_names()
     assert ChemShellCalculation.FILE_STDOUT in ofiles
-    # assert ChemShellCalculation.FILE_DLFIND in ofiles
-    # assert ChemShellCalculation.FILE_RESULTS in ofiles
 
     assert (
         results.get("optimised_structure").filename == ChemShellCalculation.FILE_DLFIND
@@ -233,6 +231,9 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for DL_POLY based optimisation calculation."
     )
+
+    assert results.get("trajectory_path").filename == ChemShellCalculation.FILE_TRJPTH
+    assert results.get("trajectory_force").filename == ChemShellCalculation.FILE_TRJFRC
 
 
 def test_vibrational_calculation(chemsh_code, get_test_data_file):

@@ -82,7 +82,7 @@ class ChemShellParser(Parser):
                 "frozen",
                 "perpendicular",
             ]:
-                self.parse_neb_path(retrieved_tmp_folder / "nebpath.xyz")
+                self.parse_xyz_path(retrieved_tmp_folder / "nebpath.xyz", "neb_path")
                 self.parse_neb_info(retrieved_tmp_folder / "nebinfo")
             elif dl_find_path.exists():
                 descrip = "Optimised structure from a ChemShell optimisation"
@@ -114,17 +114,7 @@ class ChemShellParser(Parser):
                 trj_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJPTH
                 trj_frc_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJFRC
                 if trj_path.exists():
-                    with open(trj_path, "rb") as f:
-                        self.out(
-                            "trajectory_path",
-                            SinglefileData(
-                                file=f,
-                                filename=ChemShellCalculation.FILE_TRJPTH.replace(
-                                    "/", "_"
-                                ),
-                                label="ChemShell optimisation trajectory.",
-                            ),
-                        )
+                    self.parse_xyz_path(trj_path, "trajectory_path")
                     with open(trj_frc_path, "rb") as f:
                         self.out(
                             "trajectory_force",
@@ -196,7 +186,7 @@ class ChemShellParser(Parser):
         self.out("optimisation_path", results)
         return
 
-    def parse_neb_path(self, file_path: Path) -> None:
+    def parse_xyz_path(self, file_path: Path, output_link: str) -> None:
         """Parse the NEB pathway into an AiiDA TrajectoryData node."""
         with open(file_path) as f:
             lines = f.readlines()
@@ -219,7 +209,9 @@ class ChemShellParser(Parser):
             i += natoms + 2
         path = TrajectoryData()
         path.set_trajectory(symbols=symbols, positions=numpy.asarray(positions))
-        self.out("neb_path", path)
+        path.label = "ChemShell (DL_FIND) optimisation path."
+        path.description = "Path taken for a ChemShell Optimisation or NEB calculation."
+        self.out(output_link, path)
         return
 
     def parse_neb_info(self, file_path: Path) -> None:

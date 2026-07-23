@@ -203,17 +203,17 @@ class ChemShellCalculation(CalcJob):
 
         spec.output(
             "trajectory_path",
-            valid_type=SinglefileData,
+            valid_type=TrajectoryData,
             required=False,
-            help="XYZ trajectory file for the geometry optimisation",
+            help="Trajectory with the path taken for a geometry optimisation.",
         )
         spec.output(
             "trajectory_force",
             valid_type=SinglefileData,
             required=False,
             help=(
-                "XYZ trajectory containing forces at each step of a geometry "
-                "optimisation"
+                "XYZ style trajectory file containing forces at each step of a geometry"
+                " optimisation."
             ),
         )
 

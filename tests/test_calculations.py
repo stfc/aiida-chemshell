@@ -232,7 +232,8 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
         "Incorrect energy result for DL_POLY based optimisation calculation."
     )
 
-    assert results.get("trajectory_path").filename == ChemShellCalculation.FILE_TRJPTH
+    assert results.get("trajectory_path").numsteps == 13
+    assert results.get("trajectory_path").numsites == 15
     assert results.get("trajectory_force").filename == ChemShellCalculation.FILE_TRJFRC
 
 

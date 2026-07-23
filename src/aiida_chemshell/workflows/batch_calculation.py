@@ -17,8 +17,13 @@ class BatchProcessWorkChain(WorkChain):
         """Define the AiiDA process specification."""
         super().define(spec)
 
-        # Expose Chemshell inputs
+        # Expose Chemshell inputs in the top level namespace
         spec.expose_inputs(ChemShellCalculation, exclude=("structure", "metadata"))
+
+        # Expose the calculation metadata under a dedicated 'calc' namespace.
+        spec.expose_inputs(
+            ChemShellCalculation, namespace="calc", include=("metadata",)
+        )
 
         # Input structure series
         spec.input(
@@ -90,6 +95,10 @@ class BatchProcessWorkChain(WorkChain):
         """Extract all individual structures and submit their calculations."""
         futures: dict[str, ProcessNode] = {}
         inputs = {"code": self.inputs.code}
+        # Forward the calculation options (resources, MPI processes, wallclock, ...)
+        # to every job in the batch.
+        if "calc" in self.inputs and "options" in self.inputs.calc.metadata:
+            inputs["metadata"] = {"options": dict(self.inputs.calc.metadata.options)}
         if "qm_parameters" in self.inputs:
             inputs["qm_parameters"] = self.inputs.qm_parameters
         if "mm_parameters" in self.inputs:

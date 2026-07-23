@@ -163,9 +163,12 @@ The structures to process can be supplied in any of three ways (at least one is 
      - namespace of ``SinglefileData``
      - A dictionary of structure files. Currently only ``.xyz`` trajectory files are parsed; others are skipped.
 
-All of the ``chemshell`` calculation inputs are exposed (excluding ``structure`` and ``metadata``), so the
-QM/MM parameters, optimisation parameters, etc., are shared across every structure in the batch. If none of
-the three structure inputs are provided the WorkChain returns exit code ``350`` (``ERROR_NO_INPUTS``).
+All of the ``chemshell`` calculation inputs are exposed (excluding ``structure``, which is provided through
+the batch-specific inputs above), so the QM/MM parameters, optimisation parameters, etc., are shared across
+every structure in the batch. The calculation ``metadata`` is exposed under a dedicated ``calc`` namespace:
+any options set via ``calc.metadata.options`` (for example the computational resources and number of MPI
+processes) are forwarded to every job in the batch. If none of the three structure inputs are provided the
+WorkChain returns exit code ``350`` (``ERROR_NO_INPUTS``).
 
 .. code-block:: python
 
@@ -184,6 +187,11 @@ the three structure inputs are provided the WorkChain returns exit code ``350`` 
     builder.structures = {
         "molecule_a": StructureData(...),
         "molecule_b": StructureData(...),
+    }
+    # Resources set here are applied to every calculation in the batch
+    builder.calc.metadata.options.resources = {
+        "num_machines": 1,
+        "num_mpiprocs_per_machine": 8,
     }
 
     results, node = run.get_node(builder)

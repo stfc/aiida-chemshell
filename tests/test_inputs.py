@@ -11,7 +11,7 @@ def test_defaults(generate_calcjob):
 
     assert calc_info.retrieve_list == [
         ChemShellCalculation.FILE_STDOUT,
-        ChemShellCalculation.FILE_RESULTS,
+        # ChemShellCalculation.FILE_RESULTS,
     ]
     code_info = calc_info.codes_info[0]
     assert ChemShellCalculation.FILE_SCRIPT in code_info.cmdline_params
@@ -99,7 +99,7 @@ def test_default_qm_opt(generate_calcjob, generate_inputs):
 
     assert calc_info.retrieve_list == [
         ChemShellCalculation.FILE_STDOUT,
-        ChemShellCalculation.FILE_RESULTS,
+        # ChemShellCalculation.FILE_RESULTS,
         ChemShellCalculation.FILE_DLFIND,
     ]
 

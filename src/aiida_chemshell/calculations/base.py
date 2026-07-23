@@ -974,11 +974,12 @@ class ChemShellCalculation(CalcJob):
         # Setup the calculation information object
         calc_info = CalcInfo()
         calc_info.codes_info = [code_info]
-        calc_info.retrieve_temporary_list = []
+        calc_info.retrieve_temporary_list = [
+            ChemShellCalculation.FILE_RESULTS,
+        ]
         calc_info.provenance_exclude_list = []
         calc_info.retrieve_list = [
             ChemShellCalculation.FILE_STDOUT,
-            ChemShellCalculation.FILE_RESULTS,
         ]
         calc_info.local_copy_list = []
 

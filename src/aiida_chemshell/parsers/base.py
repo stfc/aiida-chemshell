@@ -21,13 +21,13 @@ class ChemShellParser(Parser):
 
         if ChemShellCalculation.FILE_STDOUT not in self.retrieved.list_object_names():
             return self.exit_codes.ERROR_STDOUT_NOT_FOUND
-        if ChemShellCalculation.FILE_RESULTS not in self.retrieved.list_object_names():
+        results_path = Path(retrieved_tmp_folder) / ChemShellCalculation.FILE_RESULTS  # type: ignore
+        if not (results_path).exists():
             return self.exit_codes.ERROR_RESULTS_FILE_NOT_FOUND
 
         # Read the 'json' formatted results file
-        results = json.loads(
-            self.retrieved.get_object_content(ChemShellCalculation.FILE_RESULTS, "rb")
-        )
+        with open(results_path, "rb") as f:
+            results = json.loads(f.read())
 
         # Extract the final energy
         try:

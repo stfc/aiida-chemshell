@@ -27,15 +27,16 @@ Source = "https://github.com/stfc/aiida-chemshell"
 
 [project.entry-points."aiida.calculations"]
 "chemshell" = "aiida_chemshell.calculations.base:ChemShellCalculation"
-"chemshell.file_conversion.mlip_training" = "aiida_chemshell.calculations.file_conversion:CreateJanusTrainingInputsCalcJob"
+
 
 [project.entry-points."aiida.parsers"]
 "chemshell" = "aiida_chemshell.parsers.base:ChemShellParser"
-"chemshell.file_conversion.mlip_training" = "aiida_chemshell.parsers.file_conversion:CreateJanusTrainingInputsParser"
+
 
 [project.entry-points."aiida.workflows"]
 "chemshell.opt" = "aiida_chemshell.workflows.optimisation:GeometryOptimisationWorkChain"
 "chemshell.atomic_energies" = "aiida_chemshell.workflows.isolated_atoms:IsolatedAtomicEnergiesWorkChain"
+"chemshell.batch" = "aiida_chemshell.workflows.batch_calculation:BatchProcessWorkChain"
 
 [tool.setuptools.packages.find]
 where = ["src"]

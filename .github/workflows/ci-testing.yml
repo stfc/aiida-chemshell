@@ -89,7 +89,9 @@ jobs:
 
       - name: Run the test suite without coverage 
         if:  ${{ !contains(matrix.python-version, '3.12') }}
-        run: pytest -n auto
+        run: |
+          pip install .[dev]
+          pytest -n auto
 
       - name: Report coverage to Coveralls 
         if: contains(matrix.python-version, '3.12')

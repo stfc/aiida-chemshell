@@ -32,7 +32,7 @@ jobs:
         - name: Run the format checker  
           run: ruff format --check 
 
-  pytest: 
+  pytest-quick: 
       runs-on: ubuntu-latest
       strategy:
         matrix:
@@ -52,10 +52,13 @@ jobs:
             pip install .[dev]
 
         - name: Run the basic test suite without coverage 
-          run: pytest tests/test_inputs.py
+          run: pytest tests/test_inputs.py tests/test_error_codes.py
 
   pytest-full:
     runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          python-version: ["3.10", "3.11", "3.12"]
     permissions:
       contents: read 
       packages: read
@@ -79,11 +82,17 @@ jobs:
         run: docker pull ghcr.io/stfc/aiidalab-chemshell/chemsh:latest
           
       - name: Run the test suite with coverage
+        if: contains(matrix.python-version, '3.12')
         run: |
           pip install .[dev]
           pytest -n auto --cov=aiida-chemshell --cov-report=xml:coverage.xml
 
+      - name: Run the test suite without coverage 
+        if:  ${{ !contains(matrix.python-version, '3.12') }}
+        run: pytest -n auto
+
       - name: Report coverage to Coveralls 
+        if: contains(matrix.python-version, '3.12')
         uses: coverallsapp/github-action@v2 
         with: 
           file: coverage.xml 

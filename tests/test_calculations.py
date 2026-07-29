@@ -147,12 +147,12 @@ def test_sp_calculation_qmmm(chemsh_code, get_test_data_file):
     )
 
 
-def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
+def test_opt_calculation_qm(chemsh_code, get_test_data_file):
     """QM based geometry optimisation test."""
     code = chemsh_code
     builder = code.get_builder()
     builder.structure = get_test_data_file("water.cjson")
-    builder.qm_parameters = Dict({"theory": "PySCF", "method": "DFT", "basis": "3-21G"})
+    builder.qm_parameters = Dict({"theory": "PySCF", "method": "hf", "basis": "3-21G"})
     builder.optimisation_parameters = Dict({})
 
     results, node = run.get_node(builder)
@@ -173,7 +173,7 @@ def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
     assert "Optimised structure" in results.get("optimised_structure").description
 
     # eref = -75.951248996895
-    eref = -75.951248407932
+    eref = -75.585959742723
     assert abs(results.get("energy") - eref) < 1e-8, (
         "Incorrect energy result for PySCF based optimisation calculation."
     )
@@ -189,8 +189,13 @@ def test_opt_calculation_qm_dft(chemsh_code, get_test_data_file):
         "Optimisation path energies entry missing."
     )
 
-    assert optimisation_path.get_shape("energies")[0] == 7, (
+    assert optimisation_path.get_shape("energies")[0] == 5, (
         "Incorrect number of entries for the optimisation_path energies."
+    )
+
+    e_0_ref = -75.58528778
+    assert abs(optimisation_path.get_array("energies")[0] - e_0_ref) < 1e-7, (
+        "Incorrect initial energy in optimisation_path energy series."
     )
 
     assert abs(optimisation_path.get_array("energies")[-1] - eref) < 1e-7, (
@@ -306,6 +311,10 @@ def test_neb_calculation(chemsh_code, get_test_data_file):
     builder.structure2 = get_test_data_file("h2o_dimer_2.cjson")
     builder.qm_parameters = Dict({"theory": "PySCF", "method": "hf", "basis": "3-21G"})
     builder.optimisation_parameters = Dict({"neb": "frozen"})
+    builder.metadata["options"]["resources"] = {
+        "num_machines": 1,
+        "num_mpiprocs_per_machine": 2,
+    }
 
     results, node = run.get_node(builder)
 

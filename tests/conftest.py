@@ -125,9 +125,13 @@ def chemsh_code(
     computer.configure()
 
     # Clear any potential entrypoints so AiiDA can handle the executable
-    # in the container.
+    # in the container. Run the container as the host user so that files
+    # written into the bind-mounted working directory are owned by that user
+    # and can be cleaned up by pytest (otherwise they are root-owned and the
+    # temp-directory cleanup fails with noisy warnings).
     engine_command = (
-        "docker run --rm -v $PWD:/workdir:rw -w /workdir --entrypoint= {image_name}"
+        f"docker run --rm --user {os.getuid()}:{os.getgid()} "
+        "-v $PWD:/workdir:rw -w /workdir --entrypoint= {image_name}"
     )
 
     return aiida_code(

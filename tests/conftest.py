@@ -212,7 +212,7 @@ def generate_inputs(chemsh_code, get_test_data_file):
             structure = get_test_data_file(structure_fname)
         else:
             structure = structure_fname
-        inputs = {"code": chemsh_code(), "structure": structure}
+        inputs = {"code": chemsh_code, "structure": structure}
         if sp:
             inputs["calculation_parameters"] = Dict(sp)
         if qm:

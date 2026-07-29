@@ -11,7 +11,7 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
     """Test a geometry optimisation workflow with vibrational analysis."""
     inputs = {
         "structure": get_test_data_file(),
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "qm_parameters": {"theory": "NWChem", "method": "HF"},
     }
     results, node = run_get_node(IsolatedAtomicEnergiesWorkChain, **inputs)

@@ -2,6 +2,8 @@
 
 import os
 import pathlib
+import shutil
+import subprocess
 
 import numpy
 import pytest
@@ -10,10 +12,41 @@ from aiida.common.folders import Folder
 from aiida.engine import CalcJob
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager
-from aiida.orm import Dict, InstalledCode, SinglefileData, StructureData, TrajectoryData
+from aiida.orm import (
+    ContainerizedCode,
+    Dict,
+    InstalledCode,
+    SinglefileData,
+    StructureData,
+    TrajectoryData,
+)
 from packaging.version import parse as parse_version
 
 pytest_plugins = "aiida.tools.pytest_fixtures"
+
+
+def _docker_available() -> bool:
+    """Return whether a usable Docker daemon is reachable on this host.
+
+    This is used to gate the container-backed tests so that the Docker
+    dependency only applies to the tests that actually launch a containerised
+    ChemShell code, rather than to the test suite as a whole.
+    """
+    if shutil.which("docker") is None:
+        return False
+    try:
+        subprocess.run(
+            ["docker", "info"],
+            capture_output=True,
+            check=True,
+            timeout=30,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
+        return False
+    return True
+
+
+DOCKER_AVAILABLE = _docker_available()
 
 
 def pytest_configure(config):
@@ -55,10 +88,24 @@ def get_test_data_file(get_data_filepath):
 
 
 @pytest.fixture
-def chemsh_code(aiida_code_installed):
-    """Return a ChemShell AiiDA code instance."""
+def chemsh_code(
+    aiida_code, aiida_code_installed, aiida_computer
+) -> ContainerizedCode | InstalledCode:
+    """Return  a ChemShell AiiDA code instance.
 
-    def factory(plugin: str = "chemshell") -> InstalledCode:
+    By default this returns a :class:`~aiida.orm.ContainerizedCode` that launches
+    ChemShell inside a Docker container. The image defaults to
+    ``ghcr.io/stfc/aiidalab-chemshell/chemsh:latest`` (override with
+    ``CHEMSHELL_IMAGE`` and ``CHEMSHELL_CONTAINER_BIN``).
+
+    If no Docker daemon is available, it falls back to a host-installed ``chemsh``
+    executable (``CHEMSHELL_BIN``, default ``chemsh``).
+
+    The code instance is given a fixed label such that it is created once and
+    then reused by all tests within the temporary testing profile.
+    """
+    if not DOCKER_AVAILABLE:
+        # Fall back to a host-installed ChemShell executable.
         return aiida_code_installed(
             filepath_executable=os.environ.get("CHEMSHELL_BIN", "chemsh"),
             default_calc_job_plugin="chemshell",
@@ -66,7 +113,33 @@ def chemsh_code(aiida_code_installed):
             append_text=os.environ.get("CHEMSHELL_APPEND_TEXT", ""),
         )
 
-    return factory
+    image_name = os.environ.get(
+        "CHEMSHELL_IMAGE", "ghcr.io/stfc/aiidalab-chemshell/chemsh:latest"
+    )
+    filepath_executable = os.environ.get(
+        "CHEMSHELL_CONTAINER_BIN", "/opt/chemsh-py/bin/intel/chemsh"
+    )
+
+    computer = aiida_computer(label="localhost-docker", transport_type="core.local")
+    computer.set_use_double_quotes(True)
+    computer.configure()
+
+    # Clear any potential entrypoints so AiiDA can handle the executable
+    # in the container.
+    engine_command = (
+        "docker run --rm -v $PWD:/workdir:rw -w /workdir --entrypoint= {image_name}"
+    )
+
+    return aiida_code(
+        "core.code.containerized",
+        label="chemsh-containerized",
+        default_calc_job_plugin="chemshell",
+        computer=computer,
+        filepath_executable=filepath_executable,
+        engine_command=engine_command,
+        image_name=image_name,
+        with_mpi=False,  # MPI is handled by plugin when using ``chemsh`` executable
+    )
 
 
 @pytest.fixture(scope="function")

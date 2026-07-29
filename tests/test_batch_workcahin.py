@@ -26,7 +26,7 @@ def test_batch_forwards_metadata_options(chemsh_code, water_trajectory_object):
     """Resources set on the WorkChain are forwarded to every sub-calculation."""
     resources = {"num_machines": 1, "num_mpiprocs_per_machine": 2}
     inputs = {
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "trajectory": water_trajectory_object,
         "qm_parameters": Dict(
             {
@@ -49,7 +49,7 @@ def test_batch_forwards_metadata_options(chemsh_code, water_trajectory_object):
 def test_batch_from_trajectorydata(chemsh_code, water_trajectory_object):
     """DFT based single point test."""
     inputs = {
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "trajectory": water_trajectory_object,
         "qm_parameters": Dict(
             {
@@ -78,7 +78,7 @@ def test_batch_from_structuredata(chemsh_code, water_trajectory_object):
     trajectory = water_trajectory_object
 
     inputs = {
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "structures": {
             "structure_1": trajectory.get_step_structure(0),
             "structure_2": trajectory.get_step_structure(1),
@@ -110,7 +110,7 @@ def test_batch_from_structuredata_and_trajectorydata(
 ):
     """DFT based single point test."""
     inputs = {
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "trajectory": water_trajectory_object,
         "structures": {
             "Structure_1": water_structure_object,
@@ -145,7 +145,7 @@ def test_batch_from_file(chemsh_code, get_test_data_file):
     """DFT based single point test."""
     structure_file = get_test_data_file("trajectory.xyz")
     inputs = {
-        "code": chemsh_code(),
+        "code": chemsh_code,
         "structure_files": {
             structure_file.filename.strip(".xyz").replace(" ", "_"): structure_file
         },

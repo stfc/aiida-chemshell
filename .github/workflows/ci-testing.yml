@@ -74,6 +74,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the ChemShell testing container
+        run: docker pull ghcr.io/stfc/aiidalab-chemshell/chemsh:latest
           
       - name: Run the test suite with coverage
         run: |

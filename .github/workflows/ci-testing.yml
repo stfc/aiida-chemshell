@@ -74,12 +74,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run the test suite with coverage 
+          
+      - name: Run the test suite with coverage
         run: |
-          PYTEST_CMD='cd /opt/aiida-chemshell && pip install . && pytest --cov=aiida_chemshell --cov-report=xml:/opt/aiida-chemshell/coverage.xml' 
-          IMAGE_NAME=ghcr.io/stfc/aiida-chemshell/testing:latest 
-          docker run --rm -v $(pwd):/opt/aiida-chemshell $IMAGE_NAME bash -c "$PYTEST_CMD"
+          pip install .[dev]
+          pytest --cov=aiida-chemshell --cov-report=xml:coverage.xml
 
       - name: Report coverage to Coveralls 
         uses: coverallsapp/github-action@v2 

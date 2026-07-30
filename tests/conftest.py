@@ -129,8 +129,15 @@ def chemsh_code(
     # written into the bind-mounted working directory are owned by that user
     # and can be cleaned up by pytest (otherwise they are root-owned and the
     # temp-directory cleanup fails with noisy warnings).
+    #
+    # The host uid may not exist in the image's /etc/passwd (e.g. the GitHub
+    # Actions runner is uid 1001, whereas the image only defines uid 1000), in
+    # which case ``$HOME`` defaults to an unwritable ``/`` and username lookups
+    # fail, breaking ChemShell/Intel-MPI. Point ``HOME`` at the (host-owned)
+    # working directory and provide a ``USER`` so this works for any uid.
     engine_command = (
         f"docker run --rm --user {os.getuid()}:{os.getgid()} "
+        "-e HOME=/workdir -e USER=aiida "
         "-v $PWD:/workdir:rw -w /workdir --entrypoint= {image_name}"
     )
 

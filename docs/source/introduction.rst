@@ -35,7 +35,7 @@ of a basis YAML configuration file for a ChemShell code:
 
 .. code-block:: yaml 
 
-    label: chemshell 
+    label: chemsh
     description: ChemShell 
     computer: localhost 
     filepath_executable: chemsh.x 

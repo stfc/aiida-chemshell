@@ -1,9 +1,17 @@
 """Workflow for processing a series of structures from a single input."""
 
 import re
+from io import BytesIO
 
 from aiida.engine import ProcessSpec, ToContext, WorkChain, calcfunction
-from aiida.orm import ProcessNode, SinglefileData, StructureData, TrajectoryData
+from aiida.orm import (
+    ArrayData,
+    Float,
+    ProcessNode,
+    SinglefileData,
+    StructureData,
+    TrajectoryData,
+)
 from aiida.plugins.factories import CalculationFactory
 
 ChemShellCalculation = CalculationFactory("chemshell")
@@ -49,6 +57,30 @@ class BatchProcessWorkChain(WorkChain):
             ),
         )
 
+        # Results combination key
+        spec.input(
+            "combine_results",
+            valid_type=bool,
+            required=False,
+            non_db=True,
+            help=(
+                "A key which tells the workchain to combine all the results from the "
+                "individual batch processing tasks into one final results object which "
+                'is an extended xyz file (key="xyz").'
+            ),
+            # validator=cls.validate_combination_input_key,
+        )
+        # Results combination output node
+        spec.output(
+            "combined_results",
+            valid_type=SinglefileData,
+            required=False,
+            help=(
+                "An extended XYZ file with all the ChemShell results from the batch "
+                "processed input structures."
+            ),
+        )
+
         spec.exit_code(
             350,
             "ERROR_NO_INPUTS",
@@ -64,6 +96,16 @@ class BatchProcessWorkChain(WorkChain):
             cls.submit_jobs,
             cls.collate_results,
         )
+
+    # @classmethod
+    # def validate_combination_input_key(cls, key: str | None, _) -> str | None:
+    #     """Validate the combine_results input key."""
+    #     if key in ["xyz", "trajectory"]:
+    #         return None
+    #     return (
+    #         f"Invalid input for 'combine_results'. {key} must be either 'xyz' or "
+    #         "'trajectory'"
+    #     )
 
     def validate_inputs(self):
         """Validate the inputs provided to the WorkChain."""
@@ -130,6 +172,46 @@ class BatchProcessWorkChain(WorkChain):
 
     def collate_results(self) -> None:
         """Collect the WorkChain's results."""
+        if self.inputs.get("combine_results", None):
+            if "optimisation_parameters" in self.inputs:
+                self.logger.warning(
+                    "Output combination is not currently supported for optimisation "
+                    "jobs."
+                )
+                return
+            inputs = {}
+            include_forces = self.inputs.get("calculation_parameters", {}).get(
+                "gradients", False
+            )
+            if "trajectory" in self.inputs:
+                inputs["structure_trajectory"] = self.inputs.trajectory
+                for i in range(self.inputs.trajectory.numsteps):
+                    inputs[f"energy_trajectory_frame_{i}"] = self.ctx[
+                        f"trajectory_frame_{i}"
+                    ].outputs.energy
+                    if include_forces:
+                        inputs[f"array_trajectory_frame_{i}"] = self.ctx[
+                            f"trajectory_frame_{i}"
+                        ].outputs.gradients
+            if "structures" in self.inputs:
+                for key, structure in self.inputs.structures.items():
+                    inputs[f"structure_{key}"] = structure
+                    inputs[f"energy_{key}"] = self.ctx[key].outputs.energy
+                    if include_forces:
+                        inputs[f"array_{key}"] = self.ctx[key].outputs.gradients
+            if "structure_files" in self.inputs:
+                for key, structure in self.structures_from_files.items():
+                    inputs[f"structure_{key}"] = structure
+                    inputs[f"energy_{key}"] = self.ctx[key].outputs.energy
+                    if include_forces:
+                        inputs[f"array_{key}"] = self.ctx[key].outputs.gradients
+            combined_output_node = combine_into_extended_xyz(**inputs)
+            combined_output_node.label = "ChemShell Batch Processed Structures"
+            combined_output_node.description = (
+                "Collection of structures processed by ChemShell from WorkChain: "
+                f" {self.node.pk}"
+            )
+            self.out("combined_results", combined_output_node)
         return
 
 
@@ -203,3 +285,73 @@ def extract_structures_from_xyz(file: SinglefileData):
         i += natoms
 
     return structures
+
+
+@calcfunction
+def combine_into_extended_xyz(**kwargs) -> SinglefileData:
+    """Combine a set of batch results into a single extxyz file."""
+    structures: list[StructureData] = []
+    energies: list[Float] = []
+    arrays: list[ArrayData] = []
+
+    # Extract individual structures and SP calculation results.
+    for _key, node in kwargs.items():
+        if isinstance(node, TrajectoryData):
+            for tindex in range(node.numsteps):
+                structures.append(node.get_step_structure(tindex))
+        elif isinstance(node, StructureData):
+            structures.append(node)
+        elif isinstance(node, Float):
+            energies.append(node)
+        elif isinstance(node, ArrayData):  # Ensure after TrajectoryData !!
+            arrays.append(node)
+        else:
+            raise ValueError(
+                f"Invalid input of type {node} to 'combine_into_extended_xyz' "
+                "calcfunction."
+            )
+    if not structures:
+        raise ValueError("No StructureData nodes were provided.")
+    if len(structures) != len(energies):
+        raise ValueError(
+            f"Mismatched input lengths: received {len(structures)} structures and "
+            f"{len(energies)} energies."
+        )
+    if arrays:
+        if len(arrays) != len(energies):
+            raise ValueError(
+                f"Mismatched input lengths: received {len(arrays)} arrays and "
+                f"{len(energies)} energies."
+            )
+
+    xyz_lines = []
+
+    for i in range(len(structures)):
+        structure = structures[i]
+        energy = energies[i]
+
+        xyz_lines.append(str(len(structure.sites)))
+
+        header_line = f"Energy={energy.value}"
+        if arrays:
+            forces = arrays[i].get_array("gradients")
+            header_line += " Properties=species:S:1:pos:R:3:force:R:3"
+        else:
+            forces = None
+            header_line += " Properties=species:S:1:pos:R:3"
+        xyz_lines.append(header_line)
+
+        for j, site in enumerate(structure.sites):
+            kind = structure.get_kind(site.kind_name)
+            symbol = kind.symbols[0]
+            x, y, z = site.position
+            site_line = f"{symbol:<4} {x:15.8f} {y:15.8f} {z:15.8f}"
+            if forces is not None:
+                fx, fy, fz = forces[j]
+                site_line += f" {fx:15.8f} {fy:15.8f} {fz:15.8f}"
+            xyz_lines.append(site_line)
+
+    content = "\n".join(xyz_lines)
+    stream = BytesIO(content.encode("utf-8"))
+
+    return SinglefileData(file=stream, filename="chemshell_batch_workchain.extxyz")

@@ -58,17 +58,18 @@ def test_batch_from_trajectorydata(chemsh_code, water_trajectory_object):
                 "method": "hf",
             }
         ),
+        "combine_results": True,
     }
     results, node = run_get_node(BatchProcessWorkChain, **inputs)
 
     assert node.is_finished_ok, "WorkChain Failed"
 
     sub_nodes = node.called
-    assert len(sub_nodes) == 3, "Incorrect number of sub processes created."
+    assert len(sub_nodes) == 4, "Incorrect number of sub processes created."
 
     final_energies = [-75.565560193461, -75.585287771819, -75.426355430539]
 
-    for i, sub_node in enumerate(sub_nodes):
+    for i, sub_node in enumerate(sub_nodes[:-1]):
         assert sub_node.is_finished_ok, "Sub Process Failed"
         assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10
 
@@ -91,19 +92,21 @@ def test_batch_from_structuredata(chemsh_code, water_trajectory_object):
                 "method": "hf",
             }
         ),
+        "combine_results": True,
     }
     results, node = run_get_node(BatchProcessWorkChain, **inputs)
 
     assert node.is_finished_ok, "WorkChain Failed"
 
     sub_nodes = node.called
-    assert len(sub_nodes) == 3, "Incorrect number of sub processes created."
+    assert len(sub_nodes) == 4, "Incorrect number of sub processes created."
 
     final_energies = [-75.565560193461, -75.585287771819, -75.426355430539]
 
-    for i, sub_node in enumerate(sub_nodes):
+    for i, sub_node in enumerate(sub_nodes[:-1]):
         assert sub_node.is_finished_ok, "Sub Process Failed"
         assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10
+    assert sub_nodes[-1].is_finished_ok, "Combination process failed"
 
 
 def test_batch_from_structuredata_and_trajectorydata(
@@ -151,13 +154,15 @@ def test_batch_from_file(chemsh_code, get_test_data_file):
                 "method": "hf",
             }
         ),
+        "calculation_parameters": Dict({"gradients": True}),
+        "combine_results": True,
     }
     results, node = run_get_node(BatchProcessWorkChain, **inputs)
 
     assert node.is_finished_ok, "WorkChain Failed"
 
     sub_nodes = node.called
-    assert len(sub_nodes) == 5, "Incorrect number of sub processes created."
+    assert len(sub_nodes) == 6, "Incorrect number of sub processes created."
 
     final_energies = [
         -75.585287789025,
@@ -166,6 +171,64 @@ def test_batch_from_file(chemsh_code, get_test_data_file):
         -272.88756364993,
     ]
 
-    for i, sub_node in enumerate(sub_nodes[1:]):
+    for i, sub_node in enumerate(sub_nodes[1:-1]):
         assert sub_node.is_finished_ok, "Sub Process Failed"
-        assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10
+        assert abs(sub_node.outputs.energy - final_energies[i]) < 1e-10, (
+            "Incorrect energy value for sub process."
+        )
+
+    with structure_file.open() as f:
+        expected_lines = f.readlines()
+    with results["combined_results"].open() as f:
+        results_lines = f.readlines()
+
+    assert len(expected_lines) == len(results_lines), (
+        "Results file is of the incorrect length"
+    )
+
+    assert "Energy=-75.585287789025" in results_lines[1], (
+        "Missing energy tag in first frame on results file."
+    )
+
+    assert "Properties=species:S:1:pos:R:3:force:R:3" in results_lines[1], (
+        "Missing correct properties description tag in results file."
+    )
+
+    assert "0.01449338" in results_lines[3], (
+        "Invalid force value for first frame in reulst file"
+    )
+
+
+def test_calcfunction_trajectory_directly():
+    """Unit test for the combine_into_extended_xyz calcfunction."""
+    from aiida.orm import Float, SinglefileData, StructureData
+
+    from aiida_chemshell.workflows.batch_calculation import combine_into_extended_xyz
+
+    struct1 = StructureData(cell=[[10, 0, 0], [0, 10, 0], [0, 0, 10]])
+    struct1.append_atom(position=(0.0, 0.0, 0.0), symbols="O")
+    struct2 = StructureData(cell=[[10, 0, 0], [0, 10, 0], [0, 0, 10]])
+    struct2.append_atom(position=(1.0, 0.0, 0.0), symbols="H")
+
+    energy1 = Float(-75.312)
+    energy2 = Float(-5.456)
+
+    kwargs = {
+        "structure_0000": struct1,
+        "energy_0000": energy1,
+        "structure_0001": struct2,
+        "energy_0001": energy2,
+    }
+
+    res = combine_into_extended_xyz(**kwargs)
+
+    assert isinstance(res, SinglefileData)
+    with res.open(res.filename, "r") as f:
+        content = f.readlines()
+
+    assert "1" in content[0]
+    assert "Energy=-75.312" in content[1]
+    assert "O" in content[2]
+    assert "1" in content[3]
+    assert "Energy=-5.456" in content[4]
+    assert "H" in content[5]

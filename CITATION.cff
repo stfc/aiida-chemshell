@@ -13,5 +13,5 @@ identifiers:
 repository-code: "https://github.com/stfc/aiida-chemshell"
 abstract: "AiiDA plugin for the ChemShell multiscale computational chemistry package."
 license: BSD-3-Clause
-version: 0.3.0
-date-released: "2026-09-09"
+version: 0.3.1
+date-released: "2026-09-11"

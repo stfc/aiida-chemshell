@@ -10,7 +10,6 @@ from aiida.orm import (
     Float,
     SinglefileData,
     StructureData,
-    TrajectoryData,
 )
 from aiida.plugins.factories import CalculationFactory
 

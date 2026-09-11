@@ -230,7 +230,7 @@ def test_calcfunction_trajectory_directly():
     """Unit test for the combine_into_extended_xyz calcfunction."""
     from aiida.orm import Float, SinglefileData, StructureData
 
-    from aiida_chemshell.workflows.batch_calculation import combine_into_extended_xyz
+    from aiida_chemshell.calculations.utils import combine_into_extended_xyz
 
     struct1 = StructureData(cell=[[10, 0, 0], [0, 10, 0], [0, 0, 10]])
     struct1.append_atom(position=(0.0, 0.0, 0.0), symbols="O")

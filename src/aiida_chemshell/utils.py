@@ -1,8 +1,12 @@
 """Utility functions for the aiida-chemshell AiiDA plugin."""
 
+import json
 from enum import Enum, auto
 
 from aiida.orm import SinglefileData, StructureData
+
+from aiida_chemshell.periodic_table import PeriodicTable
+from aiida_chemshell.units import UnitsConverter
 
 
 class ChemShellQMTheory(Enum):
@@ -54,6 +58,60 @@ def chemsh_punch_to_structure_data(data: str) -> StructureData:  # pragma: no co
                 structure.append_atom(position=(x, y, z), symbols=atm)
 
         i += 1
+
+    return structure
+
+
+def chemsh_cjson_to_structure_data(data: str | bytes) -> StructureData:
+    """
+    Create an AiiDA StructureData object from a ChemShell '.cjson' file.
+
+    Parameters
+    ----------
+    data : str | bytes
+        The contents of a ChemShell '.cjson' (Chemical JSON) structure file.
+
+    Returns
+    -------
+    StructureData
+        A non-periodic AiiDA StructureData node containing the parsed structure.
+        Coordinates are converted to Angstrom when the file reports them in
+        atomic units (Bohr).
+    """
+    if isinstance(data, bytes):
+        data = data.decode("utf-8")
+    cjson = json.loads(data)
+
+    atoms = cjson.get("atoms", {})
+    elements = atoms.get("elements", {})
+    symbols = elements.get("symbol")
+    if symbols is None:
+        numbers = elements.get("number")
+        if numbers is None:
+            raise ValueError("CJSON file contains no atomic element information.")
+        symbols = [PeriodicTable.atom_z_to_symbol(number) for number in numbers]
+    # Normalise to the standard element symbol case (e.g. 'HE' -> 'He') as
+    # required by AiiDA StructureData.
+    symbols = [symbol.capitalize() for symbol in symbols]
+
+    coords = atoms.get("coords", {})
+    flat_coords = coords.get("3d", [])
+    unit = coords.get("unit", "angstrom").lower()
+
+    if len(flat_coords) != 3 * len(symbols):
+        raise ValueError(
+            "Mismatch between the number of atoms and coordinates in the CJSON file."
+        )
+
+    def _to_angstrom(value: float) -> float:
+        if unit in ("au", "bohr", "a.u.", "atomic"):
+            return UnitsConverter.bohr_to_angstrom(value)
+        return value
+
+    structure = StructureData(pbc=[False, False, False])
+    for index, symbol in enumerate(symbols):
+        position = [_to_angstrom(c) for c in flat_coords[3 * index : 3 * index + 3]]
+        structure.append_atom(position=position, symbols=symbol)
 
     return structure
 

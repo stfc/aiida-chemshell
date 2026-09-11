@@ -154,6 +154,38 @@ H            0.7546064020       0.5900323550       0.0000000000"""
     assert ChemShellCalculation.FILE_TMP_STRUCTURE in script_txt
 
 
+def test_cjson_to_structure_data(get_test_data_file):
+    """Test parsing a ChemShell '.cjson' file into a StructureData node."""
+    from aiida_chemshell.units import UnitsConverter
+    from aiida_chemshell.utils import chemsh_cjson_to_structure_data
+
+    cjson = get_test_data_file("water.cjson")
+    structure = chemsh_cjson_to_structure_data(cjson.get_content())
+
+    assert structure.get_formula() == "H2O"
+    assert len(structure.sites) == 3
+
+    positions = [site.position for site in structure.sites]
+    # Coordinates in the file are in atomic units and should be converted to
+    # Angstrom.
+    assert positions[0] == (0.0, 0.0, 0.0)
+    assert abs(positions[1][0] - UnitsConverter.bohr_to_angstrom(-1.426)) < 1e-9
+    assert abs(positions[1][1] - UnitsConverter.bohr_to_angstrom(1.115)) < 1e-9
+
+
+def test_cjson_to_structure_data_symbol_normalisation():
+    """Test that uppercase element symbols are normalised for AiiDA."""
+    from aiida_chemshell.utils import chemsh_cjson_to_structure_data
+
+    data = (
+        '{"atoms": {"elements": {"symbol": ["NA", "CL"]}, '
+        '"coords": {"unit": "angstrom", "3d": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0]}}}'
+    )
+    structure = chemsh_cjson_to_structure_data(data)
+
+    assert {kind.symbols[0] for kind in structure.kinds} == {"Na", "Cl"}
+
+
 def test_default_input_tags_applied(generate_calcjob, generate_inputs):
     """Test default labels/descriptions are applied to untagged input nodes."""
     inputs = generate_inputs(qm={"method": "HF"})

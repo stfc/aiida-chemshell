@@ -10,6 +10,7 @@ from aiida.orm import ArrayData, Dict, Float, SinglefileData, TrajectoryData
 from aiida.parsers.parser import Parser
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
+from aiida_chemshell.utils import chemsh_cjson_to_structure_data
 
 
 class ChemShellParser(Parser):
@@ -101,17 +102,25 @@ class ChemShellParser(Parser):
                 if isinstance(self.node.inputs.structure, SinglefileData):
                     input_fname = self.node.inputs.structure.filename
                     descrip += f" ({input_fname})"
-                # Store the optimised structure file
-                with open(dl_find_path, "rb") as f:
-                    self.out(
-                        "optimised_structure",
-                        SinglefileData(
-                            file=f,
-                            filename=ChemShellCalculation.FILE_DLFIND,
-                            label="CJSON Structure File",
-                            description=descrip,
-                        ),
-                    )
+                # Store the optimised structure either as a SinglefileData '.cjson'
+                # file or (by default) as an AiiDA StructureData node.
+                if self.node.base.extras.get("output_structure_as_file", False):
+                    with open(dl_find_path, "rb") as f:
+                        self.out(
+                            "optimised_structure",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_DLFIND,
+                                label="CJSON Structure File",
+                                description=descrip,
+                            ),
+                        )
+                else:
+                    with open(dl_find_path, "rb") as f:
+                        structure = chemsh_cjson_to_structure_data(f.read())
+                    structure.label = "Optimised Structure"
+                    structure.description = descrip
+                    self.out("optimised_structure", structure)
                 self.parse_optimisation_path(
                     self.retrieved.get_object_content(
                         ChemShellCalculation.FILE_STDOUT, "r"
@@ -125,21 +134,7 @@ class ChemShellParser(Parser):
                 trj_frc_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJFRC
                 if trj_path.exists():
                     self.parse_xyz_path(trj_path, "trajectory_path")
-                    with open(trj_frc_path, "rb") as f:
-                        self.out(
-                            "trajectory_force",
-                            SinglefileData(
-                                file=f,
-                                filename=ChemShellCalculation.FILE_TRJFRC.replace(
-                                    "/", "_"
-                                ),
-                                label="Optimisation Path Forces",
-                                description=(
-                                    "XYZ trajectory of the forces at each step of a "
-                                    "ChemShell geometry optimisation."
-                                ),
-                            ),
-                        )
+                    self.parse_xyz_forces(trj_frc_path, "trajectory_force")
                 else:
                     return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
@@ -236,6 +231,47 @@ class ChemShellParser(Parser):
         path.label = "ChemShell (DL_FIND) optimisation path."
         path.description = "Path taken for a ChemShell Optimisation or NEB calculation."
         self.out(output_link, path)
+        return
+
+    def parse_xyz_forces(self, file_path: Path, output_link: str) -> None:
+        """
+        Parse an XYZ style forces trajectory into an AiiDA ArrayData node.
+
+        Each frame is stored as a separate '(natoms, 3)' array labelled
+        'Frame_{i}' (zero-indexed). An underscore is used in place of a space as
+        AiiDA array names may only contain digits, letters and underscores.
+
+        Parameters
+        ----------
+        file_path : Path
+            Path to the XYZ style forces trajectory file to parse.
+        output_link : str
+            The output link label under which the resulting ArrayData node is
+            attached to the calculation.
+        """
+        with open(file_path) as f:
+            lines = f.readlines()
+        natoms = int(lines[0])
+        forces = ArrayData(
+            label="Optimisation Path Forces",
+            description=(
+                "Per-atom forces at each step of a ChemShell geometry optimisation, "
+                "stored as one (natoms, 3) array per frame."
+            ),
+        )
+        frame = 0
+        i = 0
+        while i < len(lines):
+            frame_forces = numpy.zeros((natoms, 3), dtype=float)
+            for atm_index, atm_line in enumerate(lines[i + 2 : i + 2 + natoms]):
+                line = atm_line.split()
+                frame_forces[atm_index][0] = float(line[1])
+                frame_forces[atm_index][1] = float(line[2])
+                frame_forces[atm_index][2] = float(line[3])
+            forces.set_array(f"Frame_{frame}", frame_forces)
+            frame += 1
+            i += natoms + 2
+        self.out(output_link, forces)
         return
 
     def parse_neb_info(self, file_path: Path) -> None:

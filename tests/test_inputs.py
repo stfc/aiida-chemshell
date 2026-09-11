@@ -154,6 +154,37 @@ H            0.7546064020       0.5900323550       0.0000000000"""
     assert ChemShellCalculation.FILE_TMP_STRUCTURE in script_txt
 
 
+def test_default_input_tags_applied(generate_calcjob, generate_inputs):
+    """Test default labels/descriptions are applied to untagged input nodes."""
+    inputs = generate_inputs(qm={"method": "HF"})
+    generate_calcjob(ChemShellCalculation, inputs)
+
+    structure = inputs["structure"]
+    assert structure.label == "Input Chemical Structure"
+    assert structure.description == (
+        "The input structure for the ChemShell calculation."
+    )
+
+    qm_parameters = inputs["qm_parameters"]
+    assert qm_parameters.label == "ChemShell QM Parameters"
+    assert qm_parameters.description == (
+        "Parameters for the ChemShell QM Theory object."
+    )
+
+
+def test_existing_input_tags_preserved(generate_calcjob, generate_inputs):
+    """Test that pre-existing labels/descriptions on input nodes are not changed."""
+    inputs = generate_inputs(qm={"method": "HF"})
+    inputs["structure"].label = "My custom structure"
+    inputs["structure"].description = "A custom description."
+
+    generate_calcjob(ChemShellCalculation, inputs)
+
+    structure = inputs["structure"]
+    assert structure.label == "My custom structure"
+    assert structure.description == "A custom description."
+
+
 def test_atom_as_structuredata_object(
     generate_calcjob, generate_inputs, water_structure_object
 ):

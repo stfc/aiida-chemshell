@@ -6,12 +6,21 @@ from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.utils import create_dictionary
 from aiida_chemshell.periodic_table import PeriodicTable
+from aiida_chemshell.workflows.utils import apply_default_input_node_tags
 
 ChemShellCalculation = CalculationFactory("chemshell")
 
 
 class IsolatedAtomicEnergiesWorkChain(WorkChain):
     """AiiDA workflow for extracting isolated atomic energies from a given structure."""
+
+    # Default labels and descriptions applied to WorkChain specific input nodes
+    DEFAULT_INPUT_TAGS = {
+        "structure": (
+            "Input Chemical Structure",
+            "The input structure to extract isolated atomic energies from.",
+        ),
+    }
 
     @classmethod
     def define(cls, spec) -> None:
@@ -35,9 +44,18 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
             ),
         )
 
-        spec.outline(cls.determine_unique_atom_types, cls.atom_energies, cls.result)
+        spec.outline(
+            cls.apply_default_input_tags,
+            cls.determine_unique_atom_types,
+            cls.atom_energies,
+            cls.result,
+        )
 
         return
+
+    def apply_default_input_tags(self) -> None:
+        """Apply default labels/descriptions to WorkChain specific input nodes."""
+        apply_default_input_node_tags(self.inputs, self.DEFAULT_INPUT_TAGS)
 
     def determine_unique_atom_types(self) -> None:
         """Determine all unique atom types within the given structure."""

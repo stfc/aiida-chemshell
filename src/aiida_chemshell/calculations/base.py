@@ -36,6 +36,47 @@ class ChemShellCalculation(CalcJob):
     FILE_TRJPTH = "path.xyz"
     FILE_TRJFRC = "path_force.xyz"
 
+    # Default labels and descriptions applied to input nodes that do not already
+    # have them set, keyed by the input port name.
+    DEFAULT_INPUT_TAGS = {
+        "structure": (
+            "Input Chemical Structure",
+            "The input structure for the ChemShell calculation.",
+        ),
+        "structure_index": (
+            "Structure Input Index",
+            "Index used to select a structure from a multi-structure input.",
+        ),
+        "structure2": (
+            "Secondary Input Structure",
+            "The additional (final) input structure for the ChemShell calculation.",
+        ),
+        "calculation_parameters": (
+            "ChemShell Calculation Parameters",
+            "Base parameters for the ChemShell Task object.",
+        ),
+        "optimisation_parameters": (
+            "ChemShell Optimisation Parameters",
+            "Parameters for the ChemShell geometry optimisation task.",
+        ),
+        "qm_parameters": (
+            "ChemShell QM Parameters",
+            "Parameters for the ChemShell QM Theory object.",
+        ),
+        "mm_parameters": (
+            "ChemShell MM Parameters",
+            "Parameters for the ChemShell MM interface.",
+        ),
+        "force_field_file": (
+            "ChemShell Force Field File",
+            "Force field parameters for the ChemShell MM interface.",
+        ),
+        "qmmm_parameters": (
+            "ChemShell QM/MM Parameters",
+            "Parameters for the ChemShell QM/MM interface.",
+        ),
+    }
+
     @classmethod
     def define(cls, spec: CalcJobProcessSpec) -> None:
         """
@@ -324,7 +365,7 @@ class ChemShellCalculation(CalcJob):
         return None
 
     @classmethod
-    def get_valid_calculation_parameter_keys(cls) -> tuple[str]:
+    def get_valid_calculation_parameter_keys(cls) -> tuple[str, str]:
         """
         Return the valid parameter keys for the ChemShell Single Point calculation.
 
@@ -933,6 +974,24 @@ class ChemShellCalculation(CalcJob):
 
         return script
 
+    def apply_default_input_tags(self) -> None:
+        """
+        Apply default labels and descriptions to the calculation input nodes.
+
+        Iterates over the provided input nodes and, for any node defined in
+        :attr:`DEFAULT_INPUT_TAGS` that does not already have a label or
+        description set, assigns the corresponding default value. Existing
+        labels and descriptions are left untouched.
+        """
+        for port_name, (label, description) in self.DEFAULT_INPUT_TAGS.items():
+            if port_name not in self.inputs:
+                continue
+            node = self.inputs[port_name]
+            if not node.label:
+                node.label = label
+            if not node.description:
+                node.description = description
+
     def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         """
         Prepare the ChemShell calculation for submission.
@@ -948,6 +1007,9 @@ class ChemShellCalculation(CalcJob):
         calcInfo : CalcInfo
             An `aiida.common.CalcInfo` instance.
         """
+        # Apply default labels/descriptions to input nodes lacking them
+        self.apply_default_input_tags()
+
         # Create the ChemShell input script
         input_script = self.chemsh_script_generator()
         with folder.open(ChemShellCalculation.FILE_SCRIPT, "w") as f:

@@ -11,6 +11,33 @@ from aiida.orm import Dict
 from aiida_chemshell.workflows.batch_calculation import BatchProcessWorkChain
 
 
+def test_default_input_tags_applied(chemsh_code, get_test_data_file):
+    """The ``structure_files`` inputs are tagged as they are not forwarded directly."""
+    structure_file = get_test_data_file("trajectory.xyz")
+    inputs = {
+        "code": chemsh_code,
+        "structure_files": {
+            structure_file.filename.strip(".xyz").replace(" ", "_"): structure_file
+        },
+        "qm_parameters": Dict({"theory": "NWChem"}),
+    }
+
+    runner = get_manager().get_runner()
+    process = instantiate_process(runner, BatchProcessWorkChain, **inputs)
+    process.apply_default_input_tags()
+
+    for node in process.inputs.structure_files.values():
+        assert node.label == "Multi-Structure Input File"
+        assert node.description == (
+            "A structure file containing multiple structures to batch process with "
+            "ChemShell."
+        )
+
+    # ``qm_parameters`` is forwarded to the sub-calculations, so it is tagged by
+    # the base ChemShellCalculation auto-tagger rather than here.
+    assert process.inputs.qm_parameters.label == ""
+
+
 def test_batch_forwards_metadata_options(chemsh_code, water_trajectory_object):
     """Resources set on the WorkChain are forwarded to every sub-calculation.
 

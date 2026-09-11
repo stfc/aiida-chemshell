@@ -1,8 +1,62 @@
 """Tests for carrying out pre-defined workflows with aiida-chemshell."""
 
 from aiida.engine import run_get_node
+from aiida.engine.utils import instantiate_process
+from aiida.manage.manager import get_manager
 
 from aiida_chemshell.workflows.optimisation import GeometryOptimisationWorkChain
+
+
+def test_default_input_tags_applied(chemsh_code, get_test_data_file):
+    """WorkChain specific inputs are tagged with default labels/descriptions."""
+    inputs = {
+        "chemsh": {
+            "code": chemsh_code,
+            "structure": get_test_data_file(),
+            "qm_parameters": {"theory": "NWChem"},
+        },
+        "vibrational_analysis": True,
+    }
+
+    runner = get_manager().get_runner()
+    process = instantiate_process(runner, GeometryOptimisationWorkChain, **inputs)
+    process.apply_default_input_tags()
+
+    vib = process.inputs.vibrational_analysis
+    assert vib.label == "Vibrational Analysis Flag"
+    assert vib.description == (
+        "Whether to calculate the vibrational modes of the optimised structure."
+    )
+
+    # The exposed ``chemsh`` structure is left untagged here; it is tagged by the
+    # base ChemShellCalculation auto-tagger when forwarded to the sub-calculation.
+    assert process.inputs.chemsh.structure.label == ""
+
+
+def test_existing_input_tags_preserved(chemsh_code, get_test_data_file):
+    """Pre-existing labels/descriptions on WorkChain inputs are not changed."""
+    from aiida.orm import Bool
+
+    vibrational_analysis = Bool(True)
+    vibrational_analysis.label = "My custom flag"
+    vibrational_analysis.description = "A custom description."
+
+    inputs = {
+        "chemsh": {
+            "code": chemsh_code,
+            "structure": get_test_data_file(),
+            "qm_parameters": {"theory": "NWChem"},
+        },
+        "vibrational_analysis": vibrational_analysis,
+    }
+
+    runner = get_manager().get_runner()
+    process = instantiate_process(runner, GeometryOptimisationWorkChain, **inputs)
+    process.apply_default_input_tags()
+
+    vib = process.inputs.vibrational_analysis
+    assert vib.label == "My custom flag"
+    assert vib.description == "A custom description."
 
 
 def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):

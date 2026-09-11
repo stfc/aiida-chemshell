@@ -31,7 +31,17 @@ class ChemShellParser(Parser):
 
         # Extract the final energy
         try:
-            self.out("energy", Float(results["energy"][0], label="Final SCF Energy"))
+            self.out(
+                "energy",
+                Float(
+                    results["energy"][0],
+                    label="Final SCF Energy",
+                    description=(
+                        "The total (final SCF) energy of the system calculated by "
+                        "ChemShell."
+                    ),
+                ),
+            )
         except (KeyError, ValueError):
             return self.exit_codes.ERROR_MISSING_FINAL_ENERGY
         except ModificationNotAllowed as e:
@@ -123,7 +133,11 @@ class ChemShellParser(Parser):
                                 filename=ChemShellCalculation.FILE_TRJFRC.replace(
                                     "/", "_"
                                 ),
-                                label="ChemShell optimisation trajectory.",
+                                label="Optimisation Path Forces",
+                                description=(
+                                    "XYZ trajectory of the forces at each step of a "
+                                    "ChemShell geometry optimisation."
+                                ),
                             ),
                         )
                 else:
@@ -161,7 +175,17 @@ class ChemShellParser(Parser):
                 read = True
             elif "total S vib" in line:
                 read = False
-        self.out("vibrational_energies", Dict(energies))
+        self.out(
+            "vibrational_energies",
+            Dict(
+                energies,
+                label="Thermochemical Properties",
+                description=(
+                    "Thermochemical properties (ZPE, enthalpy, entropy, etc.) "
+                    "calculated by ChemShell."
+                ),
+            ),
+        )
         modes = numpy.asarray(modes)
         modes_data_node = ArrayData(
             label="Vibrational Modes",

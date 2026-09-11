@@ -234,11 +234,20 @@ class ChemShellParser(Parser):
         return
 
     def parse_xyz_forces(self, file_path: Path, output_link: str) -> None:
-        """Parse an XYZ style forces trajectory into an AiiDA ArrayData node.
+        """
+        Parse an XYZ style forces trajectory into an AiiDA ArrayData node.
 
-        Each frame is stored as a separate ``(natoms, 3)`` array labelled
-        ``Frame_{i}`` (zero-indexed). An underscore is used in place of a space
-        as AiiDA array names may only contain digits, letters and underscores.
+        Each frame is stored as a separate '(natoms, 3)' array labelled
+        'Frame_{i}' (zero-indexed). An underscore is used in place of a space as
+        AiiDA array names may only contain digits, letters and underscores.
+
+        Parameters
+        ----------
+        file_path : Path
+            Path to the XYZ style forces trajectory file to parse.
+        output_link : str
+            The output link label under which the resulting ArrayData node is
+            attached to the calculation.
         """
         with open(file_path) as f:
             lines = f.readlines()

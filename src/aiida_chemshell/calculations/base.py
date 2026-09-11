@@ -384,7 +384,7 @@ class ChemShellCalculation(CalcJob):
 
         Returns
         -------
-         : tuple[str]
+        tuple[str, str]
             A tuple of valid parameter keys for the ChemShell calculation.
         """
         return ("gradients", "hessian")
@@ -433,7 +433,7 @@ class ChemShellCalculation(CalcJob):
 
         Returns
         -------
-         : tuple[str]
+        tuple[str]
             A tuple of valid optimisation parameter keys for the ChemShell
             calculation.
         """
@@ -491,12 +491,13 @@ class ChemShellCalculation(CalcJob):
     @classmethod
     def get_valid_qm_parameter_keys(cls) -> dict:
         """
-        Return a tuple of valid parameter keys for the ChemShell calculation.
+        Return a dictionary of valid parameter keys for the ChemShell calculation.
 
         Returns
         -------
-        validKeys : dict[str: type]
-            A tuple of valid Theory parameter keys for the ChemShell calculation.
+        dict[str, type]
+            A mapping of valid Theory parameter keys to their expected value
+            types for the ChemShell calculation.
         """
         return {
             "theory": str,
@@ -581,14 +582,21 @@ class ChemShellCalculation(CalcJob):
         return None
 
     @classmethod
-    def get_valid_mm_parameter_keys(cls, theory: str = "") -> dict[str:type]:
+    def get_valid_mm_parameter_keys(cls, theory: str = "") -> dict[str, type]:
         """
-        Return a tuple of valid parameter keys for the ChemShell MM interface.
+        Return a dictionary of valid parameter keys for the ChemShell MM interface.
+
+        Parameters
+        ----------
+        theory : str
+            The MM theory whose valid parameter keys should be returned (e.g.
+            'DL_POLY'). Defaults to an empty string.
 
         Returns
         -------
-        validKeys : dict[str: type]
-            A tuple of valid MM parameter keys for the ChemShell calculation.
+        dict[str, type]
+            A mapping of valid MM parameter keys to their expected value types
+            for the ChemShell calculation.
         """
         if theory == "DL_POLY":
             valid_keys = {
@@ -808,6 +816,12 @@ class ChemShellCalculation(CalcJob):
         Defines the process label to be associated with the created ProcessNode
         stored in the AiiDA database.
 
+        Parameters
+        ----------
+        node : ProcessNode
+            The process (or its ProcessNode) whose inputs are inspected to build
+            the label.
+
         Returns
         -------
         str
@@ -1009,8 +1023,8 @@ class ChemShellCalculation(CalcJob):
         """
         Prepare the ChemShell calculation for submission.
 
-        Params
-        ------
+        Parameters
+        ----------
         folder : Folder
             An `aiida.common.folders.Folder` specifying the temporary working
             directory for the calculation.

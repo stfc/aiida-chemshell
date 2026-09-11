@@ -134,21 +134,7 @@ class ChemShellParser(Parser):
                 trj_frc_path = retrieved_tmp_folder / ChemShellCalculation.FILE_TRJFRC
                 if trj_path.exists():
                     self.parse_xyz_path(trj_path, "trajectory_path")
-                    with open(trj_frc_path, "rb") as f:
-                        self.out(
-                            "trajectory_force",
-                            SinglefileData(
-                                file=f,
-                                filename=ChemShellCalculation.FILE_TRJFRC.replace(
-                                    "/", "_"
-                                ),
-                                label="Optimisation Path Forces",
-                                description=(
-                                    "XYZ trajectory of the forces at each step of a "
-                                    "ChemShell geometry optimisation."
-                                ),
-                            ),
-                        )
+                    self.parse_xyz_forces(trj_frc_path, "trajectory_force")
                 else:
                     return self.exit_codes.ERROR_MISSING_OPTIMISED_STRUCTURE_FILE
 
@@ -245,6 +231,38 @@ class ChemShellParser(Parser):
         path.label = "ChemShell (DL_FIND) optimisation path."
         path.description = "Path taken for a ChemShell Optimisation or NEB calculation."
         self.out(output_link, path)
+        return
+
+    def parse_xyz_forces(self, file_path: Path, output_link: str) -> None:
+        """Parse an XYZ style forces trajectory into an AiiDA ArrayData node.
+
+        Each frame is stored as a separate ``(natoms, 3)`` array labelled
+        ``Frame_{i}`` (zero-indexed). An underscore is used in place of a space
+        as AiiDA array names may only contain digits, letters and underscores.
+        """
+        with open(file_path) as f:
+            lines = f.readlines()
+        natoms = int(lines[0])
+        forces = ArrayData(
+            label="Optimisation Path Forces",
+            description=(
+                "Per-atom forces at each step of a ChemShell geometry optimisation, "
+                "stored as one (natoms, 3) array per frame."
+            ),
+        )
+        frame = 0
+        i = 0
+        while i < len(lines):
+            frame_forces = numpy.zeros((natoms, 3), dtype=float)
+            for atm_index, atm_line in enumerate(lines[i + 2 : i + 2 + natoms]):
+                line = atm_line.split()
+                frame_forces[atm_index][0] = float(line[1])
+                frame_forces[atm_index][1] = float(line[2])
+                frame_forces[atm_index][2] = float(line[3])
+            forces.set_array(f"Frame_{frame}", frame_forces)
+            frame += 1
+            i += natoms + 2
+        self.out(output_link, forces)
         return
 
     def parse_neb_info(self, file_path: Path) -> None:

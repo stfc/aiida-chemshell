@@ -263,11 +263,11 @@ class ChemShellCalculation(CalcJob):
         )
         spec.output(
             "trajectory_force",
-            valid_type=SinglefileData,
+            valid_type=ArrayData,
             required=False,
             help=(
-                "XYZ style trajectory file containing forces at each step of a geometry"
-                " optimisation."
+                "Per-atom forces (natoms, 3) at each step of a geometry optimisation, "
+                "stored one array per frame labelled 'Frame {i}'."
             ),
         )
 

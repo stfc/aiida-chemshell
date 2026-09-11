@@ -1,7 +1,7 @@
 """Tests for performing calculation processes with aiida_chemshell."""
 
 from aiida.engine import run
-from aiida.orm import Dict, StructureData, TrajectoryData
+from aiida.orm import ArrayData, Dict, StructureData, TrajectoryData
 from numpy.linalg import norm
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -247,7 +247,12 @@ def test_opt_calculation_dlpoly(chemsh_code, get_test_data_file):
 
     assert results.get("trajectory_path").numsteps == 13
     assert results.get("trajectory_path").numsites == 15
-    assert results.get("trajectory_force").filename == ChemShellCalculation.FILE_TRJFRC
+    trajectory_force = results.get("trajectory_force")
+    assert isinstance(trajectory_force, ArrayData)
+    assert len(trajectory_force.get_arraynames()) == 13
+    assert "Frame_0" in trajectory_force.get_arraynames()
+    assert trajectory_force.get_shape("Frame_0") == (15, 3)
+    assert trajectory_force.get_shape("Frame_12") == (15, 3)
 
 
 def test_vibrational_calculation(chemsh_code, get_test_data_file):

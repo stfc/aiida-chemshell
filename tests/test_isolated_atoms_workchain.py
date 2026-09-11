@@ -11,6 +11,29 @@ from aiida.orm import Dict
 from aiida_chemshell.workflows.isolated_atoms import IsolatedAtomicEnergiesWorkChain
 
 
+def test_default_input_tags_applied(chemsh_code, water_structure_object):
+    """The ``structure`` input is tagged as it is never forwarded to a calculation."""
+    inputs = {
+        "structure": water_structure_object,
+        "code": chemsh_code,
+        "qm_parameters": Dict({"theory": "NWChem"}),
+    }
+
+    runner = get_manager().get_runner()
+    process = instantiate_process(runner, IsolatedAtomicEnergiesWorkChain, **inputs)
+    process.apply_default_input_tags()
+
+    structure = process.inputs.structure
+    assert structure.label == "Input Chemical Structure"
+    assert structure.description == (
+        "The input structure to extract isolated atomic energies from."
+    )
+
+    # ``qm_parameters`` is forwarded to the sub-calculations, so it is tagged by
+    # the base ChemShellCalculation auto-tagger rather than here.
+    assert process.inputs.qm_parameters.label == ""
+
+
 def test_metadata_options_forwarded_to_subcalculations(
     chemsh_code, water_structure_object
 ):

@@ -14,11 +14,24 @@ from aiida.orm import (
 )
 from aiida.plugins.factories import CalculationFactory
 
+from aiida_chemshell.workflows.utils import apply_default_input_node_tags
+
 ChemShellCalculation = CalculationFactory("chemshell")
 
 
 class BatchProcessWorkChain(WorkChain):
     """Process a series of structures with the same inputs."""
+
+    # Default labels and descriptions applied to WorkChain specific input nodes
+    DEFAULT_INPUT_TAGS = {
+        "structure_files": (
+            "Multi-Structure Input File",
+            (
+                "A structure file containing multiple structures to batch process with "
+                "ChemShell."
+            ),
+        ),
+    }
 
     @classmethod
     def define(cls, spec: ProcessSpec) -> None:
@@ -91,11 +104,16 @@ class BatchProcessWorkChain(WorkChain):
         )
 
         spec.outline(
+            cls.apply_default_input_tags,
             cls.validate_inputs,
             cls.extract_structures_from_files,
             cls.submit_jobs,
             cls.collate_results,
         )
+
+    def apply_default_input_tags(self) -> None:
+        """Apply default labels/descriptions to WorkChain specific input nodes."""
+        apply_default_input_node_tags(self.inputs, self.DEFAULT_INPUT_TAGS)
 
     # @classmethod
     # def validate_combination_input_key(cls, key: str | None, _) -> str | None:

@@ -177,6 +177,17 @@ class ChemShellCalculation(CalcJob):
             required=False,
             help="A dictionary of parameters for the ChemShell QM/MM interface.",
         )
+        spec.input(
+            "output_structure_as_file",
+            valid_type=bool,
+            non_db=True,
+            default=False,
+            help=(
+                "If True, the optimised structure is returned as a SinglefileData "
+                "node containing a ChemShell '.cjson' file. By default (False) it is "
+                "returned as an AiiDA StructureData node."
+            ),
+        )
 
         ## Calculation outputs
         spec.output(
@@ -197,12 +208,14 @@ class ChemShellCalculation(CalcJob):
         )
         spec.output(
             "optimised_structure",
-            valid_type=SinglefileData,
+            valid_type=(StructureData, SinglefileData),
             required=False,
             help=(
                 "The optimised structure of the given system, if a geometry "
-                "optimisation task was configured and successfully completed. The "
-                "structure is contained within a ChemShell '.pun' file."
+                "optimisation task was configured and successfully completed. By "
+                "default this is an AiiDA StructureData node; if the "
+                "'output_structure_as_file' input is True it is instead a "
+                "SinglefileData node containing a ChemShell '.cjson' file."
             ),
         )
         spec.output(
@@ -1009,6 +1022,13 @@ class ChemShellCalculation(CalcJob):
         """
         # Apply default labels/descriptions to input nodes lacking them
         self.apply_default_input_tags()
+
+        # Record the (non_db) output structure format choice as a node extra so
+        # that the parser can determine whether to return the optimised structure
+        # as a StructureData or SinglefileData node.
+        self.node.base.extras.set(
+            "output_structure_as_file", bool(self.inputs.output_structure_as_file)
+        )
 
         # Create the ChemShell input script
         input_script = self.chemsh_script_generator()

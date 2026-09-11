@@ -79,9 +79,13 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
         "Incorrect final energy for geometry optimisation workflow."
     )
 
+    # The optimised structure is now returned as a StructureData node, so the
+    # geometry fed to the vibrational analysis step is round-tripped through
+    # Bohr->Angstrom->Bohr. This shifts the thermochemistry by a physically
+    # negligible amount relative to passing the raw '.cjson' file through.
     assert results.get("vibrational_energies").get("Temperature / Kelvin") == 300.0
-    assert results.get("vibrational_energies").get("ZPE / J/mol") == 57173.49993
-    assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.84524
+    assert results.get("vibrational_energies").get("ZPE / J/mol") == 57173.46025
+    assert results.get("vibrational_energies").get("Enthalpy / J/mol") == 3.84523
     assert results.get("vibrational_energies").get("Entropy / J/mol/K") == 0.01430
 
     assert results.get("vibrational_modes").get_shape("Modes") == (3, 5)

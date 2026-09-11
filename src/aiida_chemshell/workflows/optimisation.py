@@ -2,7 +2,16 @@
 
 from aiida.common.exceptions import MissingEntryPointError
 from aiida.engine import ToContext, WorkChain
-from aiida.orm import ArrayData, Bool, Code, Dict, Float, SinglefileData
+from aiida.orm import (
+    ArrayData,
+    Bool,
+    Code,
+    Dict,
+    Float,
+    SinglefileData,
+    StructureData,
+    TrajectoryData,
+)
 from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
@@ -49,7 +58,7 @@ class GeometryOptimisationWorkChain(WorkChain):
         )
         spec.output(
             "optimised_structure",
-            valid_type=SinglefileData,
+            valid_type=(StructureData, SinglefileData),
             required=True,
             help="The final optimised geometry of the given structure.",
         )

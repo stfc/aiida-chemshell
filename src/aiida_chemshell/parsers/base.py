@@ -10,6 +10,7 @@ from aiida.orm import ArrayData, Dict, Float, SinglefileData, TrajectoryData
 from aiida.parsers.parser import Parser
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
+from aiida_chemshell.utils import chemsh_cjson_to_structure_data
 
 
 class ChemShellParser(Parser):
@@ -101,17 +102,25 @@ class ChemShellParser(Parser):
                 if isinstance(self.node.inputs.structure, SinglefileData):
                     input_fname = self.node.inputs.structure.filename
                     descrip += f" ({input_fname})"
-                # Store the optimised structure file
-                with open(dl_find_path, "rb") as f:
-                    self.out(
-                        "optimised_structure",
-                        SinglefileData(
-                            file=f,
-                            filename=ChemShellCalculation.FILE_DLFIND,
-                            label="CJSON Structure File",
-                            description=descrip,
-                        ),
-                    )
+                # Store the optimised structure either as a SinglefileData '.cjson'
+                # file or (by default) as an AiiDA StructureData node.
+                if self.node.base.extras.get("output_structure_as_file", False):
+                    with open(dl_find_path, "rb") as f:
+                        self.out(
+                            "optimised_structure",
+                            SinglefileData(
+                                file=f,
+                                filename=ChemShellCalculation.FILE_DLFIND,
+                                label="CJSON Structure File",
+                                description=descrip,
+                            ),
+                        )
+                else:
+                    with open(dl_find_path, "rb") as f:
+                        structure = chemsh_cjson_to_structure_data(f.read())
+                    structure.label = "Optimised Structure"
+                    structure.description = descrip
+                    self.out("optimised_structure", structure)
                 self.parse_optimisation_path(
                     self.retrieved.get_object_content(
                         ChemShellCalculation.FILE_STDOUT, "r"

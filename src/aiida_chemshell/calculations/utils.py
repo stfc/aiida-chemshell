@@ -13,6 +13,97 @@ from aiida.orm import (
     TrajectoryData,
 )
 
+from aiida_chemshell.periodic_table import PeriodicTable
+
+
+@calcfunction
+def create_isolated_atom_structures(structure) -> dict[str, StructureData]:
+    """
+    Create an isolated single-atom StructureData for each unique atom type.
+
+    The unique atom types present in ``structure`` are determined and, for each,
+    a non-periodic StructureData node containing a single atom at the origin is
+    created.
+
+    Parameters
+    ----------
+    structure : StructureData | SinglefileData
+        The input structure to extract isolated atomic species from. Either a
+        StructureData node or a SinglefileData node wrapping a supported
+        structure file (.xyz or .cjson).
+
+    Returns
+    -------
+    dict[str, StructureData]
+        A mapping of atom type to its isolated single-atom StructureData node.
+        As a calcfunction return value, this is registered as a namespace of
+        output nodes, with the atom type used as the output link label.
+
+    Raises
+    ------
+    Exception
+        If the structure file format is unsupported (e.g. .pun).
+    """
+    unique_atoms = _determine_unique_atoms(structure)
+    structures = {}
+    for atom_symbol in unique_atoms:
+        atom = StructureData()
+        atom.append_atom(position=(0.0, 0.0, 0.0), symbols=atom_symbol)
+        atom.set_pbc((False, False, False))
+        atom.label = f"{atom_symbol} atom"
+        atom.description = (
+            f"Isolated {atom_symbol} atom extracted from Node: {structure.pk}"
+        )
+        structures[atom_symbol] = atom
+    return structures
+
+
+def _determine_unique_atoms(structure) -> list[str]:
+    """Determine all unique atom types within the given structure."""
+    if isinstance(structure, StructureData):
+        return _atom_types_from_structuredata(structure)
+    return _atom_types_from_file(structure)
+
+
+def _atom_types_from_structuredata(structure: StructureData) -> list[str]:
+    """Determine the unique atom types from a StructureData object."""
+    unique_atoms: list[str] = []
+    for site in structure.sites:
+        if site.kind_name not in unique_atoms:
+            unique_atoms.append(site.kind_name)
+    return unique_atoms
+
+
+def _atom_types_from_file(structure: SinglefileData) -> list[str]:
+    """Determine the unique atom types from a SinglefileData object."""
+    if structure.filename[-4:] == ".xyz":
+        return _atom_types_from_xyz(structure)
+    if structure.filename[-6:] == ".cjson":
+        return _atom_types_from_cjson(structure)
+    raise Exception(
+        f"Unsupported structure file format for isolated atom extraction: "
+        f"{structure.filename}"
+    )
+
+
+def _atom_types_from_xyz(structure: SinglefileData) -> list[str]:
+    """Determine the unique atom types from an xyz structure file."""
+    parsed = StructureData()
+    parsed._parse_xyz(structure.content.decode("utf-8"))
+    return _atom_types_from_structuredata(parsed)
+
+
+def _atom_types_from_cjson(structure: SinglefileData) -> list[str]:
+    """Determine the unique atom types from a cjson structure file."""
+    import json
+
+    data = json.loads(structure.content).get("atoms").get("elements")
+    atom_symbols: list[str] = data.get("symbol", [])
+    atom_numbers: list[int] = data.get("number", [])
+    if len(atom_symbols) == 0:
+        return list({PeriodicTable.atom_z_to_symbol(number) for number in atom_numbers})
+    return list(set(atom_symbols))
+
 
 @calcfunction
 def create_dictionary(atoms, energies) -> Dict:

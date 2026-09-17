@@ -59,7 +59,7 @@ def test_metadata_options_forwarded_to_subcalculations(
     # Skip the actual (slow) ChemShell calculations; only capture the submissions.
     process.submit = MagicMock(return_value=MagicMock())
 
-    process.determine_unique_atom_types()
+    process.create_atom_structures()
     process.atom_energies()
 
     # Water contains two unique atom types (O and H).
@@ -68,6 +68,45 @@ def test_metadata_options_forwarded_to_subcalculations(
         options = call.kwargs["metadata"]["options"]
         assert dict(options["resources"]) == resources, (
             "Calculation metadata was not forwarded to the sub-calculation."
+        )
+
+
+def test_isolated_atom_structures_are_provenance_tracked(
+    chemsh_code, water_structure_object
+):
+    """Isolated atom structures are created and correctly linked in provenance."""
+    from aiida.common.links import LinkType
+
+    inputs = {
+        "structure": water_structure_object,
+        "code": chemsh_code,
+        "qm_parameters": Dict({"theory": "NWChem"}),
+    }
+
+    runner = get_manager().get_runner()
+    process = instantiate_process(runner, IsolatedAtomicEnergiesWorkChain, **inputs)
+
+    process.create_atom_structures()
+
+    atom_structures = process.ctx.atom_structures
+    # Water contains two unique atom types (O and H).
+    assert set(atom_structures.keys()) == {"O", "H"}
+
+    for atom_structure in atom_structures.values():
+        assert atom_structure.is_stored, "Isolated atom structure was not stored."
+        creator = (
+            atom_structure.base.links.get_incoming(link_type=LinkType.CREATE).one().node
+        )
+        # The creator must be the calcfunction, which itself took the input
+        # structure as an input node.
+        input_pks = [
+            link.node.pk
+            for link in creator.base.links.get_incoming(
+                link_type=LinkType.INPUT_CALC
+            ).all()
+        ]
+        assert water_structure_object.pk in input_pks, (
+            "Isolated atom structure is not linked back to the input structure."
         )
 
 

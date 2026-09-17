@@ -13,8 +13,6 @@ from aiida.orm import (
     TrajectoryData,
 )
 
-from aiida_chemshell.periodic_table import PeriodicTable
-
 
 @calcfunction
 def create_isolated_atom_structures(structure) -> dict[str, StructureData]:
@@ -29,8 +27,8 @@ def create_isolated_atom_structures(structure) -> dict[str, StructureData]:
     ----------
     structure : StructureData | SinglefileData
         The input structure to extract isolated atomic species from. Either a
-        StructureData node or a SinglefileData node wrapping a supported
-        structure file (.xyz or .cjson).
+        StructureData node or a SinglefileData node wrapping a structure file in
+        any format readable by ``ase.io.read``.
 
     Returns
     -------
@@ -42,7 +40,7 @@ def create_isolated_atom_structures(structure) -> dict[str, StructureData]:
     Raises
     ------
     Exception
-        If the structure file format is unsupported (e.g. .pun).
+        If the structure file format is not supported by the ASE reader.
     """
     unique_atoms = _determine_unique_atoms(structure)
     structures = {}
@@ -58,7 +56,7 @@ def create_isolated_atom_structures(structure) -> dict[str, StructureData]:
     return structures
 
 
-def _determine_unique_atoms(structure) -> list[str]:
+def _determine_unique_atoms(structure: SinglefileData | StructureData) -> list[str]:
     """Determine all unique atom types within the given structure."""
     if isinstance(structure, StructureData):
         return _atom_types_from_structuredata(structure)
@@ -75,34 +73,26 @@ def _atom_types_from_structuredata(structure: StructureData) -> list[str]:
 
 
 def _atom_types_from_file(structure: SinglefileData) -> list[str]:
-    """Determine the unique atom types from a SinglefileData object."""
-    if structure.filename[-4:] == ".xyz":
-        return _atom_types_from_xyz(structure)
-    if structure.filename[-6:] == ".cjson":
-        return _atom_types_from_cjson(structure)
-    raise Exception(
-        f"Unsupported structure file format for isolated atom extraction: "
-        f"{structure.filename}"
-    )
+    """Determine the unique atom types from a SinglefileData object using ASE."""
+    import os
+    import tempfile
 
+    from ase.io import read
+    from ase.io.formats import UnknownFileTypeError
 
-def _atom_types_from_xyz(structure: SinglefileData) -> list[str]:
-    """Determine the unique atom types from an xyz structure file."""
-    parsed = StructureData()
-    parsed._parse_xyz(structure.content.decode("utf-8"))
-    return _atom_types_from_structuredata(parsed)
-
-
-def _atom_types_from_cjson(structure: SinglefileData) -> list[str]:
-    """Determine the unique atom types from a cjson structure file."""
-    import json
-
-    data = json.loads(structure.content).get("atoms").get("elements")
-    atom_symbols: list[str] = data.get("symbol", [])
-    atom_numbers: list[int] = data.get("number", [])
-    if len(atom_symbols) == 0:
-        return list({PeriodicTable.atom_z_to_symbol(number) for number in atom_numbers})
-    return list(set(atom_symbols))
+    suffix = os.path.splitext(structure.filename)[1]
+    with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
+        with structure.open(mode="rb") as f:
+            tmp.write(f.read())
+        tmp.flush()
+        try:
+            atoms = read(tmp.name)
+        except UnknownFileTypeError as e:
+            raise Exception(
+                f"Unsupported structure file format for isolated atom extraction: "
+                f"{structure.filename}"
+            ) from e
+    return list(dict.fromkeys(atoms.get_chemical_symbols()))
 
 
 @calcfunction

@@ -5,7 +5,7 @@ from aiida.orm import Dict, StructureData
 from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.utils import (
-    create_dictionary,
+    create_atomic_energy_dictionary,
     create_isolated_atom_structures,
 )
 from aiida_chemshell.workflows.utils import apply_default_input_node_tags
@@ -88,7 +88,7 @@ class IsolatedAtomicEnergiesWorkChain(WorkChain):
     def result(self) -> None:
         """Collect the results into a dictionary."""
         unique_atoms = list(self.ctx.atom_structures.keys())
-        results_dict = create_dictionary(
+        results_dict = create_atomic_energy_dictionary(
             unique_atoms,
             [self.ctx.get(atom).outputs.energy for atom in unique_atoms],
         )

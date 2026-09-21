@@ -96,7 +96,7 @@ def _atom_types_from_file(structure: SinglefileData) -> list[str]:
 
 
 @calcfunction
-def create_dictionary(atoms, energies) -> Dict:
+def create_atomic_energy_dictionary(atoms, energies) -> Dict:
     """Collate a series of isolated atom energies into a dictionary output."""
     if len(atoms) != len(energies):
         raise ValueError(

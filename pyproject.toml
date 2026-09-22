@@ -9,7 +9,7 @@ description = "AiiDA workflow plugin for the ChemShell chemical modelling softwa
 authors = [
     { name = "Dr. Benjamin T. Speake", email = "benjamin.speake@stfc.ac.uk" },
 ]
-dependencies = ["aiida-core >= 2.5"]
+dependencies = ["aiida-core >= 2.5", "ase>=3.29"]
 readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["aiida", "workflows", "chemshell"]

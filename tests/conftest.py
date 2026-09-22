@@ -137,7 +137,7 @@ def chemsh_code(
     # working directory and provide a ``USER`` so this works for any uid.
     engine_command = (
         f"docker run --rm --user {os.getuid()}:{os.getgid()} "
-        "-e HOME=/workdir -e USER=aiida "
+        "-e HOME=/workdir -e USER=aiida --shm-size 4gb "
         "-v $PWD:/workdir:rw -w /workdir --entrypoint= {image_name}"
     )
 

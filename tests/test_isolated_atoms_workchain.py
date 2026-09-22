@@ -110,9 +110,8 @@ def test_isolated_atom_structures_are_provenance_tracked(
         )
 
 
-@pytest.mark.xfail(reason="Will fail if NWChem not properly configured.")
-def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
-    """Test a geometry optimisation workflow with vibrational analysis."""
+def test_full_workflow(chemsh_code, get_test_data_file):
+    """End-to-end test for the isolated atomic energies workflow."""
     inputs = {
         "structure": get_test_data_file(),
         "code": chemsh_code,
@@ -120,7 +119,6 @@ def test_geometry_optimisation_workflow(chemsh_code, get_test_data_file):
     }
     results, node = run_get_node(IsolatedAtomicEnergiesWorkChain, **inputs)
 
-    # print(results)
     assert node.is_finished_ok, (
         "WorkChain node failed for IsolatedAtomicEnergiesWorkChain"
     )

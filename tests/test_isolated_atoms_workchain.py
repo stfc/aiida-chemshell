@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock
 
-import pytest
 from aiida.engine import run_get_node
 from aiida.engine.utils import instantiate_process
 from aiida.manage.manager import get_manager

@@ -1,17 +1,14 @@
 """Workflows for geometry optimisation based taks."""
 
-from aiida.common.exceptions import MissingEntryPointError
 from aiida.engine import ToContext, WorkChain
 from aiida.orm import (
     ArrayData,
     Bool,
-    Code,
     Dict,
     Float,
     SinglefileData,
     StructureData,
 )
-from aiida.plugins.factories import CalculationFactory
 
 from aiida_chemshell.calculations.base import ChemShellCalculation
 from aiida_chemshell.workflows.isolated_atoms import IsolatedAtomicEnergiesWorkChain
@@ -26,10 +23,6 @@ class GeometryOptimisationWorkChain(WorkChain):
         "vibrational_analysis": (
             "Vibrational Analysis Flag",
             "Whether to calculate the vibrational modes of the optimised structure.",
-        ),
-        "mlip_model": (
-            "MLIP Foundation Model",
-            "The MLIP foundation model to apply fine-tuning to.",
         ),
     }
 
@@ -74,45 +67,14 @@ class GeometryOptimisationWorkChain(WorkChain):
             help="The calculated vibrational modes for the optimised structure.",
         )
 
-        # Optional inputs/outputs for using the results to fine tune a MLIP model
-        # using the janus-core project via the aiida-mlip plugin.
-        try:
-            CalculationFactory("mlip.train")
-        except MissingEntryPointError:
-            pass
-        else:
-            from aiida_mlip.data.model import ModelData
-
-            spec.input(
-                "mlip_model",
-                valid_type=ModelData,
-                required=False,
-                help="The MLIP foundation model to apply fine-tuning to.",
-            )
-            spec.input(
-                "mlip_code",
-                valid_type=Code,
-                required=False,
-                help="The Janus-core AiiDA code instance.",
-            )
-            spec.output(
-                "fine_tuned_model", valid_type=ModelData, required=False, help=""
-            )
-            spec.output(
-                "fine_tuned_model_compiled",
-                valid_type=SinglefileData,
-                required=False,
-                help="",
-            )
-
         ## Workflow ##
         spec.outline(
             cls.apply_default_input_tags,
             cls.optimise,
             cls.energy,
             cls.isolated_atom_energies,
-            cls.generate_mlip_training_inputs,
-            cls.train_mlip,
+            # cls.generate_mlip_training_inputs,
+            # cls.train_mlip,
             cls.result,
         )
 
@@ -199,96 +161,6 @@ class GeometryOptimisationWorkChain(WorkChain):
                 f"WorkChain: {self.node.pk} to be used for MLIP fine-tuning."
             )
             return ToContext(isolated_atoms=future)
-        return None
-
-    def generate_mlip_training_inputs(self):
-        """Convert the optimisation path files to Janus compatible inputs."""
-        if "mlip_model" in self.inputs:
-            inputs = {
-                "path": self.ctx.optimise.outputs.trajectory_path,
-                "force": self.ctx.optimise.outputs.trajectory_force,
-                "energies": self.ctx.optimise.outputs.optimisation_path,
-                "atom_energies": self.ctx.isolated_atoms.outputs.atom_energies,
-                "code": self.inputs.chemsh.code,
-                "metadata": {
-                    "options": {
-                        "resources": {"num_mpiprocs_per_machine": 2, "num_machines": 1},
-                        # "withmpi": True,
-                    }
-                },
-            }
-            from aiida_chemshell.calculations.file_conversion import (
-                CreateJanusTrainingInputsCalcJob,
-            )
-
-            future = self.submit(CreateJanusTrainingInputsCalcJob, **inputs)
-            future.label = "Generate MLIP training data set from geometry optimisation."
-            future.description = (
-                f"Data extraction step from WorkChainNode pk: {self.node.pk}"
-            )
-            return ToContext(create_mlip_inputs=future)
-        return None
-
-    def train_mlip(self):
-        """Train a given MLIP model."""
-        try:
-            mlip_train_calc = CalculationFactory("mlip.train")
-        except MissingEntryPointError:
-            pass
-        else:
-            if "mlip_model" in self.inputs:
-                # This needs to be properly addressed within aiida-mlip
-                computer = self.inputs.get("mlip_code", None).computer
-                work_dir = computer.get_workdir()
-                with open("train.xyz", mode="wb") as f:
-                    f.write(self.ctx.create_mlip_inputs.outputs.training_input.content)
-                with open("test.xyz", mode="wb") as f:
-                    f.write(self.ctx.create_mlip_inputs.outputs.test_input.content)
-                with open("valid.xyz", mode="wb") as f:
-                    f.write(
-                        self.ctx.create_mlip_inputs.outputs.validation_input.content
-                    )
-                with computer.get_transport() as transport:
-                    from pathlib import Path
-
-                    transport.putfile(
-                        Path("train.xyz").absolute(), f"{work_dir}/train.xyz"
-                    )
-                    transport.putfile(
-                        Path("test.xyz").absolute(), f"{work_dir}/test.xyz"
-                    )
-                    transport.putfile(
-                        Path("valid.xyz").absolute(), f"{work_dir}/valid.xyz"
-                    )
-
-                import yaml
-                from aiida_mlip.data.config import JanusConfigfile
-
-                from aiida_chemshell.utils import generate_default_mlip_fine_tune_config
-
-                config_dict = generate_default_mlip_fine_tune_config()
-                config_dict["train_file"] = f"{work_dir}/train.xyz"
-                config_dict["test_file"] = f"{work_dir}/test.xyz"
-                config_dict["valid_file"] = f"{work_dir}/valid.xyz"
-                config_dict["name"] = "ChemShell_Workflow_Test"
-
-                with open("mlip_config.yml", "w+") as f:
-                    yaml.dump(config_dict, f, default_flow_style=False)
-
-                mlip_inputs = {
-                    "mlip_config": JanusConfigfile(Path("mlip_config.yml").absolute()),
-                    "code": self.inputs.get("mlip_code", None),
-                    "fine_tune": True,
-                    "foundation_model": self.inputs.get("mlip_model", None),
-                    "metadata": {"options": {"resources": {"num_machines": 1}}},
-                }
-                # Submit the mlip training job
-                future = self.submit(mlip_train_calc, **mlip_inputs)
-                future.label = "MLIP Fine-Tuning."
-                future.description = (
-                    f"MLIP fine-tuning step from WorkChainNode pk: {self.node.pk}"
-                )
-                return ToContext(mlip_training=future)
         return None
 
     def result(self):

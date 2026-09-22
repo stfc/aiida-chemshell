@@ -1016,8 +1016,9 @@ class ChemShellCalculation(CalcJob):
             node = self.inputs[port_name]
             if not node.label:
                 node.label = label
-            if not node.description:
-                node.description = description
+                if not node.desciption:
+                    node.description = description
+        return
 
     def prepare_for_submission(self, folder: Folder) -> CalcInfo:
         """

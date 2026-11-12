@@ -839,6 +839,8 @@ class ChemShellCalculation(CalcJob):
         if "optimisation_parameters" in node.inputs:
             if node.inputs.optimisation_parameters.get("thermal", False):
                 return "ChemShell_Vibrational_Frequencies" + theory_key
+            if node.inputs.optimisation_parameters.get("neb", "no") != "no":
+                return "ChemShell_NEB" + theory_key
             return "ChemShell_Geometry_Optimisation" + theory_key
 
         return "ChemShell_Single_Point_Calculation" + theory_key

@@ -236,7 +236,10 @@ class ChemShellCalculation(CalcJob):
             "vibrational_modes",
             valid_type=ArrayData,
             required=False,
-            help="The calculated vibrational modes of the system.",
+            help=(
+                "The calculated vibrational modes of the system. A negative "
+                "frequency indicates an imaginary frequency."
+            ),
         )
 
         # Validate inputs namespace

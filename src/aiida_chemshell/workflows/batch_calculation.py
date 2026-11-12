@@ -113,16 +113,7 @@ class BatchProcessWorkChain(WorkChain):
     def apply_default_input_tags(self) -> None:
         """Apply default labels/descriptions to WorkChain specific input nodes."""
         apply_default_input_node_tags(self.inputs, self.DEFAULT_INPUT_TAGS)
-
-    # @classmethod
-    # def validate_combination_input_key(cls, key: str | None, _) -> str | None:
-    #     """Validate the combine_results input key."""
-    #     if key in ["xyz", "trajectory"]:
-    #         return None
-    #     return (
-    #         f"Invalid input for 'combine_results'. {key} must be either 'xyz' or "
-    #         "'trajectory'"
-    #     )
+        return
 
     def validate_inputs(self):
         """Validate the inputs provided to the WorkChain."""

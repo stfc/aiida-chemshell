@@ -163,8 +163,17 @@ class ChemShellParser(Parser):
                 elif "Mode" in line or "total" in line:
                     pass
                 else:
-                    # All remaining lines should be part of the modes table
-                    modes.append(numpy.array([float(x) for x in line_vals[2:]]))
+                    # All remaining lines should be part of the modes table.
+                    # Imaginary frequencies are printed with a trailing "i"
+                    # (e.g. "100.0i") and are stored as the negative value.
+                    modes.append(
+                        numpy.array(
+                            [
+                                -float(x[:-1]) if x.endswith("i") else float(x)
+                                for x in line_vals[2:]
+                            ]
+                        )
+                    )
 
             if "Thermochemical analysis" in line:
                 read = True

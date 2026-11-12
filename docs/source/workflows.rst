@@ -62,7 +62,8 @@ there.
      - Thermochemical properties (only when ``vibrational_analysis`` is ``True``).
    * - ``vibrational_modes``
      - ``ArrayData``
-     - Vibrational modes (only when ``vibrational_analysis`` is ``True``).
+     - Vibrational modes (only when ``vibrational_analysis`` is ``True``). A negative
+       frequency indicates an imaginary frequency.
 
 If ``qm_parameters`` are not supplied in the ``chemsh`` namespace, the WorkChain falls back to a default
 NWChem DFT setup (``B3LYP`` / ``cc-pvdz``).

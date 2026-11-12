@@ -330,7 +330,8 @@ Which outputs are produced depends on the calculation type and the parameters re
      - When ``thermal: True``. Thermochemical properties (ZPE, enthalpy, entropy, ...).
    * - ``vibrational_modes``
      - ``ArrayData``
-     - When ``thermal: True``. The calculated vibrational modes.
+     - When ``thermal: True``. The calculated vibrational modes. A negative frequency
+       indicates an imaginary frequency.
    * - ``neb_path``
      - ``TrajectoryData``
      - After an NEB calculation. The determined reaction pathway.

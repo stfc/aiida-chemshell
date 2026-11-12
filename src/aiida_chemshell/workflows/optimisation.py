@@ -64,7 +64,10 @@ class GeometryOptimisationWorkChain(WorkChain):
             "vibrational_modes",
             valid_type=ArrayData,
             required=False,
-            help="The calculated vibrational modes for the optimised structure.",
+            help=(
+                "The calculated vibrational modes for the optimised structure. A "
+                "negative frequency indicates an imaginary frequency."
+            ),
         )
 
         ## Workflow ##

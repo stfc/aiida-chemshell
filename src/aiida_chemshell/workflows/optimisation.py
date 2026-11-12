@@ -108,6 +108,9 @@ class GeometryOptimisationWorkChain(WorkChain):
         if "mlip_model" in self.inputs:
             inputs["optimisation_parameters"]["save_path"] = True
 
+        if "maxcycle" not in inputs["optimisation_parameters"]:
+            inputs["optimisation_parameters"]["maxcycle"] = 300
+
         future = self.submit(ChemShellCalculation, **inputs)
         future.label = ChemShellCalculation.default_process_label(future)
         future.description = (

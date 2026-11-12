@@ -154,6 +154,52 @@ H            0.7546064020       0.5900323550       0.0000000000"""
     assert ChemShellCalculation.FILE_TMP_STRUCTURE in script_txt
 
 
+def test_structure2_as_structuredata_object(
+    generate_calcjob, generate_inputs, water_structure_object
+):
+    """Test that a StructureData 'structure2' input is written to its own file.
+
+    Regression test: 'structure2' was previously written to the primary
+    structure's temporary file (FILE_TMP_STRUCTURE), overwriting it, instead
+    of its own file (FILE_TMP_STRUCTURE2).
+    """
+    structure2 = StructureData()
+    structure2.pbc = [False, False, False]
+    structure2.append_atom(symbols="O", position=[0.0, 0.0, 1.0])
+
+    inputs = generate_inputs(structure_fname=water_structure_object)
+    inputs["structure2"] = structure2
+
+    tmp_pth, calc_info = generate_calcjob(ChemShellCalculation, inputs)
+
+    structure_file = tmp_pth / ChemShellCalculation.FILE_TMP_STRUCTURE
+    structure2_file = tmp_pth / ChemShellCalculation.FILE_TMP_STRUCTURE2
+    assert structure_file.exists()
+    assert structure2_file.exists()
+
+    # The primary structure file must not have been overwritten by structure2.
+    chk_str = """3
+Lattice="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" pbc="False False False"
+O            0.0000000000       0.0000000000       0.0000000000
+H           -0.7546064020       0.5900323550       0.0000000000
+H            0.7546064020       0.5900323550       0.0000000000"""
+    assert structure_file.read_text() == chk_str
+
+    chk_str2 = """1
+Lattice="0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0" pbc="False False False"
+O            0.0000000000       0.0000000000       1.0000000000"""
+    assert structure2_file.read_text() == chk_str2
+
+    script_file = tmp_pth / ChemShellCalculation.FILE_SCRIPT
+    assert script_file.exists()
+
+    script_txt = script_file.read_text()
+    assert (
+        f"frg2 = Fragment(coords='{ChemShellCalculation.FILE_TMP_STRUCTURE2:s}')\n"
+        in script_txt
+    )
+
+
 def test_cjson_to_structure_data(get_test_data_file):
     """Test parsing a ChemShell '.cjson' file into a StructureData node."""
     from aiida_chemshell.units import UnitsConverter

@@ -888,7 +888,6 @@ class ChemShellCalculation(CalcJob):
                 fname = self.inputs.structure2.filename
             else:
                 fname = ChemShellCalculation.FILE_TMP_STRUCTURE2
-            print(fname)
             script += f"frg2 = Fragment(coords='{fname:s}')\n"
 
         ## Setup Theory objects
@@ -1102,7 +1101,7 @@ class ChemShellCalculation(CalcJob):
         # Copy data for second input fragment if required
         if "structure2" in self.inputs:
             if isinstance(self.inputs.structure2, StructureData):
-                with folder.open(ChemShellCalculation.FILE_TMP_STRUCTURE, "wb") as f:
+                with folder.open(ChemShellCalculation.FILE_TMP_STRUCTURE2, "wb") as f:
                     f.write(self.inputs.structure2._prepare_xyz()[0])
             else:
                 calc_info.local_copy_list.append(

@@ -3,11 +3,16 @@ name: aiida-chemshell
 description: >-
   Set up, submit, and troubleshoot ChemShell multiscale computational chemistry
   calculations through AiiDA using the aiida-chemshell plugin. Use when the user wants to
-  run a ChemShell QM, MM or QM/MM single point energy, geometry optimisation, NEB or
-  vibrational frequency job from AiiDA, build a ChemShell calcjob's parameter inputs,
-  interpret aiida-chemshell's calcjob outputs or exit codes, choose one of its WorkChains
-  (`chemshell.opt`, `chemshell.atomic_energies`, `chemshell.batch`), or asks about the
-  aiida_chemshell.mcp tools (describe_chemshell_calcjob, submit_chemshell_job).
+  run a ChemShell QM, MM or QM/MM single point energy, geometry optimisation, NEB,
+  isolated-atom-energies, batch, or vibrational frequency job from AiiDA, build a
+  ChemShell calcjob's parameter inputs, interpret aiida-chemshell's calcjob or workflow
+  outputs or exit codes, choose one of its WorkChains (`chemshell.opt`,
+  `chemshell.atomic_energies`, `chemshell.batch`), or asks about the aiida_chemshell.mcp
+  tools (describe_chemshell_calcjob, submit_chemshell_job,
+  describe_chemshell_opt_workflow, submit_chemshell_opt_workflow,
+  describe_chemshell_atomic_energies_workflow,
+  submit_chemshell_atomic_energies_workflow, describe_chemshell_batch_workflow,
+  submit_chemshell_batch_workflow).
 ---
 
 # aiida-chemshell
@@ -45,15 +50,29 @@ when the code points directly at `chemsh.x`.
 
 ## Two ways to submit a job
 
-**Prefer the MCP tools if connected to an `aiida-mcp` server** (check for
-`describe_chemshell_calcjob` / `submit_chemshell_job` among available tools): call
-`describe_chemshell_calcjob` first to confirm current inputs/outputs/exit codes, then
-`submit_chemshell_job` with the arguments below, then follow up with aiida-mcp's own
-`get_process` / `get_process_report` to poll status and see output. `structure`,
-`structure2`, and `force_field_file` each take exactly one of `path` (file on the
-server's machine), `text` (raw file contents), or `pk` (existing node); the
-`*_parameters` inputs (`calculation_parameters`, `optimisation_parameters`,
-`qm_parameters`, `mm_parameters`, `qmmm_parameters`) take `parameters` (a dict) instead.
+**Prefer the MCP tools if connected to an `aiida-mcp` server.** There are four
+describe/submit tool pairs, one for the raw calcjob and one per WorkChain (see
+"WorkChains" below) — pick the narrowest one that fits the task instead of always
+reaching for the raw calcjob:
+
+| Task | Tools |
+|---|---|
+| One calculation; you'll handle everything else yourself | `describe_chemshell_calcjob` / `submit_chemshell_job` |
+| Geometry optimisation (plus isolated-atom energies, optionally vibrational analysis) | `describe_chemshell_opt_workflow` / `submit_chemshell_opt_workflow` |
+| Isolated-atom reference energies for every element in a structure | `describe_chemshell_atomic_energies_workflow` / `submit_chemshell_atomic_energies_workflow` |
+| The same calculation settings over several independent structures (a trajectory, a set of `StructureData` nodes, or a batch of structure files) | `describe_chemshell_batch_workflow` / `submit_chemshell_batch_workflow` |
+
+Call the matching `describe_*` tool first to confirm current inputs/outputs/exit codes,
+then the matching `submit_*` tool, then follow up with aiida-mcp's own `get_process` /
+`get_process_report` to poll status and see output. `structure`, `structure2`, and
+`force_field_file` each take exactly one of `path` (file on the server's machine), `text`
+(raw file contents), or `pk` (existing node); the `*_parameters` inputs
+(`calculation_parameters`, `optimisation_parameters`, `qm_parameters`, `mm_parameters`,
+`qmmm_parameters`) take `parameters` (a dict) instead. The three workflow `submit_*`
+tools take the same shaped arguments as `submit_chemshell_job` (see each tool's own
+schema for the exact set — e.g. the batch tool takes `trajectory`/`structures`/
+`structure_files` instead of a single `structure`) and `label`/`description` there set
+the *workflow* node's label/description, not any individual calculation step's.
 
 **Otherwise, write an AiiDA script** using the builder API. A QM single point energy
 calculation:
@@ -165,22 +184,37 @@ only retrieved, not automatically exposed) — use `verdi calcjob outputcat <pk>
 output.log` or `verdi calcjob gotocomputer <pk>` to inspect the raw ChemShell log before
 guessing further.
 
+The WorkChains below have their own exit codes for workflow-level failures (e.g. a step
+submitting with bad inputs, or — for `chemshell.batch` — no structures given at all);
+call the matching `describe_chemshell_*_workflow` MCP tool, or inspect
+`WorkflowFactory("<entry point>").spec().exit_codes`, for the current list rather than
+assuming the numbers above apply. If a workflow step itself (a `chemshell` calcjob it
+submitted) fails, check that step's own node and `exit_status` against the calcjob exit
+codes above.
+
 ## WorkChains
 
 In addition to the low-level `chemshell` calcjob, three WorkChains orchestrate it into
-higher-level tasks (load via `WorkflowFactory("<entry point>")`):
+higher-level tasks (load via `WorkflowFactory("<entry point>")`, or submit through the
+matching MCP `submit_chemshell_*_workflow` tool if connected to an `aiida-mcp` server —
+see "Two ways to submit a job" above):
 
-- `chemshell.opt` (`GeometryOptimisationWorkChain`) — runs a geometry optimisation and
-  optionally a follow-up vibrational analysis in one WorkChain. Exposes all `chemshell`
-  inputs under a `chemsh` namespace, plus a top-level `vibrational_analysis` (`Bool`).
-  Outputs: `final_energy`, `optimised_structure`, and (if requested)
-  `vibrational_energies`/`vibrational_modes`.
-- `chemshell.atomic_energies` (`IsolatedAtomicEnergiesWorkChain`) — computes the single
-  point energy of each unique atomic species in a structure in isolation. Inputs:
-  `structure`, `qm_parameters`, `code`. Output: `atom_energies` (`Dict` mapping element
-  symbol to energy). Not supported with the `PySCF` QM backend.
-- `chemshell.batch` (`BatchProcessWorkChain`) — applies the same `chemshell` inputs to a
-  series of structures, given as one of `trajectory` (`TrajectoryData`), `structures`
-  (namespace of `StructureData`), or `structure_files` (namespace of `SinglefileData`,
-  `.xyz` only). Shared calcjob metadata/resources go under a `calc` namespace. Returns
-  exit code 350 (`ERROR_NO_INPUTS`) if none of the three structure inputs are given.
+- `chemshell.opt` (`GeometryOptimisationWorkChain`; MCP: `submit_chemshell_opt_workflow`)
+  — runs a geometry optimisation and optionally a follow-up vibrational analysis in one
+  WorkChain. Exposes all `chemshell` inputs under a `chemsh` namespace, plus a top-level
+  `vibrational_analysis` (`Bool`). Outputs: `final_energy`, `optimised_structure`, and
+  (if requested) `vibrational_energies`/`vibrational_modes`. If `qm_parameters` isn't
+  given, it defaults to NWChem DFT B3LYP/cc-pvdz.
+- `chemshell.atomic_energies` (`IsolatedAtomicEnergiesWorkChain`; MCP:
+  `submit_chemshell_atomic_energies_workflow`) — computes the single point energy of
+  each unique atomic species in a structure in isolation. Inputs: `structure`,
+  `qm_parameters`, `code`. Output: `atom_energies` (`Dict` mapping element symbol to
+  energy). Not supported with the `PySCF` QM backend.
+- `chemshell.batch` (`BatchProcessWorkChain`; MCP: `submit_chemshell_batch_workflow`) —
+  applies the same `chemshell` inputs to a series of structures, given as one of
+  `trajectory` (`TrajectoryData`), `structures` (namespace of `StructureData`), or
+  `structure_files` (namespace of `SinglefileData`, `.xyz` only). Shared calcjob
+  metadata/resources go under a `calc` namespace. Returns exit code 350
+  (`ERROR_NO_INPUTS`) if none of the three structure inputs are given; `combine_results`
+  (combine every structure's results into one extended XYZ output) isn't supported
+  together with `optimisation_parameters`.

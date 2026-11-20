@@ -14,7 +14,7 @@ import pytest
 pytest.importorskip("aiida_mcp")
 
 from aiida import orm  # noqa: E402
-from aiida_mcp.plugins import calcjob  # noqa: E402
+from aiida_mcp.plugins import calcjob, workflow  # noqa: E402
 from aiida_mcp.plugins.inputs import ControlInput, FileInput  # noqa: E402
 from mcp.server.mcpserver import MCPServer  # noqa: E402
 from mcp.server.mcpserver.exceptions import ToolError  # noqa: E402
@@ -100,12 +100,18 @@ def test_describe_chemshell_option_defaults():
 
 
 def test_register_adds_tool():
-    """register() adds the ChemShell describe and submit tools."""
+    """register() adds the ChemShell calcjob and workflow describe/submit tools."""
     server = MCPServer("test")
     chemshell_mcp.register(server)
     assert _tool_names(server) == {
         "describe_chemshell_calcjob",
         "submit_chemshell_job",
+        "describe_chemshell_opt_workflow",
+        "submit_chemshell_opt_workflow",
+        "describe_chemshell_atomic_energies_workflow",
+        "submit_chemshell_atomic_energies_workflow",
+        "describe_chemshell_batch_workflow",
+        "submit_chemshell_batch_workflow",
     }
 
 
@@ -257,3 +263,182 @@ def test_submit_tool_is_registered_with_input_schema():
         "description",
     }
     assert optional <= set(schema["properties"])
+
+
+# --- workflow submission ---
+
+
+@pytest.fixture
+def fake_workflow_submit():
+    """Replace aiida.engine.submit, as imported into aiida_mcp.plugins.workflow."""
+    node = orm.WorkChainNode()
+    node.set_process_type("aiida.workflows:chemshell.opt")
+    with mock.patch.object(workflow, "submit", return_value=node) as patched:
+        node.store_all = lambda: None
+        yield patched
+
+
+@pytest.fixture
+def stored_workflow_node_returned(fake_workflow_submit):
+    """Make the fake submit return an already-stored WorkChainNode."""
+    fake_workflow_submit.return_value = orm.WorkChainNode().store()
+    return fake_workflow_submit
+
+
+def test_submit_opt_job_builds_validated_inputs(code, stored_workflow_node_returned):
+    """submit_opt_job nests the ChemShell calcjob inputs under 'chemsh'."""
+    result = chemshell_mcp.submit_opt_job(
+        code=code.pk,
+        structure=FileInput(text="1\n\nH 0.0 0.0 0.0\n"),
+        vibrational_analysis=True,
+        num_machines=2,
+        num_mpiprocs_per_machine=8,
+    )
+
+    stored_workflow_node_returned.assert_called_once()
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    chemsh = submitted["chemsh"]
+    assert chemsh["code"].pk == code.pk
+    assert chemsh["structure"].is_stored
+    resources = chemsh["metadata"]["options"]["resources"]
+    assert resources == {"num_machines": 2, "num_mpiprocs_per_machine": 8}
+    assert "label" not in chemsh["metadata"]
+    assert isinstance(submitted["vibrational_analysis"], orm.Bool)
+    assert submitted["vibrational_analysis"].value is True
+
+    assert result["pk"] == stored_workflow_node_returned.return_value.pk
+    assert set(result["inputs"]) == {"structure"}
+    assert result["code"] == code.full_label
+
+
+def test_submit_opt_job_sets_label_on_workflow_node_not_calcjob_step(
+    code, stored_workflow_node_returned
+):
+    """submit_opt_job's label/description set the workflow's own top-level metadata."""
+    chemshell_mcp.submit_opt_job(
+        code=code.pk,
+        structure=FileInput(text="1\n\nH 0.0 0.0 0.0\n"),
+        label="my opt run",
+        description="an optimisation",
+    )
+
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert submitted["metadata"]["label"] == "my opt run"
+    assert submitted["metadata"]["description"] == "an optimisation"
+    assert "label" not in submitted["chemsh"]["metadata"]
+    assert "description" not in submitted["chemsh"]["metadata"]
+
+
+def test_submit_opt_job_omits_metadata_by_default(code, stored_workflow_node_returned):
+    """submit_opt_job omits top-level metadata when no label/description is given."""
+    chemshell_mcp.submit_opt_job(
+        code=code.pk, structure=FileInput(text="1\n\nH 0.0 0.0 0.0\n")
+    )
+
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert "metadata" not in submitted
+
+
+def test_submit_opt_job_rejects_bad_resources(code, fake_workflow_submit):
+    """A resources value below 1 is a ToolError."""
+    with pytest.raises(ToolError, match="num_machines must be at least 1"):
+        chemshell_mcp.submit_opt_job(
+            code=code.pk,
+            structure=FileInput(text="1\n\nH 0.0 0.0 0.0\n"),
+            num_machines=0,
+        )
+    fake_workflow_submit.assert_not_called()
+
+
+def test_submit_atomic_energies_job_builds_top_level_inputs(
+    code, stored_workflow_node_returned
+):
+    """submit_atomic_energies_job exposes code/structure/qm_parameters at top level."""
+    result = chemshell_mcp.submit_atomic_energies_job(
+        code=code.pk,
+        structure=FileInput(text="1\n\nH 0.0 0.0 0.0\n"),
+        qm_parameters=ControlInput(parameters={"theory": "NWChem"}),
+    )
+
+    stored_workflow_node_returned.assert_called_once()
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert submitted["code"].pk == code.pk
+    assert submitted["structure"].is_stored
+    assert isinstance(submitted["qm_parameters"], orm.Dict)
+    assert "metadata" in submitted["chemsh"]
+    assert "code" not in submitted["chemsh"]
+
+    assert result["pk"] == stored_workflow_node_returned.return_value.pk
+    assert set(result["inputs"]) == {"structure", "qm_parameters"}
+
+
+def test_submit_batch_job_requires_a_structure_source(code, fake_workflow_submit):
+    """Giving none of trajectory/structures/structure_files is a ToolError."""
+    with pytest.raises(ToolError, match="Give at least one of"):
+        chemshell_mcp.submit_batch_job(code=code.pk)
+    fake_workflow_submit.assert_not_called()
+
+
+def test_submit_batch_job_builds_structures_namespace(
+    code, stored_workflow_node_returned
+):
+    """submit_batch_job builds the structures namespace from a dict of FileInputs."""
+    result = chemshell_mcp.submit_batch_job(
+        code=code.pk,
+        structures={
+            "water": FileInput(text="1\n\nH 0.0 0.0 0.0\n"),
+            "methane": FileInput(text="1\n\nC 0.0 0.0 0.0\n"),
+        },
+    )
+
+    stored_workflow_node_returned.assert_called_once()
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert set(submitted["structures"]) == {"water", "methane"}
+    assert all(node.is_stored for node in submitted["structures"].values())
+    assert submitted["calc"]["metadata"]["options"]["resources"] == {
+        "num_machines": 1,
+        "num_mpiprocs_per_machine": 4,
+    }
+
+    assert set(result["inputs"]["structures"]) == {"water", "methane"}
+
+
+def test_submit_batch_job_builds_structure_files_by_index(
+    code, stored_workflow_node_returned
+):
+    """submit_batch_job keys the structure_files namespace by list index."""
+    chemshell_mcp.submit_batch_job(
+        code=code.pk,
+        structure_files=[
+            FileInput(text="structure one"),
+            FileInput(text="structure two"),
+        ],
+    )
+
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert set(submitted["structure_files"]) == {"0", "1"}
+
+
+def test_submit_batch_job_builds_trajectory_input(code, stored_workflow_node_returned):
+    """submit_batch_job loads an existing TrajectoryData node by PK."""
+    trajectory = orm.TrajectoryData().store()
+
+    chemshell_mcp.submit_batch_job(code=code.pk, trajectory=trajectory.pk)
+
+    submitted = stored_workflow_node_returned.call_args.kwargs
+    assert submitted["trajectory"].pk == trajectory.pk
+
+
+def test_submit_batch_job_unknown_trajectory_pk(code, fake_workflow_submit):
+    """A trajectory PK that doesn't exist is a ToolError."""
+    with pytest.raises(ToolError, match="no node with pk 999999"):
+        chemshell_mcp.submit_batch_job(code=code.pk, trajectory=999999)
+    fake_workflow_submit.assert_not_called()
+
+
+def test_submit_batch_job_trajectory_wrong_type(code, fake_workflow_submit):
+    """A trajectory PK that isn't a TrajectoryData is a ToolError."""
+    wrong = orm.Int(1).store()
+    with pytest.raises(ToolError, match="expected TrajectoryData"):
+        chemshell_mcp.submit_batch_job(code=code.pk, trajectory=wrong.pk)
+    fake_workflow_submit.assert_not_called()

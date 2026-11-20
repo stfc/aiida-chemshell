@@ -28,10 +28,12 @@ pip install "aiida-chemshell[mcp]"
 
 pulls in [aiida-mcp](https://github.com/stfc/aiida-mcp) and registers `aiida_chemshell.mcp`
 under its `aiida_mcp.plugins` entry point group, so any aiida-mcp server running in the
-same environment automatically exposes `describe_chemshell_calcjob` and
-`submit_chemshell_job` tools. See the
-[MCP integration](https://stfc.github.io/aiida-chemshell/mcp.html) docs page for the
-tools' arguments and a worked example.
+same environment automatically exposes tools for the raw ChemShell calcjob
+(`describe_chemshell_calcjob`/`submit_chemshell_job`) and three higher-level workflows —
+geometry optimisation, isolated-atom energies, and batch processing — which should be
+preferred over the raw calcjob where they fit. See the
+[MCP integration](https://stfc.github.io/aiida-chemshell/mcp.html) docs page for all
+eight tools' arguments and worked examples.
 
 ## Agent Skill
 

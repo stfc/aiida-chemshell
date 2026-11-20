@@ -10,6 +10,7 @@ aiida_chemshell documentation
    inputs
    workflows
    mcp
+   skills
 
 API
 ===

@@ -20,6 +20,19 @@ This plugin is available through PyPI and should be installed using [`pip`](http
 pip install aiida-chemshell 
 ```
 
+## MCP integration
+
+```bash
+pip install "aiida-chemshell[mcp]"
+```
+
+pulls in [aiida-mcp](https://github.com/stfc/aiida-mcp) and registers `aiida_chemshell.mcp`
+under its `aiida_mcp.plugins` entry point group, so any aiida-mcp server running in the
+same environment automatically exposes `describe_chemshell_calcjob` and
+`submit_chemshell_job` tools. See the
+[MCP integration](https://stfc.github.io/aiida-chemshell/mcp.html) docs page for the
+tools' arguments and a worked example.
+
 ## Requirements
 
 To use this plugin a configured AiiDA profile and computer configuration are required, see the

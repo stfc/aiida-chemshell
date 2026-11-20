@@ -9,6 +9,7 @@ aiida_chemshell documentation
    examples
    inputs
    workflows
+   mcp
 
 API
 ===

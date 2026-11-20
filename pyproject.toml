@@ -38,10 +38,14 @@ Source = "https://github.com/stfc/aiida-chemshell"
 "chemshell.atomic_energies" = "aiida_chemshell.workflows.isolated_atoms:IsolatedAtomicEnergiesWorkChain"
 "chemshell.batch" = "aiida_chemshell.workflows.batch_calculation:BatchProcessWorkChain"
 
+[project.entry-points."aiida_mcp.plugins"]
+chemshell = "aiida_chemshell.mcp"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [project.optional-dependencies]
+mcp = ["aiida-mcp"]
 dev = [
     "aiida-core>=2.8",
     "pytest>=8.0",
